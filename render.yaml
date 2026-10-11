@@ -1,6 +1,9 @@
 databases:
   - name: scrap-express-db
     plan: basic-256mb
+    # Must match the web service: the private connection string only
+    # resolves between services in the same region.
+    region: singapore
     postgresMajorVersion: "17"
 
 services:
