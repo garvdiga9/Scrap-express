@@ -1,0 +1,89 @@
+<%- include('partials/head') %>
+<%- include('partials/sprite') %>
+<%- include('partials/header') %>
+
+<main id="top">
+
+  <!-- Demolition Services -->
+  <section class="section page-top" id="demolition">
+    <div class="container book-inner">
+      <div class="section-head book-head">
+        <span class="eyebrow">New Service</span>
+        <h2>Building Demolition Services</h2>
+        <p>From schools and factories to old residential complexes, we handle safe, licensed demolition — and instantly recycle every bit of scrap it generates.</p>
+        <ul class="book-points">
+          <li><svg class="icon"><use href="#icon-building"/></svg> Schools, colleges &amp; institutional buildings</li>
+          <li><svg class="icon"><use href="#icon-crane"/></svg> Factories, warehouses &amp; industrial sheds</li>
+          <li><svg class="icon"><use href="#icon-hardhat"/></svg> Licensed crew, safety-compliant equipment</li>
+          <li><svg class="icon"><use href="#icon-check"/></svg> Free site survey &amp; no-obligation quote</li>
+        </ul>
+      </div>
+      <form class="book-form" id="demolitionForm" novalidate>
+        <div id="demolitionAlert" class="form-alert" hidden></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="demoName">Full Name / Company *</label>
+            <input type="text" id="demoName" name="name" required placeholder="Your name or organization">
+          </div>
+          <div class="form-group">
+            <label for="demoPhone">Phone Number *</label>
+            <input type="tel" id="demoPhone" name="phone" required placeholder="98765 43210">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="demoEmail">Email (optional)</label>
+            <input type="email" id="demoEmail" name="email" placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label for="buildingType">Building Type *</label>
+            <select id="buildingType" name="buildingType" required>
+              <option value="" disabled selected>Select building type</option>
+              <option>School / Institution</option>
+              <option>Factory / Industrial Shed</option>
+              <option>Warehouse</option>
+              <option>Commercial Complex</option>
+              <option>Residential Building</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="demoLocation">Site Location / Address *</label>
+          <textarea id="demoLocation" name="location" required rows="2" placeholder="Full address of the site"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="approxArea">Approx. Built-up Area</label>
+          <input type="text" id="approxArea" name="approxArea" placeholder="e.g. 20,000 sq. ft. / 3 floors">
+        </div>
+        <div class="form-group">
+          <label for="demoNotes">Additional Notes</label>
+          <textarea id="demoNotes" name="notes" rows="2" placeholder="Timeline, special requirements, etc."></textarea>
+        </div>
+        <button type="submit" class="btn btn-accent btn-lg btn-block" id="demoSubmitBtn">Request Site Visit &amp; Quote</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- CTA banner -->
+  <section class="cta-banner">
+    <div class="container cta-inner">
+      <h2>Got Scrap Lying Around at Home or Office?</h2>
+      <p>Book a free pickup today and turn clutter into cash.</p>
+      <div class="cta-actions">
+        <a href="#book" class="btn btn-accent btn-lg">Book Pickup Now</a>
+        <a href="tel:+919818826333" class="btn btn-outline-light btn-lg">
+          <svg class="icon"><use href="#icon-phone"/></svg> Call Us
+        </a>
+      </div>
+    </div>
+    <svg class="section-wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0,40 C240,0 480,80 720,40 C960,0 1200,80 1440,40 L1440,80 L0,80 Z" fill="var(--color-dark)"/>
+    </svg>
+  </section>
+
+</main>
+
+</main>
+
+<%- include('partials/footer') %>

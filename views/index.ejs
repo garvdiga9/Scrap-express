@@ -1,0 +1,229 @@
+<%- include('partials/head') %>
+<%- include('partials/sprite') %>
+<%- include('partials/header') %>
+
+<main id="top">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-blob blob-1"></div>
+    <div class="hero-blob blob-2"></div>
+    <div class="container hero-inner">
+      <div class="hero-copy">
+        <span class="eyebrow">Delhi NCR • Now Online</span>
+        <h1>Turn Your Scrap Into <span class="text-accent">Instant Cash</span> — Right From Your Doorstep</h1>
+        <p class="hero-sub">Scrap Express brings Delhi's most trusted scrap dealing business online. Book a pickup in seconds, get transparent digital weighing, and walk away with cash the same day — no more waiting for the cart to pass by.</p>
+        <div class="hero-cta">
+          <a href="#book" class="btn btn-accent btn-lg">Book a Free Pickup</a>
+          <a href="#rates" class="btn btn-outline-light btn-lg">See Live Scrap Rates</a>
+        </div>
+        <div class="hero-stats" id="heroStats">
+          <div class="stat"><span class="stat-num-row"><span class="stat-num" data-count="35">0</span><span class="stat-num-suffix">+</span></span><span class="stat-label">Years in Delhi</span></div>
+          <div class="stat"><span class="stat-num-row"><span class="stat-num" data-count="100">0</span><span class="stat-num-suffix">+</span></span><span class="stat-label">Localities Covered</span></div>
+          <div class="stat"><span class="stat-num-row"><span class="stat-num" data-count="500">0</span><span class="stat-num-suffix">+</span></span><span class="stat-label">Tons Recycled / Month</span></div>
+          <div class="stat"><span class="stat-num-row"><span class="stat-num" data-count="10000">0</span><span class="stat-num-suffix">+</span></span><span class="stat-label">Happy Customers</span></div>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <svg class="hero-illustration" viewBox="0 0 400 400">
+          <circle cx="200" cy="200" r="150" stroke="rgba(255,255,255,0.12)" stroke-width="2" stroke-dasharray="2 10" stroke-linecap="round" fill="none"/>
+          <g transform="translate(180,20)" stroke="rgba(255,255,255,0.6)" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M0 18 20 2 40 18"/>
+            <path d="M6 15v19h28V15"/>
+          </g>
+          <use href="#icon-truck" x="34" y="296" width="48" height="48" style="color:rgba(255,255,255,0.55)"/>
+          <use href="#icon-recycle" x="308" y="296" width="48" height="48" style="color:var(--color-accent)"/>
+          <circle cx="200" cy="50" r="4" fill="rgba(255,255,255,0.5)"/>
+          <circle cx="70" cy="320" r="4" fill="rgba(255,255,255,0.5)"/>
+          <circle cx="330" cy="320" r="4" fill="var(--color-accent)"/>
+        </svg>
+        <div class="hero-card card-truck">
+          <svg class="icon icon-xl"><use href="#icon-truck"/></svg>
+          <p>Doorstep pickup across Delhi</p>
+        </div>
+        <div class="hero-card card-scale">
+          <svg class="icon icon-xl"><use href="#icon-scale"/></svg>
+          <p>Certified digital weighing</p>
+        </div>
+        <div class="hero-card card-cash">
+          <span class="cash-symbol">₹</span>
+          <p>Instant cash on pickup</p>
+        </div>
+      </div>
+    </div>
+    <svg class="section-wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0,40 C240,80 480,0 720,40 C960,80 1200,0 1440,40 L1440,80 L0,80 Z" fill="var(--color-white)"/>
+    </svg>
+  </section>
+
+  <!-- Trust bar -->
+  <section class="trust-bar">
+    <div class="container trust-inner">
+      <div class="trust-item"><svg class="icon"><use href="#icon-truck"/></svg> Free Doorstep Pickup</div>
+      <div class="trust-item"><svg class="icon"><use href="#icon-scale"/></svg> Transparent Digital Weighing</div>
+      <div class="trust-item"><svg class="icon"><use href="#icon-shield"/></svg> Verified & Licensed</div>
+      <div class="trust-item"><svg class="icon"><use href="#icon-leaf"/></svg> Eco-Friendly Recycling</div>
+    </div>
+  </section>
+
+  <!-- Environmental Impact -->
+  <section class="section section-alt" id="impact">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Our Impact</span>
+        <h2>Every Kilogram Counts</h2>
+        <p>Estimated environmental impact from scrap responsibly recycled through Scrap Express.</p>
+      </div>
+      <div class="impact-grid" id="impactStats">
+        <div class="impact-card">
+          <div class="impact-icon"><svg class="icon icon-lg"><use href="#icon-recycle"/></svg></div>
+          <span class="impact-num" data-count="185000">0</span>
+          <span class="impact-label">Kg Scrap Recycled</span>
+        </div>
+        <div class="impact-card">
+          <div class="impact-icon"><svg class="icon icon-lg"><use href="#icon-cloud"/></svg></div>
+          <span class="impact-num" data-count="240">0</span>
+          <span class="impact-label">Tonnes CO₂ Avoided</span>
+        </div>
+        <div class="impact-card">
+          <div class="impact-icon"><svg class="icon icon-lg"><use href="#icon-tree"/></svg></div>
+          <span class="impact-num" data-count="3100">0</span>
+          <span class="impact-label">Trees Saved (Equivalent)</span>
+        </div>
+        <div class="impact-card">
+          <div class="impact-icon"><svg class="icon icon-lg"><use href="#icon-home"/></svg></div>
+          <span class="impact-num" data-count="10000">0</span>
+          <span class="impact-label">Households Served</span>
+        </div>
+      </div>
+      <p class="impact-note">Impact figures are estimates based on standard industry recycling benchmarks, updated periodically.</p>
+    </div>
+  </section>
+
+
+  <!-- Live Rates teaser -->
+  <section class="section" id="rates">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Updated Daily</span>
+        <h2>Live Scrap Rates</h2>
+        <p>Transparent, market-linked prices for every category. Rates below are per kg unless noted.</p>
+      </div>
+      <div class="rates-grid" id="ratesGrid" data-limit="6">
+        <!-- populated by JS -->
+        <div class="rates-loading">Loading current rates…</div>
+      </div>
+      <p class="section-more"><a href="/rates" class="btn btn-outline">View All Scrap Rates</a></p>
+    </div>
+  </section>
+  <!-- How it works -->
+  <section class="section" id="how">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Simple &amp; Fast</span>
+        <h2>How It Works</h2>
+        <p>From booking to cash in hand — done in four easy steps.</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card">
+          <span class="step-num">1</span>
+          <h3>Book a Pickup</h3>
+          <p>Fill the online form with your address and scrap details in under a minute.</p>
+        </div>
+        <div class="step-card">
+          <span class="step-num">2</span>
+          <h3>We Visit &amp; Weigh</h3>
+          <p>Our verified team arrives at your slot with certified digital weighing scales.</p>
+        </div>
+        <div class="step-card">
+          <span class="step-num">3</span>
+          <h3>Instant Cash Payment</h3>
+          <p>Get paid on the spot at the day's live market rate — no haggling, no delays.</p>
+        </div>
+        <div class="step-card">
+          <span class="step-num">4</span>
+          <h3>Eco-Friendly Recycling</h3>
+          <p>Your scrap is responsibly sorted and sent for certified recycling.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why us -->
+  <section class="section" id="why">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Why Scrap Express</span>
+        <h2>Delhi's Scrap Trade, Reimagined</h2>
+        <p>12 years of offline trust, now backed by technology.</p>
+      </div>
+      <div class="why-grid">
+        <div class="why-card">
+          <svg class="icon icon-lg"><use href="#icon-scale"/></svg>
+          <h3>Best Market Rates</h3>
+          <p>Rates updated daily so you always get fair value for every category.</p>
+        </div>
+        <div class="why-card">
+          <svg class="icon icon-lg"><use href="#icon-truck"/></svg>
+          <h3>Doorstep Pickup</h3>
+          <p>No need to carry scrap anywhere — our team comes to you, free of cost.</p>
+        </div>
+        <div class="why-card">
+          <svg class="icon icon-lg"><use href="#icon-shield"/></svg>
+          <h3>Licensed &amp; Verified</h3>
+          <p>Background-checked staff and a fully registered scrap trading business.</p>
+        </div>
+        <div class="why-card">
+          <svg class="icon icon-lg"><use href="#icon-clock"/></svg>
+          <h3>Same-Day Service</h3>
+          <p>Book before noon and get same-day pickup in most Delhi localities.</p>
+        </div>
+        <div class="why-card">
+          <svg class="icon icon-lg"><use href="#icon-leaf"/></svg>
+          <h3>Eco-Friendly Disposal</h3>
+          <p>Every kg is sorted and routed to certified recycling partners.</p>
+        </div>
+        <div class="why-card">
+          <svg class="icon icon-lg"><use href="#icon-check"/></svg>
+          <h3>No Hidden Charges</h3>
+          <p>The rate we quote is the rate you get — weighed and paid on the spot.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="section section-alt" id="reviews">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Customer Love</span>
+        <h2>What Delhi Says About Us</h2>
+      </div>
+      <div class="reviews-grid" id="reviewsGrid">
+        <div class="rates-loading">Loading reviews…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA banner -->
+  <section class="cta-banner">
+    <div class="container cta-inner">
+      <h2>Got Scrap Lying Around at Home or Office?</h2>
+      <p>Book a free pickup today and turn clutter into cash.</p>
+      <div class="cta-actions">
+        <a href="#book" class="btn btn-accent btn-lg">Book Pickup Now</a>
+        <a href="tel:+919818826333" class="btn btn-outline-light btn-lg">
+          <svg class="icon"><use href="#icon-phone"/></svg> Call Us
+        </a>
+      </div>
+    </div>
+    <svg class="section-wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0,40 C240,0 480,80 720,40 C960,0 1200,80 1440,40 L1440,80 L0,80 Z" fill="var(--color-dark)"/>
+    </svg>
+  </section>
+
+</main>
+
+</main>
+
+<%- include('partials/footer') %>

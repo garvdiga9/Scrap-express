@@ -1,14 +1,17 @@
-document.getElementById('year').textContent = new Date().getFullYear();
+const yearEl = document.getElementById('year');
+if (yearEl) yearEl.textContent = new Date().getFullYear();
 
 /* ---------- Back to top ---------- */
 const backToTop = document.getElementById('backToTop');
-backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+if (backToTop) {
+  backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+}
 
 /* ---------- Sticky header ---------- */
 const header = document.getElementById('siteHeader');
 function onScroll() {
-  header.classList.toggle('scrolled', window.scrollY > 10);
-  backToTop.classList.toggle('visible', window.scrollY > 500);
+  if (header) header.classList.toggle('scrolled', window.scrollY > 10);
+  if (backToTop) backToTop.classList.toggle('visible', window.scrollY > 500);
 }
 window.addEventListener('scroll', onScroll);
 onScroll();
@@ -16,37 +19,20 @@ onScroll();
 /* ---------- Mobile nav ---------- */
 const navToggle = document.getElementById('navToggle');
 const mainNav = document.getElementById('mainNav');
-navToggle.addEventListener('click', () => {
-  const isOpen = mainNav.classList.toggle('open');
-  navToggle.innerHTML = isOpen
-    ? '<svg class="icon"><use href="#icon-close"/></svg>'
-    : '<svg class="icon"><use href="#icon-menu"/></svg>';
-});
-mainNav.querySelectorAll('a').forEach((link) => {
-  link.addEventListener('click', () => {
-    mainNav.classList.remove('open');
-    navToggle.innerHTML = '<svg class="icon"><use href="#icon-menu"/></svg>';
+if (navToggle && mainNav) {
+  navToggle.addEventListener('click', () => {
+    const isOpen = mainNav.classList.toggle('open');
+    navToggle.innerHTML = isOpen
+      ? '<svg class="icon"><use href="#icon-close"/></svg>'
+      : '<svg class="icon"><use href="#icon-menu"/></svg>';
   });
-});
-
-/* ---------- Active nav link on scroll ---------- */
-const sections = ['rates', 'buy', 'how', 'book', 'why', 'demolition', 'areas', 'reviews']
-  .map((id) => document.getElementById(id))
-  .filter(Boolean);
-const navLinks = Array.from(document.querySelectorAll('.nav-link'));
-const sectionObserver = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        navLinks.forEach((link) => {
-          link.classList.toggle('active', link.getAttribute('href') === `#${entry.target.id}`);
-        });
-      }
+  mainNav.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', () => {
+      mainNav.classList.remove('open');
+      navToggle.innerHTML = '<svg class="icon"><use href="#icon-menu"/></svg>';
     });
-  },
-  { rootMargin: '-40% 0px -50% 0px' }
-);
-sections.forEach((section) => sectionObserver.observe(section));
+  });
+}
 
 /* ---------- Reveal-on-scroll animation ---------- */
 document.querySelectorAll(
@@ -154,6 +140,7 @@ function familyColors(icon) {
 /* ---------- Load live rates ---------- */
 async function loadRates() {
   const grid = document.getElementById('ratesGrid');
+  if (!grid) return;
   try {
     const res = await fetch('/api/rates');
     if (!res.ok) throw new Error('Failed to load rates');
@@ -163,64 +150,43 @@ async function loadRates() {
       return;
     }
     grid.innerHTML = '';
-    rates.forEach((rate) => {
+    // Home shows a short teaser; the rates page lists everything.
+    const limit = Number(grid.dataset.limit) || rates.length;
+    rates.slice(0, limit).forEach((rate) => {
       const card = document.createElement('div');
       card.className = 'rate-card';
       const iconId = iconForCategory(rate.icon);
       const colors = familyColors(rate.icon);
+      // Photo when one has been added for this item, tinted icon otherwise.
+      const iconMedia = `<div class="rate-media rate-media-icon" style="background:${colors.bg};color:${colors.fg}"><svg class="icon"><use href="#${iconId}"/></svg></div>`;
       card.innerHTML = `
-        <div class="rate-icon" style="background:${colors.bg};color:${colors.fg}"><svg class="icon icon-lg"><use href="#${iconId}"/></svg></div>
+        ${iconMedia}
         <h3></h3>
         <div class="rate-price">₹<span class="price-val"></span> <span>/ ${escapeHtml(rate.unit)}</span></div>
       `;
+      if (rate.image) {
+        const img = document.createElement('img');
+        img.className = 'rate-media rate-photo';
+        img.src = rate.image;
+        img.alt = rate.name;
+        img.loading = 'lazy';
+        // If the file is missing or corrupt, drop back to the icon tile.
+        img.addEventListener('error', () => img.remove(), { once: true });
+        img.addEventListener('load', () => {
+          const placeholder = card.querySelector('.rate-media-icon');
+          if (placeholder) placeholder.remove();
+        }, { once: true });
+        card.insertBefore(img, card.firstChild);
+      }
       card.querySelector('h3').textContent = rate.name;
       card.querySelector('.price-val').textContent = Number(rate.price).toLocaleString('en-IN');
       grid.appendChild(card);
     });
-    initCalculator(rates);
   } catch (err) {
     grid.innerHTML = '<p class="rates-loading">Could not load live rates right now. Please call us for current pricing.</p>';
   }
 }
 loadRates();
-
-/* ---------- Scrap value calculator ---------- */
-function initCalculator(rates) {
-  const card = document.getElementById('calcCard');
-  const categorySelect = document.getElementById('calcCategory');
-  const qtyInput = document.getElementById('calcQty');
-  const amountEl = document.getElementById('calcAmount');
-  const cta = document.getElementById('calcCta');
-
-  categorySelect.innerHTML = rates
-    .map((rate, i) => `<option value="${i}">${escapeHtml(rate.name)} (₹${Number(rate.price).toLocaleString('en-IN')}/${escapeHtml(rate.unit)})</option>`)
-    .join('');
-
-  function recalc() {
-    const rate = rates[Number(categorySelect.value)];
-    const qty = Math.max(0, Number(qtyInput.value) || 0);
-    const amount = rate ? rate.price * qty : 0;
-    amountEl.textContent = Math.round(amount).toLocaleString('en-IN');
-  }
-
-  categorySelect.addEventListener('change', recalc);
-  qtyInput.addEventListener('input', recalc);
-
-  cta.addEventListener('click', () => {
-    const rate = rates[Number(categorySelect.value)];
-    const qty = Math.max(0, Number(qtyInput.value) || 0);
-    if (rate) {
-      const quantityField = document.getElementById('quantity');
-      const notesField = document.getElementById('notes');
-      quantityField.value = `${qty} ${rate.unit}`;
-      notesField.value = `Interested in: ${rate.name} — estimated ₹${Math.round(rate.price * qty).toLocaleString('en-IN')} at current rates.`;
-    }
-    document.getElementById('book').scrollIntoView({ behavior: 'smooth' });
-  });
-
-  recalc();
-  card.hidden = false;
-}
 
 /* ---------- Load testimonials ---------- */
 function starRow(rating) {
@@ -249,6 +215,7 @@ function colorForName(name) {
 
 async function loadTestimonials() {
   const grid = document.getElementById('reviewsGrid');
+  if (!grid) return;
   try {
     const res = await fetch('/api/testimonials');
     if (!res.ok) throw new Error('Failed to load reviews');
@@ -317,7 +284,7 @@ function showAlert(alertEl, message, type) {
   alertEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-pickupForm.addEventListener('submit', async (e) => {
+if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   formAlert.hidden = true;
 
@@ -355,7 +322,7 @@ const demolitionForm = document.getElementById('demolitionForm');
 const demolitionAlert = document.getElementById('demolitionAlert');
 const demoSubmitBtn = document.getElementById('demoSubmitBtn');
 
-demolitionForm.addEventListener('submit', async (e) => {
+if (demolitionForm) demolitionForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   demolitionAlert.hidden = true;
 

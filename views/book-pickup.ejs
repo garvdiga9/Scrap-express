@@ -1,0 +1,118 @@
+<%- include('partials/head') %>
+<%- include('partials/sprite') %>
+<%- include('partials/header') %>
+
+<main id="top">
+
+  <!-- Book a pickup -->
+  <section class="section page-top" id="book">
+    <div class="container book-inner">
+      <div class="section-head book-head">
+        <span class="eyebrow">Get Started</span>
+        <h2>Book Your Scrap Pickup</h2>
+        <p>Tell us what you have and where to come. We'll confirm your slot by phone within minutes.</p>
+        <ul class="book-points">
+          <li><svg class="icon"><use href="#icon-check"/></svg> Pickup charges may vary depending on location &amp; quantity</li>
+          <li><svg class="icon"><use href="#icon-check"/></svg> Same-day &amp; next-day slots available</li>
+          <li><svg class="icon"><use href="#icon-check"/></svg> Cash or UPI payment, your choice</li>
+        </ul>
+      </div>
+      <form class="book-form" id="pickupForm" novalidate>
+        <div id="formAlert" class="form-alert" hidden></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Full Name *</label>
+            <input type="text" id="name" name="name" required placeholder="Your name">
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone Number *</label>
+            <input type="tel" id="phone" name="phone" required placeholder="98765 43210">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Email (optional)</label>
+            <input type="email" id="email" name="email" placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label for="area">Area *</label>
+            <select id="area" name="area" required>
+              <option value="" disabled selected>Select your locality</option>
+              <option>Dwarka</option>
+              <option>Rohini</option>
+              <option>Karol Bagh</option>
+              <option>Lajpat Nagar</option>
+              <option>Saket</option>
+              <option>Vasant Kunj</option>
+              <option>Pitampura</option>
+              <option>Janakpuri</option>
+              <option>Laxmi Nagar</option>
+              <option>Mayur Vihar</option>
+              <option>Preet Vihar</option>
+              <option>Other Delhi NCR</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="address">Full Address *</label>
+          <textarea id="address" name="address" required rows="2" placeholder="House no., street, landmark"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="pincode">Pincode</label>
+            <input type="text" id="pincode" name="pincode" placeholder="110001" maxlength="6">
+          </div>
+          <div class="form-group">
+            <label for="preferredDate">Preferred Date</label>
+            <input type="date" id="preferredDate" name="preferredDate">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="scrapType">Scrap Type *</label>
+            <select id="scrapType" name="scrapType" required>
+              <option value="" disabled selected>Select main category</option>
+              <option>Paper &amp; Cardboard</option>
+              <option>Plastic</option>
+              <option>Iron &amp; Steel</option>
+              <option>Copper / Brass / Aluminium</option>
+              <option>E-Waste</option>
+              <option>Mixed Household Scrap</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="quantity">Approx. Quantity</label>
+            <input type="text" id="quantity" name="quantity" placeholder="e.g. 20 kg">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="notes">Additional Notes</label>
+          <textarea id="notes" name="notes" rows="2" placeholder="Anything else we should know?"></textarea>
+        </div>
+        <button type="submit" class="btn btn-accent btn-lg btn-block" id="submitBtn">Request Pickup</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- CTA banner -->
+  <section class="cta-banner">
+    <div class="container cta-inner">
+      <h2>Got Scrap Lying Around at Home or Office?</h2>
+      <p>Book a free pickup today and turn clutter into cash.</p>
+      <div class="cta-actions">
+        <a href="#book" class="btn btn-accent btn-lg">Book Pickup Now</a>
+        <a href="tel:+919818826333" class="btn btn-outline-light btn-lg">
+          <svg class="icon"><use href="#icon-phone"/></svg> Call Us
+        </a>
+      </div>
+    </div>
+    <svg class="section-wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0,40 C240,0 480,80 720,40 C960,0 1200,80 1440,40 L1440,80 L0,80 Z" fill="var(--color-dark)"/>
+    </svg>
+  </section>
+
+</main>
+
+</main>
+
+<%- include('partials/footer') %>

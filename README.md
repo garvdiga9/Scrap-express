@@ -1,4 +1,4 @@
-# Kabadi Express — Online Scrap Pickup Website
+# Scrap Express — Online Scrap Pickup Website
 
 A full website for a Delhi-based scrap dealing business: a customer-facing site (live rates, pickup booking, testimonials, areas served) plus a password-protected admin dashboard, backed by PostgreSQL.
 
@@ -26,7 +26,7 @@ psql --version
 Open the terminal and run (it will ask for the postgres password you set during install):
 
 ```
-psql -U postgres -c "CREATE DATABASE kabadi_express;"
+psql -U postgres -c "CREATE DATABASE scrap_express;"
 ```
 
 ## 3. Configure environment variables
@@ -75,7 +75,7 @@ Then open:
 
 ## Customizing the site
 
-- **Business name, phone number, email, address:** search for `Kabadi Express`, `+91 99999 99999`, and `hello@kabadiexpress.in` in `public/index.html` / `public/admin.html` and replace with your real details.
+- **Business name, phone number, email:** search for `Scrap Express`, `+91 98188 26333`, and `garvdiga13@gmail.com` in `public/index.html` / `public/admin.html` and replace with your real details.
 - **Colors:** edit the CSS variables at the top of `public/css/style.css` (`:root { ... }`).
 - **Areas served:** edit the badge list in the "Areas We Serve" section of `public/index.html`.
 

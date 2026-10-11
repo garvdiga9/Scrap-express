@@ -1,4 +1,4 @@
--- Kabadi Express database schema
+-- Scrap Express database schema
 
 CREATE TABLE IF NOT EXISTS admin_users (
   id SERIAL PRIMARY KEY,
