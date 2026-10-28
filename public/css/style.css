@@ -29,6 +29,10 @@
 
 * { box-sizing: border-box; }
 
+/* The hidden attribute must always win; without this, any rule that sets
+   display (e.g. .admin-login's display:flex) keeps "hidden" elements visible. */
+[hidden] { display: none !important; }
+
 html { scroll-behavior: smooth; }
 
 section[id] { scroll-margin-top: var(--header-height); }
@@ -258,7 +262,22 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .section { padding: 90px 0; }
 /* First section on an inner page must clear the fixed header. */
 .section.page-top { padding-top: calc(var(--header-height) + 56px); }
-.section-more { text-align: center; margin: 44px 0 0; }
+.section-more { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 44px 0 0; }
+
+.rates-quote-note {
+  margin-top: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 28px 32px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-light);
+  border: 1px solid #bbf7d0;
+}
+.rates-quote-note h3 { font-size: 19px; margin-bottom: 4px; }
+.rates-quote-note p { margin: 0; max-width: 560px; color: var(--color-text); }
 .section-alt { background: #eef2f6; }
 .section-head { max-width: 640px; margin: 0 auto 48px; text-align: center; }
 .section-head h2 { font-size: clamp(26px, 3vw, 36px); }

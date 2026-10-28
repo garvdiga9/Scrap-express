@@ -221,7 +221,9 @@ async function loadTestimonials() {
     if (!res.ok) throw new Error('Failed to load reviews');
     const reviews = await res.json();
     if (!reviews.length) {
-      grid.innerHTML = '<p class="rates-loading">No reviews yet — be the first to share your experience!</p>';
+      // No client reviews yet: hide the whole section rather than show an empty one.
+      const section = document.getElementById('reviews');
+      if (section) section.hidden = true;
       return;
     }
     grid.innerHTML = '';
@@ -291,7 +293,8 @@ if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
   const formData = new FormData(pickupForm);
   const payload = Object.fromEntries(formData.entries());
 
-  if (!payload.name || !payload.phone || !payload.address || !payload.scrapType) {
+  if (!payload.companyName || !payload.businessType || !payload.name || !payload.phone
+    || !payload.address || !payload.scrapType) {
     showAlert(formAlert, 'Please fill in all required fields marked with *.', 'error');
     return;
   }

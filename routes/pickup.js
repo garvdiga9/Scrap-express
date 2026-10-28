@@ -1,36 +1,46 @@
 const router = require('express').Router();
 const pool = require('../db/pool');
+const { BUSINESS_TYPES, PICKUP_FREQUENCIES } = require('../data/business');
 
 const PHONE_RE = /^[0-9+\-\s]{7,15}$/;
 
-// POST /api/pickup - public: customer submits a scrap pickup request
+// POST /api/pickup - public: a business submits a bulk scrap pickup request
 router.post('/', async (req, res) => {
   const {
+    companyName, businessType, pickupFrequency,
     name, phone, email, address, area, pincode,
     scrapType, quantity, preferredDate, notes,
   } = req.body;
 
-  if (!name || !phone || !address || !scrapType) {
-    return res.status(400).json({ error: 'Name, phone, address, and scrap type are required.' });
+  if (!companyName || !name || !phone || !address || !scrapType) {
+    return res.status(400).json({ error: 'Company, contact person, phone, site address and scrap type are required.' });
   }
   if (!PHONE_RE.test(phone)) {
     return res.status(400).json({ error: 'Please enter a valid phone number.' });
+  }
+  if (businessType && !BUSINESS_TYPES.includes(businessType)) {
+    return res.status(400).json({ error: 'Please choose a business type from the list.' });
+  }
+  if (pickupFrequency && !PICKUP_FREQUENCIES.includes(pickupFrequency)) {
+    return res.status(400).json({ error: 'Please choose a pickup frequency from the list.' });
   }
 
   try {
     const { rows } = await pool.query(
       `INSERT INTO pickup_requests
-        (name, phone, email, address, area, pincode, scrap_type, approx_quantity, preferred_date, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        (company_name, business_type, pickup_frequency,
+         name, phone, email, address, area, pincode, scrap_type, approx_quantity, preferred_date, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        RETURNING id`,
       [
+        companyName, businessType || null, pickupFrequency || null,
         name, phone, email || null, address, area || null, pincode || null,
         scrapType, quantity || null, preferredDate || null, notes || null,
       ]
     );
     res.status(201).json({
       id: rows[0].id,
-      message: 'Pickup request received! Our team will call you shortly to confirm the time.',
+      message: 'Request received! Our team will call you shortly to confirm the details and share a quote.',
     });
   } catch (err) {
     console.error(err);

@@ -55,6 +55,12 @@ CREATE TABLE IF NOT EXISTS demolition_requests (
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- B2B fields, added after launch; ADD COLUMN IF NOT EXISTS keeps this safe to
+-- re-run against databases that already have data.
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS company_name VARCHAR(200);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS business_type VARCHAR(100);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS pickup_frequency VARCHAR(50);
+
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_status ON pickup_requests(status);
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_created_at ON pickup_requests(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_demolition_requests_status ON demolition_requests(status);

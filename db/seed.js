@@ -38,12 +38,8 @@ const defaultRates = [
   ['Inverter Batteries', 'piece', 800, 'battery', 26],
 ];
 
-const defaultTestimonials = [
-  ['Rohit Sharma', 'Dwarka', 5, 'Booked a pickup in the morning and their team arrived by evening. Weighing was completely transparent and I got paid in cash on the spot.'],
-  ['Anita Verma', 'Rohini', 5, 'Best rates I have found for old newspapers and cardboard compared to the local kabadiwala. Very professional service.'],
-  ['Mohd. Irfan', 'Lajpat Nagar', 4, 'Cleared out a whole room of old electronics and metal scrap. Quick response and fair pricing.'],
-  ['Priya Nanda', 'Vasant Kunj', 5, 'Loved how easy it was to book online instead of waiting for a cart to pass by. Highly recommend for busy families.'],
-];
+// Testimonials are deliberately not seeded: only real client reviews, added
+// from the admin dashboard, should ever appear on the site.
 
 async function seed() {
   const client = await pool.connect();
@@ -73,19 +69,6 @@ async function seed() {
       console.log('Default scrap rates inserted.');
     } else {
       console.log('Scrap categories already exist, skipping.');
-    }
-
-    const { rows: testRows } = await client.query('SELECT COUNT(*)::int AS count FROM testimonials');
-    if (testRows[0].count === 0) {
-      for (const [name, area, rating, message] of defaultTestimonials) {
-        await client.query(
-          `INSERT INTO testimonials (customer_name, area, rating, message) VALUES ($1,$2,$3,$4)`,
-          [name, area, rating, message]
-        );
-      }
-      console.log('Sample testimonials inserted.');
-    } else {
-      console.log('Testimonials already exist, skipping.');
     }
   } finally {
     client.release();

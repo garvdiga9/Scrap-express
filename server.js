@@ -5,6 +5,7 @@ const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
 
 const pool = require('./db/pool');
+const { AREAS, BUSINESS_TYPES, PICKUP_FREQUENCIES } = require('./data/business');
 const ratesRouter = require('./routes/rates');
 const pickupRouter = require('./routes/pickup');
 const demolitionRouter = require('./routes/demolition');
@@ -17,6 +18,21 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 app.set('trust proxy', 1);
 app.use(express.json());
+
+// One line per API call, so a request that stalls or gets dropped shows up in
+// the server log (locally and in Render's Logs tab).
+app.use('/api', (req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    console.log(`${req.method} ${req.originalUrl} -> ${res.statusCode} (${Date.now() - start}ms)`);
+  });
+  res.on('close', () => {
+    if (!res.writableFinished) {
+      console.log(`${req.method} ${req.originalUrl} -> client gave up after ${Date.now() - start}ms, no response sent`);
+    }
+  });
+  next();
+});
 
 app.use(session({
   store: new pgSession({ pool, createTableIfMissing: true }),
@@ -42,14 +58,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ---- page routes ----
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.locals.areas = AREAS;
+app.locals.businessTypes = BUSINESS_TYPES;
+app.locals.pickupFrequencies = PICKUP_FREQUENCIES;
 
 const PAGES = [
-  { path: '/', view: 'index', page: 'home', title: 'Scrap Express - Delhi\'s Trusted Online Scrap Pickup', description: 'Scrap Express offers doorstep scrap pickup across Delhi with the best market rates, instant cash payment, and eco-friendly recycling.' },
-  { path: '/rates', view: 'rates', page: 'rates', title: 'Live Scrap Rates in Delhi - Scrap Express', description: 'Today\'s scrap rates in Delhi for paper, plastic, iron, copper, brass, aluminium, wires and more. Use our calculator to estimate what your scrap is worth.' },
-  { path: '/what-we-buy', view: 'what-we-buy', page: 'what-we-buy', title: 'What We Buy - AC, Fridge, Generators & More - Scrap Express', description: 'We buy AC units, fridges, generators, motors, computers, furniture, glass and more across Delhi NCR. Free pickup and on-the-spot valuation.' },
-  { path: '/book-pickup', view: 'book-pickup', page: 'book-pickup', title: 'Book a Scrap Pickup in Delhi - Scrap Express', description: 'Book a doorstep scrap pickup anywhere in Delhi NCR. Same-day and next-day slots, transparent digital weighing, cash or UPI payment.' },
-  { path: '/demolition', view: 'demolition', page: 'demolition', title: 'Building Demolition Services in Delhi - Scrap Express', description: 'Safe, licensed demolition of schools, factories, warehouses and commercial buildings across Delhi NCR, with free site survey and quote.' },
-  { path: '/areas', view: 'areas', page: 'areas', title: 'Areas We Serve Across Delhi NCR - Scrap Express', description: 'Scrap Express collects scrap across Delhi NCR including Dwarka, Rohini, Saket, Lajpat Nagar, Janakpuri, Noida and Gurugram.' },
+  { path: '/', view: 'index', page: 'home', title: 'Scrap Express - Bulk Scrap Buyers for Businesses in Delhi NCR', description: 'Scrap Express buys scrap in bulk from factories, offices, hospitals, schools, malls and hotels across Delhi NCR. GST invoice, weighbridge slips and bank transfer payment.' },
+  { path: '/rates', view: 'rates', page: 'rates', title: 'Indicative Scrap Rates in Delhi - Scrap Express', description: 'Indicative per-kg scrap rates in Delhi for paper, plastic, iron, copper, brass, aluminium, wires and more. Request a bulk quote for business volumes.' },
+  { path: '/what-we-buy', view: 'what-we-buy', page: 'what-we-buy', title: 'What We Buy - Industrial & Office Scrap - Scrap Express', description: 'We buy AC plants, generators, motors, IT equipment, office furniture, glass and more from businesses across Delhi NCR. Quotes based on volume and condition.' },
+  { path: '/book-pickup', view: 'book-pickup', page: 'book-pickup', title: 'Request a Bulk Scrap Pickup in Delhi NCR - Scrap Express', description: 'Request a one-time or scheduled bulk scrap pickup from your factory, office or site in Delhi NCR. GST invoice, weighbridge slip, payment by bank transfer.' },
+  { path: '/demolition', view: 'demolition', page: 'demolition', title: 'Commercial Demolition Services in Delhi NCR - Scrap Express', description: 'Demolition of schools, hospitals, factories, warehouses, malls and commercial buildings across Delhi NCR, with site survey and detailed quote.' },
+  { path: '/areas', view: 'areas', page: 'areas', title: 'Industrial Areas We Serve in Delhi NCR - Scrap Express', description: 'Scrap Express collects bulk scrap from businesses in Okhla, Naraina, Mayapuri, Wazirpur, Bawana, Noida, Gurugram, Manesar, Faridabad and across Delhi NCR.' },
 ];
 
 PAGES.forEach(({ path: routePath, view, page, title, description }) => {

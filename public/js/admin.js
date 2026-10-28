@@ -45,18 +45,32 @@ async function submitLogin() {
   const username = document.getElementById('username').value;
   const password = document.getElementById('password').value;
 
+  // Never leave the button stuck on "Signing in…": give up after 20s and say so.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+
   try {
     const res = await fetch('/api/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
+      signal: controller.signal,
     });
-    const data = await res.json();
+    let data = {};
+    try {
+      data = await res.json();
+    } catch (err) {
+      if (err.name === 'AbortError') throw err;
+      throw new Error(`The server sent an unexpected response (status ${res.status}). Please try again.`);
+    }
     if (!res.ok) throw new Error(data.error || 'Login failed');
     enterDashboard(data.username);
   } catch (err) {
-    showLoginAlert(err.message);
+    showLoginAlert(err.name === 'AbortError'
+      ? 'The server took too long to respond. Check your connection and try again.'
+      : err.message);
   } finally {
+    clearTimeout(timer);
     loginBtn.disabled = false;
     loginBtn.textContent = 'Sign In';
     loginInFlight = false;
@@ -98,14 +112,14 @@ const statusFilter = document.getElementById('statusFilter');
 let allRequests = [];
 
 async function loadRequests() {
-  requestsBody.innerHTML = '<tr><td colspan="9" class="table-empty">Loading requests…</td></tr>';
+  requestsBody.innerHTML = '<tr><td colspan="11" class="table-empty">Loading requests…</td></tr>';
   try {
     const res = await fetch('/api/admin/requests');
     if (!res.ok) throw new Error();
     allRequests = await res.json();
     renderRequests();
   } catch (err) {
-    requestsBody.innerHTML = '<tr><td colspan="9" class="table-empty">Failed to load requests.</td></tr>';
+    requestsBody.innerHTML = '<tr><td colspan="11" class="table-empty">Failed to load requests.</td></tr>';
   }
 }
 
@@ -113,20 +127,25 @@ function renderRequests() {
   const filter = statusFilter.value;
   const rows = allRequests.filter((r) => filter === 'all' || r.status === filter);
   if (!rows.length) {
-    requestsBody.innerHTML = '<tr><td colspan="9" class="table-empty">No requests found.</td></tr>';
+    requestsBody.innerHTML = '<tr><td colspan="11" class="table-empty">No requests found.</td></tr>';
     return;
   }
   requestsBody.innerHTML = '';
   rows.forEach((r) => {
     const tr = document.createElement('tr');
 
+    const company = r.company_name
+      ? (r.business_type ? `${r.company_name} · ${r.business_type}` : r.company_name)
+      : '-';
     const cells = [
       new Date(r.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+      company,
       r.name,
       r.phone,
       r.area || '-',
       r.scrap_type,
       r.approx_quantity || '-',
+      r.pickup_frequency || '-',
       r.preferred_date ? new Date(r.preferred_date).toLocaleDateString('en-IN') : '-',
     ];
     cells.forEach((text) => {
