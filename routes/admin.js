@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const pool = require('../db/pool');
 const { requireAdmin } = require('../middleware/auth');
 const { PICKUP_STATUSES, QUOTE_UNITS } = require('../data/business');
+const media = require('../lib/media');
 
 const ALLOWED_STATUSES = ['pending', 'confirmed', 'completed', 'cancelled'];
 const MAX_QUOTE_LINES = 20;
@@ -45,7 +46,10 @@ router.get('/me', (req, res) => {
 
 router.get('/requests', requireAdmin, async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM pickup_requests ORDER BY created_at DESC');
+    const { rows } = await pool.query(
+      `SELECT p.*, ${media.mediaListSql('pickup', 'p.id')} AS media
+       FROM pickup_requests p ORDER BY p.created_at DESC`
+    );
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -118,6 +122,7 @@ router.put('/requests/:id/quote', requireAdmin, async (req, res) => {
 router.delete('/requests/:id', requireAdmin, async (req, res) => {
   try {
     await pool.query('DELETE FROM pickup_requests WHERE id = $1', [req.params.id]);
+    await media.removeForRequest('pickup', req.params.id);
     res.json({ message: 'Deleted' });
   } catch (err) {
     console.error(err);
@@ -129,7 +134,10 @@ router.delete('/requests/:id', requireAdmin, async (req, res) => {
 
 router.get('/demolition', requireAdmin, async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM demolition_requests ORDER BY created_at DESC');
+    const { rows } = await pool.query(
+      `SELECT d.*, ${media.mediaListSql('demolition', 'd.id')} AS media
+       FROM demolition_requests d ORDER BY d.created_at DESC`
+    );
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -158,10 +166,39 @@ router.patch('/demolition/:id', requireAdmin, async (req, res) => {
 router.delete('/demolition/:id', requireAdmin, async (req, res) => {
   try {
     await pool.query('DELETE FROM demolition_requests WHERE id = $1', [req.params.id]);
+    await media.removeForRequest('demolition', req.params.id);
     res.json({ message: 'Deleted' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete request' });
+  }
+});
+
+// ---- customer photos & videos ----
+
+// GET /api/admin/media/:id — stream one attachment (supports seeking in
+// videos). ?download=1 saves it instead of opening it.
+router.get('/media/:id', requireAdmin, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ error: 'Not found' });
+  try {
+    const file = await media.findById(req.params.id);
+    if (!file) return res.status(404).json({ error: 'Not found' });
+    // Headers must be plain ASCII; the real (possibly Hindi) name goes in filename*.
+    const name = file.original_name || file.file_name;
+    const asciiName = name.replace(/[^\x20-\x7e]|["\\]/g, '_');
+    res.sendFile(media.filePath(file), {
+      headers: {
+        'Content-Type': file.mime_type,
+        'X-Content-Type-Options': 'nosniff',
+        'Cache-Control': 'private, max-age=86400',
+        'Content-Disposition': `${req.query.download ? 'attachment' : 'inline'}; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(name)}`,
+      },
+    }, (err) => {
+      if (err && !res.headersSent) res.status(404).json({ error: 'File is missing' });
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load the file' });
   }
 });
 

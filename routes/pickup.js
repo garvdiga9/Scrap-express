@@ -5,12 +5,14 @@ const {
 } = require('../data/business');
 const { PHONE_RE, GSTIN_RE, GSTIN_ERROR } = require('../lib/validation');
 const customers = require('../lib/customers');
+const media = require('../lib/media');
 
 const OTHER = 'Other';
 const MAX_OTHER_LENGTH = 100;
 
-// POST /api/pickup - public: a business submits a bulk scrap pickup request
-router.post('/', async (req, res) => {
+// POST /api/pickup - public: a business submits a bulk scrap pickup request,
+// optionally with photos/videos of the scrap.
+router.post('/', media.acceptMedia, async (req, res) => {
   const {
     companyName, businessType, pickupFrequency,
     name, phone, email, address, area, pincode,
@@ -65,6 +67,8 @@ router.post('/', async (req, res) => {
   if (gstin && !GSTIN_RE.test(gstin)) {
     return res.status(400).json({ error: GSTIN_ERROR });
   }
+  const mediaError = media.missingMediaError(req);
+  if (mediaError) return res.status(400).json({ error: mediaError });
 
   // Logged-in customers get the request on their account; everyone else can
   // still book without one.
@@ -83,6 +87,10 @@ router.post('/', async (req, res) => {
         scrapTypes.join(', '), quantity, notes || null,
       ]
     );
+    // As with the profile below, the booking is already saved, so a problem
+    // recording the attachments is logged rather than reported as a failure.
+    await media.saveForRequest(req, 'pickup', rows[0].id)
+      .catch((err) => console.error('saving pickup media failed', err));
     if (customerId) {
       // The booking is already saved; a profile hiccup must not report failure
       // and tempt the customer to submit it twice.

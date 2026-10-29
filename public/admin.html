@@ -116,11 +116,11 @@
           <thead>
             <tr>
               <th>Date</th><th>Name</th><th>Phone</th><th>Building Type</th><th>Location</th>
-              <th>Approx. Area</th><th>Status</th><th></th>
+              <th>Approx. Area</th><th>Media</th><th>Status</th><th></th>
             </tr>
           </thead>
           <tbody id="demolitionBody">
-            <tr><td colspan="8" class="table-empty">Loading requests…</td></tr>
+            <tr><td colspan="9" class="table-empty">Loading requests…</td></tr>
           </tbody>
         </table>
       </div>
@@ -186,6 +186,7 @@
     <button type="button" class="dialog-close" id="dialogClose" aria-label="Close">&times;</button>
   </div>
   <dl class="detail-list" id="requestDetails"></dl>
+  <section class="media-gallery" id="requestMedia" hidden></section>
 
   <form class="quote-form" id="quoteForm" novalidate>
     <h3>Quote</h3>
@@ -200,6 +201,15 @@
       <button type="submit" class="btn btn-accent" id="sendQuoteBtn">Send Quote</button>
     </div>
   </form>
+</dialog>
+
+<!-- Demolition request photos & videos -->
+<dialog class="request-dialog" id="mediaDialog" aria-labelledby="mediaDialogTitle">
+  <div class="dialog-head">
+    <h2 id="mediaDialogTitle">Photos &amp; Videos</h2>
+    <button type="button" class="dialog-close" id="mediaDialogClose" aria-label="Close">&times;</button>
+  </div>
+  <section class="media-gallery" id="mediaDialogBody"></section>
 </dialog>
 
 <script src="js/admin.js"></script>

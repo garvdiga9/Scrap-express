@@ -207,6 +207,7 @@ function renderRequests() {
     viewBtn.textContent = r.quote_items ? 'View Quote' : 'View & Quote';
     viewBtn.addEventListener('click', () => openRequestDialog(r));
     actionTd.appendChild(viewBtn);
+    if (r.media && r.media.length) actionTd.appendChild(mediaBadge(r.media));
 
     const delBtn = document.createElement('button');
     delBtn.className = 'icon-btn';
@@ -225,6 +226,73 @@ function renderRequests() {
   });
 }
 statusFilter.addEventListener('change', renderRequests);
+
+/* ---------- Customer photos & videos ---------- */
+const countLabel = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+function describeMedia(list) {
+  const photos = list.filter((m) => m.kind === 'photo').length;
+  const videos = list.length - photos;
+  return [photos && countLabel(photos, 'photo'), videos && countLabel(videos, 'video')].filter(Boolean).join(', ');
+}
+
+function mediaBadge(list) {
+  const badge = document.createElement('span');
+  badge.className = 'media-count';
+  badge.title = describeMedia(list);
+  badge.textContent = `📎 ${list.length}`;
+  return badge;
+}
+
+// Thumbnails that open the full photo in a new tab, and playable videos.
+function renderMediaGallery(container, list) {
+  container.innerHTML = '';
+  container.hidden = !list.length;
+  if (!list.length) return;
+  const heading = document.createElement('h3');
+  heading.textContent = `Photos & Videos (${describeMedia(list)})`;
+  const grid = document.createElement('div');
+  grid.className = 'media-grid';
+  list.forEach((m) => {
+    const url = `/api/admin/media/${m.id}`;
+    const item = document.createElement('figure');
+    item.className = 'media-item';
+    if (m.kind === 'photo') {
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = m.name || 'Customer photo';
+      img.loading = 'lazy';
+      link.appendChild(img);
+      item.appendChild(link);
+    } else {
+      const video = document.createElement('video');
+      video.src = url;
+      video.controls = true;
+      video.preload = 'metadata';
+      video.playsInline = true;
+      item.appendChild(video);
+    }
+    const caption = document.createElement('figcaption');
+    const download = document.createElement('a');
+    download.href = `${url}?download=1`;
+    download.textContent = 'Download';
+    caption.append(`${(m.size / (1024 * 1024)).toFixed(1)} MB · `, download);
+    item.appendChild(caption);
+    grid.appendChild(item);
+  });
+  container.append(heading, grid);
+}
+
+const mediaDialog = document.getElementById('mediaDialog');
+document.getElementById('mediaDialogClose').addEventListener('click', () => mediaDialog.close());
+mediaDialog.addEventListener('click', (e) => { if (e.target === mediaDialog) mediaDialog.close(); });
+// Stop any playing video when a dialog closes.
+[mediaDialog, document.getElementById('requestDialog')].forEach((d) => {
+  d.addEventListener('close', () => d.querySelectorAll('video').forEach((v) => v.pause()));
+});
 
 /* ---------- Request details & quote dialog ---------- */
 const requestDialog = document.getElementById('requestDialog');
@@ -359,6 +427,7 @@ function openRequestDialog(r) {
   if (r.quote_response) {
     addDetail('Customer answer', `${r.quote_response === 'accepted' ? 'Accepted' : 'Declined'} on ${formatDate(r.quote_responded_at)}`);
   }
+  renderMediaGallery(document.getElementById('requestMedia'), r.media || []);
 
   quoteHint.textContent = r.quoted_at
     ? `Quote sent on ${formatDate(r.quoted_at)}. Sending again replaces it and asks the customer to answer again.`
@@ -426,14 +495,14 @@ const demolitionStatusFilter = document.getElementById('demolitionStatusFilter')
 let allDemolitionRequests = [];
 
 async function loadDemolitionRequests() {
-  demolitionBody.innerHTML = '<tr><td colspan="8" class="table-empty">Loading requests…</td></tr>';
+  demolitionBody.innerHTML = '<tr><td colspan="9" class="table-empty">Loading requests…</td></tr>';
   try {
     const res = await fetch('/api/admin/demolition');
     if (!res.ok) throw new Error();
     allDemolitionRequests = await res.json();
     renderDemolitionRequests();
   } catch (err) {
-    demolitionBody.innerHTML = '<tr><td colspan="8" class="table-empty">Failed to load requests.</td></tr>';
+    demolitionBody.innerHTML = '<tr><td colspan="9" class="table-empty">Failed to load requests.</td></tr>';
   }
 }
 
@@ -441,7 +510,7 @@ function renderDemolitionRequests() {
   const filter = demolitionStatusFilter.value;
   const rows = allDemolitionRequests.filter((r) => filter === 'all' || r.status === filter);
   if (!rows.length) {
-    demolitionBody.innerHTML = '<tr><td colspan="8" class="table-empty">No requests found.</td></tr>';
+    demolitionBody.innerHTML = '<tr><td colspan="9" class="table-empty">No requests found.</td></tr>';
     return;
   }
   demolitionBody.innerHTML = '';
@@ -461,6 +530,23 @@ function renderDemolitionRequests() {
       td.textContent = text;
       tr.appendChild(td);
     });
+
+    const mediaTd = document.createElement('td');
+    if (r.media && r.media.length) {
+      const mediaBtn = document.createElement('button');
+      mediaBtn.className = 'view-btn';
+      mediaBtn.textContent = `View ${r.media.length}`;
+      mediaBtn.title = describeMedia(r.media);
+      mediaBtn.addEventListener('click', () => {
+        document.getElementById('mediaDialogTitle').textContent = `Demolition Request #${r.id} · ${r.name}`;
+        renderMediaGallery(document.getElementById('mediaDialogBody'), r.media);
+        mediaDialog.showModal();
+      });
+      mediaTd.appendChild(mediaBtn);
+    } else {
+      mediaTd.textContent = '-';
+    }
+    tr.appendChild(mediaTd);
 
     const statusTd = document.createElement('td');
     const select = document.createElement('select');

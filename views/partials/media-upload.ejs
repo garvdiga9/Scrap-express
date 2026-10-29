@@ -1,0 +1,24 @@
+<%# Photo/video picker shared by the pickup and demolition forms. Pass
+    `hint`: what the customer should photograph. Limits come from lib/media.js.
+    At least one photo or video is required (checked in main.js and the API). %>
+<% const lim = mediaLimits; %>
+<fieldset class="form-group media-upload"
+          data-max-photos="<%= lim.photos %>" data-max-videos="<%= lim.videos %>"
+          data-photo-mb="<%= lim.photoMB %>" data-video-mb="<%= lim.videoMB %>">
+  <legend>Photos &amp; Videos * <span class="field-hint">At least 1 photo or video</span></legend>
+  <p class="media-help"><%= hint %> This lets us quote accurately without a site visit first.</p>
+  <div class="media-buttons">
+    <label class="media-pick">
+      <input type="file" class="media-input" data-kind="photo" accept="image/*" multiple>
+      <svg class="icon"><use href="#icon-camera"/></svg>
+      <span>Add Photos <small>up to <%= lim.photos %></small></span>
+    </label>
+    <label class="media-pick">
+      <input type="file" class="media-input" data-kind="video" accept="video/*" multiple>
+      <svg class="icon"><use href="#icon-video"/></svg>
+      <span>Add Videos <small>up to <%= lim.videos %>, <%= lim.videoMB %> MB each</small></span>
+    </label>
+  </div>
+  <ul class="media-previews" aria-live="polite"></ul>
+  <p class="media-error" role="alert" hidden></p>
+</fieldset>

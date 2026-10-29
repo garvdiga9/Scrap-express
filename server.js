@@ -15,6 +15,7 @@ const testimonialsRouter = require('./routes/testimonials');
 const adminRouter = require('./routes/admin');
 const customerRouter = require('./routes/customer');
 const firebase = require('./lib/firebase');
+const media = require('./lib/media');
 const customers = require('./lib/customers');
 
 const app = express();
@@ -87,6 +88,7 @@ app.locals.businessTypes = BUSINESS_TYPES;
 app.locals.scrapTypes = SCRAP_TYPES;
 app.locals.pickupFrequencies = PICKUP_FREQUENCIES;
 app.locals.minPickupKg = MIN_PICKUP_KG;
+app.locals.mediaLimits = media.LIMITS;
 app.locals.statusLabels = {
   pending: 'Received', quoted: 'Quote Ready', accepted: 'Quote Accepted', declined: 'Quote Declined',
   confirmed: 'Confirmed', completed: 'Completed', cancelled: 'Cancelled',

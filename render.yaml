@@ -14,7 +14,15 @@ services:
     region: singapore
     buildCommand: npm install
     startCommand: node db/migrate.js && node db/seed.js && node server.js
+    # Customer photos/videos. The service's own filesystem is wiped on every
+    # deploy, so uploads go on a persistent disk (can be enlarged later, not shrunk).
+    disk:
+      name: uploads
+      mountPath: /var/data
+      sizeGB: 5
     envVars:
+      - key: UPLOAD_DIR
+        value: /var/data/uploads
       - key: DATABASE_URL
         fromDatabase:
           name: scrap-express-db

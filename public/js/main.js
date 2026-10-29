@@ -323,6 +323,159 @@ function showAlert(alertEl, message, type) {
   alertEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+/* ---------- Photo / video attachments ---------- */
+const MB = 1024 * 1024;
+// Phone photos are 3–8 MB; a 1600px JPEG is plenty to quote from and
+// uploads many times faster, so photos are shrunk before sending.
+const PHOTO_MAX_SIDE = 1600;
+
+async function shrinkPhoto(file) {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, PHOTO_MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.82));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], `${file.name.replace(/\.[^.]+$/, '')}.jpg`, { type: 'image/jpeg' });
+  } catch (err) {
+    return file; // a format this browser can't draw (e.g. HEIC): send it as it is
+  }
+}
+
+function setupMediaPicker(form) {
+  const box = form && form.querySelector('.media-upload');
+  if (!box) return null;
+  const limits = { photo: Number(box.dataset.maxPhotos), video: Number(box.dataset.maxVideos) };
+  const maxMB = { photo: Number(box.dataset.photoMb), video: Number(box.dataset.videoMb) };
+  const previews = box.querySelector('.media-previews');
+  const errorEl = box.querySelector('.media-error');
+  let items = [];
+  let preparing = 0;
+
+  const showError = (message) => { errorEl.textContent = message; errorEl.hidden = !message; };
+  const remove = (item) => {
+    URL.revokeObjectURL(item.url);
+    items = items.filter((x) => x !== item);
+    render();
+    showError('');
+  };
+  function render() {
+    previews.innerHTML = '';
+    items.forEach((item) => {
+      const li = document.createElement('li');
+      li.className = `media-preview media-${item.kind}`;
+      const thumb = document.createElement(item.kind === 'photo' ? 'img' : 'video');
+      thumb.src = item.url;
+      if (item.kind === 'photo') {
+        thumb.alt = item.file.name;
+        // Browsers that can't show HEIC still upload it; show a placeholder.
+        thumb.addEventListener('error', () => thumb.replaceWith(Object.assign(document.createElement('span'), { className: 'media-placeholder', textContent: 'Photo' })));
+      } else {
+        thumb.muted = true;
+        thumb.preload = 'metadata';
+        thumb.playsInline = true;
+      }
+      const size = document.createElement('span');
+      size.className = 'media-size';
+      size.textContent = `${(item.file.size / MB).toFixed(1)} MB`;
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'media-remove';
+      removeBtn.setAttribute('aria-label', `Remove ${item.file.name}`);
+      removeBtn.textContent = '×';
+      removeBtn.addEventListener('click', () => remove(item));
+      li.append(thumb, size, removeBtn);
+      previews.appendChild(li);
+    });
+  }
+
+  box.querySelectorAll('.media-input').forEach((input) => {
+    input.addEventListener('change', async () => {
+      const { kind } = input.dataset;
+      const chosen = [...input.files];
+      input.value = ''; // so picking the same file again still fires "change"
+      showError('');
+      const problems = [];
+      preparing += 1;
+      try {
+        for (const original of chosen) {
+          if (items.filter((i) => i.kind === kind).length >= limits[kind]) {
+            problems.push(`You can add up to ${limits[kind]} ${kind}s.`);
+            break;
+          }
+          if (!original.type.startsWith(kind === 'photo' ? 'image/' : 'video/')) {
+            problems.push(`"${original.name}" isn't a ${kind}.`);
+            continue;
+          }
+          const file = kind === 'photo' ? await shrinkPhoto(original) : original;
+          if (file.size > maxMB[kind] * MB) {
+            problems.push(kind === 'video'
+              ? `"${original.name}" is over ${maxMB.video} MB. Please send a shorter clip, or WhatsApp it to us.`
+              : `"${original.name}" is over ${maxMB.photo} MB.`);
+            continue;
+          }
+          items.push({ kind, file, url: URL.createObjectURL(file) });
+          render();
+        }
+      } finally {
+        preparing -= 1;
+      }
+      showError(problems.join(' '));
+    });
+  });
+
+  form.addEventListener('reset', () => {
+    items.forEach((item) => URL.revokeObjectURL(item.url));
+    items = [];
+    render();
+    showError('');
+  });
+
+  return {
+    files: () => items,
+    isPreparing: () => preparing > 0,
+    // Every request needs at least one photo or video.
+    requireOne() {
+      if (items.length) return true;
+      showError('Please add at least one photo or video so we can quote accurately.');
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return false;
+    },
+  };
+}
+
+// Sends a request form as JSON, or, when files are attached, as multipart
+// with the fields in one JSON "data" part, reporting upload progress.
+function submitRequest(url, payload, files, onProgress) {
+  if (!files.length) {
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).then(async (res) => ({ ok: res.ok, data: await res.json().catch(() => ({})) }));
+  }
+  const body = new FormData();
+  body.append('data', JSON.stringify(payload));
+  files.forEach(({ kind, file }) => body.append(kind === 'photo' ? 'photos' : 'videos', file, file.name));
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url);
+    xhr.responseType = 'json';
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+    });
+    xhr.addEventListener('load', () => resolve({ ok: xhr.status >= 200 && xhr.status < 300, data: xhr.response || {} }));
+    xhr.addEventListener('error', () => reject(new Error('The upload failed. Please check your connection and try again.')));
+    xhr.send(body);
+  });
+}
+
+const pickupMedia = setupMediaPicker(pickupForm);
+
 /* "Other" scrap type: reveal a description box only while it's ticked */
 const otherCheckbox = document.getElementById('scrapTypeOther');
 const otherWrap = document.getElementById('otherScrapWrap');
@@ -377,17 +530,21 @@ if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
     return;
   }
 
+  if (pickupMedia && pickupMedia.isPreparing()) {
+    showAlert(formAlert, 'Your photos are still being prepared. Please try again in a moment.', 'error');
+    return;
+  }
+  if (pickupMedia && !pickupMedia.requireOne()) return;
+
   submitBtn.disabled = true;
   submitBtn.textContent = 'Submitting…';
 
   try {
-    const res = await fetch('/api/pickup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+    const files = pickupMedia ? pickupMedia.files() : [];
+    const { ok, data } = await submitRequest('/api/pickup', payload, files, (pct) => {
+      submitBtn.textContent = pct < 100 ? `Uploading… ${pct}%` : 'Submitting…';
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Something went wrong');
+    if (!ok) throw new Error(data.error || 'Something went wrong');
     showAlert(formAlert, data.message || 'Pickup request received! We will call you shortly.', 'success');
     pickupForm.reset();
   } catch (err) {
@@ -402,6 +559,7 @@ if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
 const demolitionForm = document.getElementById('demolitionForm');
 const demolitionAlert = document.getElementById('demolitionAlert');
 const demoSubmitBtn = document.getElementById('demoSubmitBtn');
+const demolitionMedia = setupMediaPicker(demolitionForm);
 
 if (demolitionForm) demolitionForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -415,17 +573,21 @@ if (demolitionForm) demolitionForm.addEventListener('submit', async (e) => {
     return;
   }
 
+  if (demolitionMedia && demolitionMedia.isPreparing()) {
+    showAlert(demolitionAlert, 'Your photos are still being prepared. Please try again in a moment.', 'error');
+    return;
+  }
+  if (demolitionMedia && !demolitionMedia.requireOne()) return;
+
   demoSubmitBtn.disabled = true;
   demoSubmitBtn.textContent = 'Submitting…';
 
   try {
-    const res = await fetch('/api/demolition', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+    const files = demolitionMedia ? demolitionMedia.files() : [];
+    const { ok, data } = await submitRequest('/api/demolition', payload, files, (pct) => {
+      demoSubmitBtn.textContent = pct < 100 ? `Uploading… ${pct}%` : 'Submitting…';
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Something went wrong');
+    if (!ok) throw new Error(data.error || 'Something went wrong');
     showAlert(demolitionAlert, data.message || 'Request received! We will call you shortly.', 'success');
     demolitionForm.reset();
   } catch (err) {

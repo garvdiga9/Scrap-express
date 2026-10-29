@@ -57,6 +57,7 @@
           <label for="approxArea">Approx. Built-up Area</label>
           <input type="text" id="approxArea" name="approxArea" placeholder="e.g. 20,000 sq. ft. / 3 floors">
         </div>
+        <%- include('partials/media-upload', { hint: 'Photos or a walk-through video of the building, inside and out.' }) %>
         <div class="form-group">
           <label for="demoNotes">Additional Notes</label>
           <textarea id="demoNotes" name="notes" rows="2" placeholder="Timeline, special requirements, etc."></textarea>

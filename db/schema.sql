@@ -97,6 +97,21 @@ ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS quoted_at TIMESTAMP;
 ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS quote_response VARCHAR(10);
 ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS quote_responded_at TIMESTAMP;
 
+-- Photos and videos customers attach to a request. The files themselves
+-- live on disk (lib/media.js); one row per file.
+CREATE TABLE IF NOT EXISTS request_media (
+  id SERIAL PRIMARY KEY,
+  request_type VARCHAR(20) NOT NULL CHECK (request_type IN ('pickup', 'demolition')),
+  request_id INT NOT NULL,
+  kind VARCHAR(10) NOT NULL CHECK (kind IN ('photo', 'video')),
+  file_name VARCHAR(100) UNIQUE NOT NULL,
+  original_name VARCHAR(255),
+  mime_type VARCHAR(50) NOT NULL,
+  size_bytes INT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_request_media_request ON request_media(request_type, request_id);
+
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_status ON pickup_requests(status);
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_created_at ON pickup_requests(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_demolition_requests_status ON demolition_requests(status);

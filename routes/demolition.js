@@ -1,9 +1,11 @@
 const router = require('express').Router();
 const pool = require('../db/pool');
 const { PHONE_RE } = require('../lib/validation');
+const media = require('../lib/media');
 
-// POST /api/demolition - public: request a demolition site visit & quote
-router.post('/', async (req, res) => {
+// POST /api/demolition - public: request a demolition site visit & quote,
+// optionally with photos/videos of the building.
+router.post('/', media.acceptMedia, async (req, res) => {
   const { name, phone, email, buildingType, location, approxArea, notes } = req.body;
 
   if (!name || !phone || !buildingType || !location) {
@@ -12,6 +14,8 @@ router.post('/', async (req, res) => {
   if (!PHONE_RE.test(phone)) {
     return res.status(400).json({ error: 'Please enter a valid phone number.' });
   }
+  const mediaError = media.missingMediaError(req);
+  if (mediaError) return res.status(400).json({ error: mediaError });
 
   const customerId = (req.session && req.session.customerId) || null;
 
@@ -23,6 +27,8 @@ router.post('/', async (req, res) => {
        RETURNING id`,
       [name, phone, email || null, buildingType, location, approxArea || null, notes || null, customerId]
     );
+    await media.saveForRequest(req, 'demolition', rows[0].id)
+      .catch((err) => console.error('saving demolition media failed', err));
     res.status(201).json({
       id: rows[0].id,
       message: 'Request received! Our site survey team will call you shortly to schedule a visit.',
