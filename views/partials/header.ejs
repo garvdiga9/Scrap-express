@@ -11,12 +11,21 @@
       <a href="/book-pickup" class="nav-link<%= page === 'book-pickup' ? ' active' : '' %>">Bulk Pickup</a>
       <a href="/demolition" class="nav-link<%= page === 'demolition' ? ' active' : '' %>">Demolition</a>
       <a href="/areas" class="nav-link<%= page === 'areas' ? ' active' : '' %>">Areas</a>
+      <% if (locals.loginEnabled || locals.customer) { %>
+      <a href="<%= locals.customer ? '/account' : '/login' %>" class="nav-link nav-account<%= ['login', 'account'].includes(page) ? ' active' : '' %>"><%= locals.customer ? 'My Account' : 'Customer Login' %></a>
+      <% } %>
     </nav>
     <div class="header-actions">
-      <a href="tel:+919818826333" class="btn btn-ghost header-call">
+      <a href="tel:+919818826333" class="btn btn-ghost header-call" aria-label="Call +91 98188 26333">
         <svg class="icon"><use href="#icon-phone"/></svg>
         <span>+91 98188 26333</span>
       </a>
+      <% if (locals.loginEnabled || locals.customer) { %>
+      <a href="<%= locals.customer ? '/account' : '/login' %>" class="btn btn-ghost header-account<%= ['login', 'account'].includes(page) ? ' active' : '' %>">
+        <svg class="icon"><use href="#icon-user"/></svg>
+        <span><%= locals.customer ? 'My Account' : 'Login' %></span>
+      </a>
+      <% } %>
       <a href="/book-pickup" class="btn btn-accent">Get a Quote</a>
       <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
         <svg class="icon"><use href="#icon-menu"/></svg>

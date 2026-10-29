@@ -1,0 +1,112 @@
+<%- include('partials/head') %>
+<%- include('partials/sprite') %>
+<%- include('partials/header') %>
+<% const c = customer; %>
+<% const fmtDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }); %>
+
+<main id="top">
+
+  <section class="section page-top">
+    <div class="container">
+      <div class="account-head">
+        <div>
+          <span class="eyebrow">My Account</span>
+          <h1>Welcome<%= c.name ? `, ${c.name}` : '' %></h1>
+          <p class="account-sub">Logged in with <%= c.verified_phone || c.email || 'your account' %><%= c.company_name ? ` · ${c.company_name}` : '' %></p>
+        </div>
+        <div class="account-actions">
+          <a href="/book-pickup" class="btn btn-accent">Request a Bulk Pickup</a>
+          <button type="button" class="btn btn-outline" id="logoutBtn">Log Out</button>
+        </div>
+      </div>
+
+      <div class="account-grid">
+        <section class="account-card">
+          <h2>Your Requests</h2>
+          <% if (!requests.length) { %>
+            <div class="account-empty">
+              <p>No requests yet. When you book a pickup or demolition while logged in, it shows up here with its live status.</p>
+              <a href="/book-pickup" class="btn btn-outline">Request a Bulk Pickup</a>
+            </div>
+          <% } else { %>
+            <ul class="request-list">
+              <% requests.forEach((r) => { %>
+                <li class="request-item">
+                  <div class="request-main">
+                    <span class="request-kind"><%= r.kind === 'pickup' ? 'Bulk Pickup' : 'Demolition' %> · #<%= r.id %> · <%= fmtDate(r.created_at) %></span>
+                    <strong class="request-detail"><%= r.detail %></strong>
+                    <span class="request-meta"><%= [r.quantity, r.frequency, r.location].filter(Boolean).join(' · ') %></span>
+                  </div>
+                  <span class="status-badge status-<%= r.status %>"><%= statusLabels[r.status] || r.status %></span>
+                </li>
+              <% }) %>
+            </ul>
+          <% } %>
+        </section>
+
+        <section class="account-card">
+          <h2>Business Details</h2>
+          <p class="account-note">Saved details fill in your booking form automatically.</p>
+          <div id="profileAlert" class="form-alert" hidden></div>
+          <form id="profileForm" novalidate>
+            <div class="form-group">
+              <label for="pCompany">Company / Organisation</label>
+              <input type="text" id="pCompany" name="companyName" maxlength="200" value="<%= c.company_name || '' %>">
+            </div>
+            <div class="form-group">
+              <label for="pBusinessType">Business Type</label>
+              <select id="pBusinessType" name="businessType">
+                <option value="">Select type</option>
+                <% businessTypes.forEach((type) => { %><option<%= c.business_type === type ? ' selected' : '' %>><%= type %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="pName">Contact Person</label>
+                <input type="text" id="pName" name="name" maxlength="150" value="<%= c.name || '' %>">
+              </div>
+              <div class="form-group">
+                <label for="pPhone">Contact Phone</label>
+                <input type="tel" id="pPhone" name="phone" maxlength="20" value="<%= c.phone || '' %>">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="pEmail">Work Email</label>
+                <input type="email" id="pEmail" name="email" maxlength="200" value="<%= c.email || '' %>">
+              </div>
+              <div class="form-group">
+                <label for="pGstin">GSTIN</label>
+                <input type="text" id="pGstin" name="gstin" maxlength="15" placeholder="07ABCDE1234F1Z5" value="<%= c.gstin || '' %>">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="pAddress">Site Address</label>
+              <textarea id="pAddress" name="address" rows="2" maxlength="500"><%= c.address || '' %></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="pArea">Area</label>
+                <select id="pArea" name="area">
+                  <option value="">Select area</option>
+                  <% [...areas, 'Other Delhi NCR'].forEach((area) => { %><option<%= c.area === area ? ' selected' : '' %>><%= area %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="pPincode">Pincode</label>
+                <input type="text" id="pPincode" name="pincode" maxlength="6" inputmode="numeric" value="<%= c.pincode || '' %>">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-accent btn-block" id="saveProfileBtn">Save Details</button>
+          </form>
+        </section>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="/js/account.js"></script>
+<%- include('partials/footer') %>

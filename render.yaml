@@ -25,3 +25,13 @@ services:
         value: admin
       - key: ADMIN_PASSWORD
         sync: false
+      # Customer login (Firebase). Set these in the Render dashboard; until they
+      # are set, customer login stays switched off and the site works as before.
+      - key: FIREBASE_API_KEY
+        sync: false
+      - key: FIREBASE_AUTH_DOMAIN
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_APP_ID
+        sync: false

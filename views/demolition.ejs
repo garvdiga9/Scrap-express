@@ -18,22 +18,23 @@
           <li><svg class="icon"><use href="#icon-check"/></svg> Site survey &amp; detailed quote</li>
         </ul>
       </div>
+      <% const c = locals.customer || {}; %>
       <form class="book-form" id="demolitionForm" novalidate>
         <div id="demolitionAlert" class="form-alert" hidden></div>
         <div class="form-row">
           <div class="form-group">
             <label for="demoName">Full Name / Company *</label>
-            <input type="text" id="demoName" name="name" required placeholder="Your name or organization">
+            <input type="text" id="demoName" name="name" required placeholder="Your name or organization" value="<%= c.company_name || c.name || '' %>">
           </div>
           <div class="form-group">
             <label for="demoPhone">Phone Number *</label>
-            <input type="tel" id="demoPhone" name="phone" required placeholder="98765 43210">
+            <input type="tel" id="demoPhone" name="phone" required placeholder="98765 43210" value="<%= c.phone || '' %>">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label for="demoEmail">Email (optional)</label>
-            <input type="email" id="demoEmail" name="email" placeholder="you@example.com">
+            <input type="email" id="demoEmail" name="email" placeholder="you@example.com" value="<%= c.email || '' %>">
           </div>
           <div class="form-group">
             <label for="buildingType">Building Type *</label>

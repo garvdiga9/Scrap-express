@@ -19,6 +19,7 @@
       <a href="/book-pickup">Request Bulk Pickup</a>
       <a href="/demolition">Demolition Services</a>
       <a href="/areas">Areas We Serve</a>
+      <% if (locals.loginEnabled || locals.customer) { %><a href="<%= locals.customer ? '/account' : '/login' %>"><%= locals.customer ? 'My Account' : 'Customer Login' %></a><% } %>
     </div>
     <div class="footer-col">
       <h4>Contact</h4>

@@ -1,7 +1,6 @@
 const router = require('express').Router();
 const pool = require('../db/pool');
-
-const PHONE_RE = /^[0-9+\-\s]{7,15}$/;
+const { PHONE_RE } = require('../lib/validation');
 
 // POST /api/demolition - public: request a demolition site visit & quote
 router.post('/', async (req, res) => {
@@ -14,13 +13,15 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'Please enter a valid phone number.' });
   }
 
+  const customerId = (req.session && req.session.customerId) || null;
+
   try {
     const { rows } = await pool.query(
       `INSERT INTO demolition_requests
-        (name, phone, email, building_type, location, approx_area, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)
+        (name, phone, email, building_type, location, approx_area, notes, customer_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
        RETURNING id`,
-      [name, phone, email || null, buildingType, location, approxArea || null, notes || null]
+      [name, phone, email || null, buildingType, location, approxArea || null, notes || null, customerId]
     );
     res.status(201).json({
       id: rows[0].id,

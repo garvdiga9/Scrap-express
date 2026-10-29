@@ -18,18 +18,27 @@
           <li><svg class="icon"><use href="#icon-check"/></svg> Pickup charges may vary depending on location &amp; quantity</li>
         </ul>
       </div>
+      <%# Logged-in customers get their saved details pre-filled. These are the
+          fields' default values, so the form keeps them after a successful
+          submit's reset, ready for the next booking. %>
+      <% const c = locals.customer || {}; %>
       <form class="book-form" id="pickupForm" novalidate>
+        <% if (locals.customer) { %>
+          <div class="form-alert info">Logged in<%= c.company_name ? ` as ${c.company_name}` : '' %> — your saved details are filled in. This request will appear in <a href="/account">My Account</a>.</div>
+        <% } else if (locals.loginEnabled) { %>
+          <div class="form-alert info">Have an account? <a href="/login?next=/book-pickup">Log in</a> to fill this in automatically and track your request.</div>
+        <% } %>
         <div id="formAlert" class="form-alert" hidden></div>
         <div class="form-row">
           <div class="form-group">
             <label for="companyName">Company / Organisation *</label>
-            <input type="text" id="companyName" name="companyName" required placeholder="Company name">
+            <input type="text" id="companyName" name="companyName" required placeholder="Company name" value="<%= c.company_name || '' %>">
           </div>
           <div class="form-group">
             <label for="businessType">Business Type *</label>
             <select id="businessType" name="businessType" required>
-              <option value="" disabled selected>Select type</option>
-              <% businessTypes.forEach((type) => { %><option><%= type %></option>
+              <option value="" disabled<%= c.business_type ? '' : ' selected' %>>Select type</option>
+              <% businessTypes.forEach((type) => { %><option<%= c.business_type === type ? ' selected' : '' %>><%= type %></option>
               <% }) %>
             </select>
           </div>
@@ -37,41 +46,47 @@
         <div class="form-row">
           <div class="form-group">
             <label for="name">Contact Person *</label>
-            <input type="text" id="name" name="name" required placeholder="Full name">
+            <input type="text" id="name" name="name" required placeholder="Full name" value="<%= c.name || '' %>">
           </div>
           <div class="form-group">
             <label for="phone">Phone Number *</label>
-            <input type="tel" id="phone" name="phone" required placeholder="98765 43210">
+            <input type="tel" id="phone" name="phone" required placeholder="98765 43210" value="<%= c.phone || '' %>">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label for="email">Work Email (optional)</label>
-            <input type="email" id="email" name="email" placeholder="you@company.com">
+            <input type="email" id="email" name="email" placeholder="you@company.com" value="<%= c.email || '' %>">
           </div>
           <div class="form-group">
-            <label for="area">Area *</label>
-            <select id="area" name="area" required>
-              <option value="" disabled selected>Select your area</option>
-              <% areas.forEach((area) => { %><option><%= area %></option>
-              <% }) %>
-              <option>Other Delhi NCR</option>
-            </select>
+            <label for="gstin">GSTIN (optional)</label>
+            <input type="text" id="gstin" name="gstin" maxlength="15" placeholder="07ABCDE1234F1Z5" value="<%= c.gstin || '' %>">
           </div>
         </div>
         <div class="form-group">
           <label for="address">Site Address *</label>
-          <textarea id="address" name="address" required rows="2" placeholder="Plot / building no., industrial area, landmark"></textarea>
+          <textarea id="address" name="address" required rows="2" placeholder="Plot / building no., industrial area, landmark"><%= c.address || '' %></textarea>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="pincode">Pincode</label>
-            <input type="text" id="pincode" name="pincode" placeholder="110001" maxlength="6">
+            <label for="area">Area *</label>
+            <select id="area" name="area" required>
+              <option value="" disabled<%= c.area ? '' : ' selected' %>>Select your area</option>
+              <% [...areas, 'Other Delhi NCR'].forEach((area) => { %><option<%= c.area === area ? ' selected' : '' %>><%= area %></option>
+              <% }) %>
+            </select>
           </div>
+          <div class="form-group">
+            <label for="pincode">Pincode</label>
+            <input type="text" id="pincode" name="pincode" placeholder="110001" maxlength="6" value="<%= c.pincode || '' %>">
+          </div>
+        </div>
+        <div class="form-row">
           <div class="form-group">
             <label for="preferredDate">Preferred Date</label>
             <input type="date" id="preferredDate" name="preferredDate">
           </div>
+          <div></div>
         </div>
         <fieldset class="form-group checkbox-group" id="scrapTypesGroup">
           <legend>Scrap Types * <span class="field-hint">Select all that apply</span></legend>
