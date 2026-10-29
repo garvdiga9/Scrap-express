@@ -60,6 +60,8 @@ CREATE TABLE IF NOT EXISTS demolition_requests (
 ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS company_name VARCHAR(200);
 ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS business_type VARCHAR(100);
 ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS pickup_frequency VARCHAR(50);
+-- Holds a comma-separated list now that several scrap types can be ticked.
+ALTER TABLE pickup_requests ALTER COLUMN scrap_type TYPE TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_status ON pickup_requests(status);
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_created_at ON pickup_requests(created_at DESC);

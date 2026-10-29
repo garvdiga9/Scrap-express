@@ -37,6 +37,18 @@ const BUSINESS_TYPES = [
   'Other',
 ];
 
+const SCRAP_TYPES = [
+  'Paper & Cardboard',
+  'Plastic',
+  'Iron & Steel',
+  'Copper / Brass / Aluminium',
+  'E-Waste & IT Equipment',
+  'AC, Fridge & Cooling Equipment',
+  'Generators & Motors',
+  'Furniture & Fixtures',
+  'Mixed Industrial / Office Scrap',
+];
+
 const PICKUP_FREQUENCIES = [
   'One-time clearance',
   'Weekly',
@@ -45,4 +57,4 @@ const PICKUP_FREQUENCIES = [
   'Not sure yet',
 ];
 
-module.exports = { AREAS, BUSINESS_TYPES, PICKUP_FREQUENCIES };
+module.exports = { AREAS, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES };

@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const pool = require('../db/pool');
-const { BUSINESS_TYPES, PICKUP_FREQUENCIES } = require('../data/business');
+const { BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES } = require('../data/business');
 
 const PHONE_RE = /^[0-9+\-\s]{7,15}$/;
 
@@ -9,11 +9,19 @@ router.post('/', async (req, res) => {
   const {
     companyName, businessType, pickupFrequency,
     name, phone, email, address, area, pincode,
-    scrapType, quantity, preferredDate, notes,
+    quantity, preferredDate, notes,
   } = req.body;
 
-  if (!companyName || !name || !phone || !address || !scrapType) {
-    return res.status(400).json({ error: 'Company, contact person, phone, site address and scrap type are required.' });
+  // A business can tick several scrap types. Also accept the older single
+  // `scrapType` field so a page cached before this change still submits.
+  const submitted = req.body.scrapTypes ?? req.body.scrapType;
+  const scrapTypes = [...new Set((Array.isArray(submitted) ? submitted : [submitted]).filter(Boolean))];
+
+  if (!companyName || !name || !phone || !address || !scrapTypes.length) {
+    return res.status(400).json({ error: 'Company, contact person, phone, site address and at least one scrap type are required.' });
+  }
+  if (scrapTypes.some((type) => !SCRAP_TYPES.includes(type))) {
+    return res.status(400).json({ error: 'Please choose scrap types from the list.' });
   }
   if (!PHONE_RE.test(phone)) {
     return res.status(400).json({ error: 'Please enter a valid phone number.' });
@@ -35,7 +43,7 @@ router.post('/', async (req, res) => {
       [
         companyName, businessType || null, pickupFrequency || null,
         name, phone, email || null, address, area || null, pincode || null,
-        scrapType, quantity || null, preferredDate || null, notes || null,
+        scrapTypes.join(', '), quantity || null, preferredDate || null, notes || null,
       ]
     );
     res.status(201).json({

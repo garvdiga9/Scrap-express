@@ -292,10 +292,16 @@ if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
 
   const formData = new FormData(pickupForm);
   const payload = Object.fromEntries(formData.entries());
+  // fromEntries keeps only the last ticked checkbox, so collect them all.
+  payload.scrapTypes = formData.getAll('scrapTypes');
 
   if (!payload.companyName || !payload.businessType || !payload.name || !payload.phone
-    || !payload.address || !payload.scrapType) {
+    || !payload.address) {
     showAlert(formAlert, 'Please fill in all required fields marked with *.', 'error');
+    return;
+  }
+  if (!payload.scrapTypes.length) {
+    showAlert(formAlert, 'Please tick at least one scrap type.', 'error');
     return;
   }
 

@@ -73,37 +73,32 @@
             <input type="date" id="preferredDate" name="preferredDate">
           </div>
         </div>
+        <fieldset class="form-group checkbox-group" id="scrapTypesGroup">
+          <legend>Scrap Types * <span class="field-hint">Select all that apply</span></legend>
+          <div class="checkbox-grid">
+            <% scrapTypes.forEach((type) => { %><label class="check-chip">
+              <input type="checkbox" name="scrapTypes" value="<%= type %>">
+              <span><%= type %></span>
+            </label>
+            <% }) %>
+          </div>
+        </fieldset>
         <div class="form-row">
           <div class="form-group">
-            <label for="scrapType">Scrap Type *</label>
-            <select id="scrapType" name="scrapType" required>
-              <option value="" disabled selected>Select main category</option>
-              <option>Paper &amp; Cardboard</option>
-              <option>Plastic</option>
-              <option>Iron &amp; Steel</option>
-              <option>Copper / Brass / Aluminium</option>
-              <option>E-Waste &amp; IT Equipment</option>
-              <option>AC, Fridge &amp; Cooling Equipment</option>
-              <option>Generators &amp; Motors</option>
-              <option>Furniture &amp; Fixtures</option>
-              <option>Mixed Industrial / Office Scrap</option>
-            </select>
+            <label for="quantity">Approx. Total Quantity</label>
+            <input type="text" id="quantity" name="quantity" placeholder="e.g. 2 tons in total">
           </div>
           <div class="form-group">
-            <label for="quantity">Approx. Quantity</label>
-            <input type="text" id="quantity" name="quantity" placeholder="e.g. 500 kg or 2 tons">
+            <label for="pickupFrequency">Pickup Frequency *</label>
+            <select id="pickupFrequency" name="pickupFrequency" required>
+              <% pickupFrequencies.forEach((freq, i) => { %><option<%= i === 0 ? ' selected' : '' %>><%= freq %></option>
+              <% }) %>
+            </select>
           </div>
-        </div>
-        <div class="form-group">
-          <label for="pickupFrequency">Pickup Frequency *</label>
-          <select id="pickupFrequency" name="pickupFrequency" required>
-            <% pickupFrequencies.forEach((freq, i) => { %><option<%= i === 0 ? ' selected' : '' %>><%= freq %></option>
-            <% }) %>
-          </select>
         </div>
         <div class="form-group">
           <label for="notes">Additional Notes</label>
-          <textarea id="notes" name="notes" rows="2" placeholder="Access timings, loading help needed, GST details, etc."></textarea>
+          <textarea id="notes" name="notes" rows="2" placeholder="Quantity per scrap type, access timings, loading help needed, etc."></textarea>
         </div>
         <button type="submit" class="btn btn-accent btn-lg btn-block" id="submitBtn">Request Bulk Quote</button>
       </form>

@@ -5,7 +5,7 @@ const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
 
 const pool = require('./db/pool');
-const { AREAS, BUSINESS_TYPES, PICKUP_FREQUENCIES } = require('./data/business');
+const { AREAS, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES } = require('./data/business');
 const ratesRouter = require('./routes/rates');
 const pickupRouter = require('./routes/pickup');
 const demolitionRouter = require('./routes/demolition');
@@ -60,6 +60,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.locals.areas = AREAS;
 app.locals.businessTypes = BUSINESS_TYPES;
+app.locals.scrapTypes = SCRAP_TYPES;
 app.locals.pickupFrequencies = PICKUP_FREQUENCIES;
 
 const PAGES = [
