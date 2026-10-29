@@ -5,7 +5,9 @@ const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
 
 const pool = require('./db/pool');
-const { AREAS, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES } = require('./data/business');
+const {
+  AREAS, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG,
+} = require('./data/business');
 const ratesRouter = require('./routes/rates');
 const pickupRouter = require('./routes/pickup');
 const demolitionRouter = require('./routes/demolition');
@@ -84,10 +86,11 @@ app.locals.areas = AREAS;
 app.locals.businessTypes = BUSINESS_TYPES;
 app.locals.scrapTypes = SCRAP_TYPES;
 app.locals.pickupFrequencies = PICKUP_FREQUENCIES;
+app.locals.minPickupKg = MIN_PICKUP_KG;
 app.locals.statusLabels = { pending: 'Received', confirmed: 'Confirmed', completed: 'Completed', cancelled: 'Cancelled' };
 
 const PAGES = [
-  { path: '/', view: 'index', page: 'home', title: 'Scrap Express - Bulk Scrap Buyers for Businesses in Delhi NCR', description: 'Scrap Express buys scrap in bulk from factories, offices, hospitals, schools, malls and hotels across Delhi NCR. GST invoice, weighbridge slips and bank transfer payment.' },
+  { path: '/', view: 'index', page: 'home', title: 'Scrap Express - Bulk Scrap Buyers for Businesses in Delhi NCR', description: 'Scrap Express buys scrap in bulk from factories, offices, hospitals, schools, malls, hotels and restaurant chains across Delhi NCR. GST invoice, weighbridge slips and bank transfer payment.' },
   { path: '/rates', view: 'rates', page: 'rates', title: 'Indicative Scrap Rates in Delhi - Scrap Express', description: 'Indicative per-kg scrap rates in Delhi for paper, plastic, iron, copper, brass, aluminium, wires and more. Request a bulk quote for business volumes.' },
   { path: '/what-we-buy', view: 'what-we-buy', page: 'what-we-buy', title: 'What We Buy - Industrial & Office Scrap - Scrap Express', description: 'We buy AC plants, generators, motors, IT equipment, office furniture, glass and more from businesses across Delhi NCR. Quotes based on volume and condition.' },
   { path: '/book-pickup', view: 'book-pickup', page: 'book-pickup', title: 'Request a Bulk Scrap Pickup in Delhi NCR - Scrap Express', description: 'Request a one-time or scheduled bulk scrap pickup from your factory, office or site in Delhi NCR. GST invoice, weighbridge slip, payment by bank transfer.' },

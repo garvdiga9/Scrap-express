@@ -31,7 +31,8 @@ const BUSINESS_TYPES = [
   'Hospital / Clinic',
   'School / College / Institution',
   'Mall / Retail Store',
-  'Hotel / Restaurant',
+  'Hotel / Banquet Hall',
+  'Restaurant / Café / Food Chain',
   'Warehouse',
   'Construction / Renovation Site',
   'Other',
@@ -57,4 +58,8 @@ const PICKUP_FREQUENCIES = [
   'Not sure yet',
 ];
 
-module.exports = { AREAS, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES };
+// Bulk pickups only: smaller lots aren't worth a truck trip.
+const MIN_PICKUP_KG = 300;
+const QUANTITY_UNITS = { kg: 1, tonnes: 1000 };
+
+module.exports = { AREAS, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS };

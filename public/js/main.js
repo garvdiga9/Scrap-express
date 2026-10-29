@@ -326,6 +326,19 @@ if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
   } else {
     delete payload.otherScrapType;
   }
+  const quantityInput = document.getElementById('quantity');
+  const minKg = Number(quantityInput.dataset.minKg);
+  const quantityKg = Number(payload.quantity) * (payload.quantityUnit === 'tonnes' ? 1000 : 1);
+  if (!payload.quantity || !(quantityKg > 0)) {
+    showAlert(formAlert, 'Please enter the approximate total quantity.', 'error');
+    quantityInput.focus();
+    return;
+  }
+  if (quantityKg < minKg) {
+    showAlert(formAlert, `We handle bulk pickups of ${minKg} kg or more. Please check the quantity.`, 'error');
+    quantityInput.focus();
+    return;
+  }
 
   submitBtn.disabled = true;
   submitBtn.textContent = 'Submitting…';
@@ -344,7 +357,7 @@ if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
     showAlert(formAlert, err.message || 'Something went wrong. Please call us directly.', 'error');
   } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Request Pickup';
+    submitBtn.textContent = 'Request Bulk Quote';
   }
 });
 

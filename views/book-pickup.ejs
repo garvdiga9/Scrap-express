@@ -15,6 +15,7 @@
           <li><svg class="icon"><use href="#icon-check"/></svg> GST invoice &amp; weighbridge weight slip</li>
           <li><svg class="icon"><use href="#icon-check"/></svg> Payment by bank transfer to your company account</li>
           <li><svg class="icon"><use href="#icon-check"/></svg> One-time clearances or scheduled pickups</li>
+          <li><svg class="icon"><use href="#icon-check"/></svg> Minimum <%= minPickupKg %> kg per pickup</li>
           <li><svg class="icon"><use href="#icon-check"/></svg> Pickup charges may vary depending on location &amp; quantity</li>
         </ul>
       </div>
@@ -108,8 +109,14 @@
         </fieldset>
         <div class="form-row">
           <div class="form-group">
-            <label for="quantity">Approx. Total Quantity</label>
-            <input type="text" id="quantity" name="quantity" placeholder="e.g. 2 tons in total">
+            <label for="quantity">Approx. Total Quantity * <span class="field-hint">Min. <%= minPickupKg %> kg</span></label>
+            <div class="quantity-input">
+              <input type="number" id="quantity" name="quantity" required min="0" step="any" inputmode="decimal" placeholder="e.g. 500" data-min-kg="<%= minPickupKg %>">
+              <select id="quantityUnit" name="quantityUnit" aria-label="Quantity unit">
+                <option value="kg" selected>kg</option>
+                <option value="tonnes">tonnes</option>
+              </select>
+            </div>
           </div>
           <div class="form-group">
             <label for="pickupFrequency">Pickup Frequency *</label>

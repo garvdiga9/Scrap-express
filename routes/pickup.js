@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const pool = require('../db/pool');
-const { BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES } = require('../data/business');
+const {
+  BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS,
+} = require('../data/business');
 const { PHONE_RE, GSTIN_RE, GSTIN_ERROR } = require('../lib/validation');
 const customers = require('../lib/customers');
 
@@ -12,8 +14,20 @@ router.post('/', async (req, res) => {
   const {
     companyName, businessType, pickupFrequency,
     name, phone, email, address, area, pincode,
-    quantity, preferredDate, notes,
+    preferredDate, notes,
   } = req.body;
+
+  // Quantity arrives as a number plus a unit and is stored as text such as
+  // "2 tonnes", the same shape older free-text entries had.
+  const quantityValue = Number(req.body.quantity);
+  const quantityUnit = req.body.quantityUnit in QUANTITY_UNITS ? req.body.quantityUnit : null;
+  if (!quantityUnit || !Number.isFinite(quantityValue) || quantityValue <= 0) {
+    return res.status(400).json({ error: 'Please enter the approximate total quantity.' });
+  }
+  if (quantityValue * QUANTITY_UNITS[quantityUnit] < MIN_PICKUP_KG) {
+    return res.status(400).json({ error: `We handle bulk pickups of ${MIN_PICKUP_KG} kg or more.` });
+  }
+  const quantity = `${quantityValue} ${quantityUnit}`;
 
   // A business can tick several scrap types. Also accept the older single
   // `scrapType` field so a page cached before this change still submits.
@@ -66,7 +80,7 @@ router.post('/', async (req, res) => {
       [
         companyName, businessType || null, pickupFrequency || null, gstin, customerId,
         name, phone, email || null, address, area || null, pincode || null,
-        scrapTypes.join(', '), quantity || null, preferredDate || null, notes || null,
+        scrapTypes.join(', '), quantity, preferredDate || null, notes || null,
       ]
     );
     if (customerId) {
