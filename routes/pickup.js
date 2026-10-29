@@ -14,7 +14,7 @@ router.post('/', async (req, res) => {
   const {
     companyName, businessType, pickupFrequency,
     name, phone, email, address, area, pincode,
-    preferredDate, notes,
+    notes,
   } = req.body;
 
   // Quantity arrives as a number plus a unit and is stored as text such as
@@ -74,13 +74,13 @@ router.post('/', async (req, res) => {
     const { rows } = await pool.query(
       `INSERT INTO pickup_requests
         (company_name, business_type, pickup_frequency, gstin, customer_id,
-         name, phone, email, address, area, pincode, scrap_type, approx_quantity, preferred_date, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+         name, phone, email, address, area, pincode, scrap_type, approx_quantity, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
        RETURNING id`,
       [
         companyName, businessType || null, pickupFrequency || null, gstin, customerId,
         name, phone, email || null, address, area || null, pincode || null,
-        scrapTypes.join(', '), quantity, preferredDate || null, notes || null,
+        scrapTypes.join(', '), quantity, notes || null,
       ]
     );
     if (customerId) {

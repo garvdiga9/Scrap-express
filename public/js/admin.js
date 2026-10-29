@@ -112,14 +112,14 @@ const statusFilter = document.getElementById('statusFilter');
 let allRequests = [];
 
 async function loadRequests() {
-  requestsBody.innerHTML = '<tr><td colspan="11" class="table-empty">Loading requests…</td></tr>';
+  requestsBody.innerHTML = '<tr><td colspan="10" class="table-empty">Loading requests…</td></tr>';
   try {
     const res = await fetch('/api/admin/requests');
     if (!res.ok) throw new Error();
     allRequests = await res.json();
     renderRequests();
   } catch (err) {
-    requestsBody.innerHTML = '<tr><td colspan="11" class="table-empty">Failed to load requests.</td></tr>';
+    requestsBody.innerHTML = '<tr><td colspan="10" class="table-empty">Failed to load requests.</td></tr>';
   }
 }
 
@@ -127,7 +127,7 @@ function renderRequests() {
   const filter = statusFilter.value;
   const rows = allRequests.filter((r) => filter === 'all' || r.status === filter);
   if (!rows.length) {
-    requestsBody.innerHTML = '<tr><td colspan="11" class="table-empty">No requests found.</td></tr>';
+    requestsBody.innerHTML = '<tr><td colspan="10" class="table-empty">No requests found.</td></tr>';
     return;
   }
   requestsBody.innerHTML = '';
@@ -146,7 +146,6 @@ function renderRequests() {
       r.scrap_type,
       r.approx_quantity || '-',
       r.pickup_frequency || '-',
-      r.preferred_date ? new Date(r.preferred_date).toLocaleDateString('en-IN') : '-',
     ];
     cells.forEach((text) => {
       const td = document.createElement('td');
