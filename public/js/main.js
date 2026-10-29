@@ -35,9 +35,19 @@ if (navToggle && mainNav) {
 }
 
 /* ---------- Reveal-on-scroll animation ---------- */
-document.querySelectorAll(
-  '.rates-grid, .buy-grid, .impact-grid, .steps-grid, .why-grid, .reviews-grid, .areas-grid, .book-form, .book-head, .hero-copy'
-).forEach((el) => el.classList.add('reveal'));
+// Grids bring their cards in one after another; other blocks fade in whole.
+// Cards added later (rates and reviews load from the API) are numbered too.
+const STAGGER_GRIDS = '.rates-grid, .buy-grid, .impact-grid, .steps-grid, .why-grid, .reviews-grid, .areas-grid';
+const MAX_STAGGER = 12;
+function numberChildren(grid) {
+  [...grid.children].forEach((child, i) => child.style.setProperty('--i', Math.min(i, MAX_STAGGER)));
+}
+document.querySelectorAll(STAGGER_GRIDS).forEach((grid) => {
+  grid.classList.add('reveal-stagger');
+  numberChildren(grid);
+  new MutationObserver(() => numberChildren(grid)).observe(grid, { childList: true });
+});
+document.querySelectorAll('.book-form, .book-head').forEach((el) => el.classList.add('reveal'));
 
 const revealObserver = new IntersectionObserver(
   (entries, observer) => {
@@ -50,7 +60,34 @@ const revealObserver = new IntersectionObserver(
   },
   { threshold: 0.15 }
 );
-document.querySelectorAll('.reveal').forEach((el) => revealObserver.observe(el));
+document.querySelectorAll('.reveal, .reveal-stagger').forEach((el) => revealObserver.observe(el));
+
+/* ---------- Hero: type out the kind of business ---------- */
+const rotator = document.getElementById('heroRotator');
+if (rotator && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const words = JSON.parse(rotator.dataset.words);
+  let wordIndex = 0;
+  let letters = words[0].length;
+  let deleting = true;
+  const HOLD = 1600;
+
+  const step = () => {
+    const word = words[wordIndex];
+    rotator.textContent = word.slice(0, letters);
+    if (!deleting && letters === word.length) {
+      deleting = true;
+      return setTimeout(step, HOLD);
+    }
+    if (deleting && letters === 0) {
+      deleting = false;
+      wordIndex = (wordIndex + 1) % words.length;
+      return setTimeout(step, 250);
+    }
+    letters += deleting ? -1 : 1;
+    setTimeout(step, deleting ? 45 : 90);
+  };
+  setTimeout(step, HOLD + 600);
+}
 
 /* ---------- Hero stat count-up ---------- */
 function animateCount(el, target) {

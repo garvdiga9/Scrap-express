@@ -10,13 +10,24 @@
     <div class="hero-blob blob-2"></div>
     <div class="container hero-inner">
       <div class="hero-copy">
-        <span class="eyebrow">B2B Scrap Buyers • Delhi NCR</span>
-        <h1>Bulk Scrap Buying for <span class="text-accent">Businesses</span> Across Delhi NCR</h1>
-        <p class="hero-sub">Scrap Express buys scrap in bulk from factories, offices, hospitals, schools, malls, hotels and restaurant &amp; food chains. One-time clearances or scheduled pickups of <%= minPickupKg %> kg and above — weighed on a weighbridge, billed with a GST invoice and paid by bank transfer.</p>
+        <span class="eyebrow eyebrow-live"><span class="live-dot" aria-hidden="true"></span> B2B Scrap Buyers • Delhi NCR</span>
+        <h1>Scrap Ka Dher? <span class="text-accent">Hum Hai Na!</span><span class="sr-only"> Bulk scrap buyers for businesses across Delhi NCR.</span></h1>
+        <p class="hero-rotator">
+          <span aria-hidden="true">Bulk scrap pickup from your</span>
+          <span class="rotator-word" id="heroRotator" aria-hidden="true"
+                data-words='["factory","office","hospital","restaurant","warehouse","school","mall","hotel"]'>factory</span><span class="rotator-caret" aria-hidden="true"></span>
+          <span class="sr-only">Bulk scrap pickup from factories, offices, hospitals, restaurants, warehouses, schools, malls and hotels.</span>
+        </p>
+        <p class="hero-sub">One-time clearances or scheduled pickups of <%= minPickupKg %> kg and above — weighed on a weighbridge, billed with a GST invoice and paid by bank transfer.</p>
         <div class="hero-cta">
-          <a href="/book-pickup" class="btn btn-accent btn-lg">Request a Bulk Quote</a>
+          <a href="/book-pickup" class="btn btn-accent btn-lg btn-glow">Request a Bulk Quote <span class="btn-arrow" aria-hidden="true">→</span></a>
           <a href="/rates" class="btn btn-outline-light btn-lg">View Indicative Rates</a>
         </div>
+        <ul class="hero-badges">
+          <li><svg class="icon"><use href="#icon-paper"/></svg> GST Invoice</li>
+          <li><svg class="icon"><use href="#icon-scale"/></svg> Weighbridge Slip</li>
+          <li><svg class="icon"><use href="#icon-shield"/></svg> Bank Transfer</li>
+        </ul>
         <div class="hero-stats" id="heroStats">
           <div class="stat"><span class="stat-num-row"><span class="stat-num" data-count="35">0</span><span class="stat-num-suffix">+</span></span><span class="stat-label">Years in Delhi</span></div>
           <div class="stat"><span class="stat-num-row"><span class="stat-num" data-count="100">0</span><span class="stat-num-suffix">+</span></span><span class="stat-label">Locations Served</span></div>
@@ -26,7 +37,8 @@
       </div>
       <div class="hero-visual" aria-hidden="true">
         <svg class="hero-illustration" viewBox="0 0 400 400">
-          <circle cx="200" cy="200" r="150" stroke="rgba(255,255,255,0.12)" stroke-width="2" stroke-dasharray="2 10" stroke-linecap="round" fill="none"/>
+          <circle class="hero-orbit" cx="200" cy="200" r="150" stroke="rgba(255,255,255,0.12)" stroke-width="2" stroke-dasharray="2 10" stroke-linecap="round" fill="none"/>
+          <circle class="hero-orbit hero-orbit-inner" cx="200" cy="200" r="95" stroke="rgba(245,158,11,0.18)" stroke-width="2" stroke-dasharray="1 14" stroke-linecap="round" fill="none"/>
           <use href="#icon-building" x="176" y="22" width="48" height="48" style="color:rgba(255,255,255,0.6)"/>
           <use href="#icon-truck" x="34" y="296" width="48" height="48" style="color:rgba(255,255,255,0.55)"/>
           <use href="#icon-recycle" x="308" y="296" width="48" height="48" style="color:var(--color-accent)"/>
@@ -53,13 +65,20 @@
     </svg>
   </section>
 
-  <!-- Trust bar -->
-  <section class="trust-bar">
-    <div class="container trust-inner">
-      <div class="trust-item"><svg class="icon"><use href="#icon-truck"/></svg> On-Site Bulk Pickup</div>
-      <div class="trust-item"><svg class="icon"><use href="#icon-scale"/></svg> Weighbridge Weight Slips</div>
-      <div class="trust-item"><svg class="icon"><use href="#icon-paper"/></svg> GST Invoice on Every Deal</div>
-      <div class="trust-item"><svg class="icon"><use href="#icon-shield"/></svg> Bank Transfer Payments</div>
+  <!-- Who we serve: a slow, endless strip. The list is drawn twice so the
+       loop has no visible seam; the copy is hidden from screen readers. -->
+  <% const serve = [
+    ['icon-gear', 'Factories'], ['icon-building', 'Offices & IT Parks'], ['icon-shield', 'Hospitals'],
+    ['icon-book', 'Schools & Colleges'], ['icon-box', 'Malls & Retail'], ['icon-home', 'Hotels & Banquets'],
+    ['icon-droplet', 'Restaurants & Food Chains'], ['icon-truck', 'Warehouses'], ['icon-hardhat', 'Construction Sites'],
+  ]; %>
+  <section class="serve-strip" aria-label="Businesses we serve">
+    <div class="serve-track">
+      <% [false, true].forEach((copy) => { %>
+        <ul class="serve-list"<%- copy ? ' aria-hidden="true"' : '' %>>
+          <% serve.forEach(([icon, label]) => { %><li><svg class="icon"><use href="#<%= icon %>"/></svg><%= label %></li><% }) %>
+        </ul>
+      <% }) %>
     </div>
   </section>
 
@@ -124,7 +143,11 @@
         <h2>How It Works</h2>
         <p>From enquiry to payment in your company account — in four steps.</p>
       </div>
-      <div class="steps-grid">
+      <div class="steps-grid steps-journey" id="stepsJourney">
+        <div class="journey-track" aria-hidden="true">
+          <span class="journey-fill"></span>
+          <svg class="icon journey-truck"><use href="#icon-truck"/></svg>
+        </div>
         <div class="step-card">
           <span class="step-num">1</span>
           <h3>Share Your Requirement</h3>
