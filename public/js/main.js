@@ -286,6 +286,18 @@ function showAlert(alertEl, message, type) {
   alertEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+/* "Other" scrap type: reveal a description box only while it's ticked */
+const otherCheckbox = document.getElementById('scrapTypeOther');
+const otherWrap = document.getElementById('otherScrapWrap');
+if (otherCheckbox && otherWrap) {
+  otherCheckbox.addEventListener('change', () => {
+    otherWrap.hidden = !otherCheckbox.checked;
+    if (otherCheckbox.checked) document.getElementById('otherScrapType').focus();
+  });
+  // form.reset() unticks the box without firing "change", so hide it here too.
+  pickupForm.addEventListener('reset', () => { otherWrap.hidden = true; });
+}
+
 if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   formAlert.hidden = true;
@@ -303,6 +315,16 @@ if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
   if (!payload.scrapTypes.length) {
     showAlert(formAlert, 'Please tick at least one scrap type.', 'error');
     return;
+  }
+  if (payload.scrapTypes.includes('Other')) {
+    payload.otherScrapType = (payload.otherScrapType || '').trim();
+    if (!payload.otherScrapType) {
+      showAlert(formAlert, 'Please describe the other scrap type.', 'error');
+      document.getElementById('otherScrapType').focus();
+      return;
+    }
+  } else {
+    delete payload.otherScrapType;
   }
 
   submitBtn.disabled = true;

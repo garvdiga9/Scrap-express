@@ -81,6 +81,14 @@
               <span><%= type %></span>
             </label>
             <% }) %>
+            <label class="check-chip">
+              <input type="checkbox" name="scrapTypes" value="Other" id="scrapTypeOther" aria-controls="otherScrapWrap">
+              <span>Other</span>
+            </label>
+          </div>
+          <div class="other-scrap" id="otherScrapWrap" hidden>
+            <label for="otherScrapType">Describe the other scrap *</label>
+            <input type="text" id="otherScrapType" name="otherScrapType" maxlength="100" placeholder="e.g. wooden pallets, rubber, lead batteries">
           </div>
         </fieldset>
         <div class="form-row">

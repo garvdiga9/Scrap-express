@@ -3,6 +3,8 @@ const pool = require('../db/pool');
 const { BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES } = require('../data/business');
 
 const PHONE_RE = /^[0-9+\-\s]{7,15}$/;
+const OTHER = 'Other';
+const MAX_OTHER_LENGTH = 100;
 
 // POST /api/pickup - public: a business submits a bulk scrap pickup request
 router.post('/', async (req, res) => {
@@ -20,8 +22,20 @@ router.post('/', async (req, res) => {
   if (!companyName || !name || !phone || !address || !scrapTypes.length) {
     return res.status(400).json({ error: 'Company, contact person, phone, site address and at least one scrap type are required.' });
   }
-  if (scrapTypes.some((type) => !SCRAP_TYPES.includes(type))) {
+  if (scrapTypes.some((type) => type !== OTHER && !SCRAP_TYPES.includes(type))) {
     return res.status(400).json({ error: 'Please choose scrap types from the list.' });
+  }
+  // "Other" is only meaningful with a description, which replaces it in the
+  // stored list, e.g. "Other: wooden pallets".
+  if (scrapTypes.includes(OTHER)) {
+    const otherText = String(req.body.otherScrapType ?? '').trim();
+    if (!otherText) {
+      return res.status(400).json({ error: 'Please describe the other scrap type.' });
+    }
+    if (otherText.length > MAX_OTHER_LENGTH) {
+      return res.status(400).json({ error: `Please keep the other scrap description under ${MAX_OTHER_LENGTH} characters.` });
+    }
+    scrapTypes[scrapTypes.indexOf(OTHER)] = `${OTHER}: ${otherText}`;
   }
   if (!PHONE_RE.test(phone)) {
     return res.status(400).json({ error: 'Please enter a valid phone number.' });
