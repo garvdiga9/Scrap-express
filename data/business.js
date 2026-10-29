@@ -62,4 +62,13 @@ const PICKUP_FREQUENCIES = [
 const MIN_PICKUP_KG = 300;
 const QUANTITY_UNITS = { kg: 1, tonnes: 1000 };
 
-module.exports = { AREAS, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS };
+// A pickup request's life: received → quote sent → customer accepts or
+// declines → pickup confirmed → completed (or cancelled at any point).
+// public/js/admin.js keeps the same lists for the dashboard.
+const PICKUP_STATUSES = ['pending', 'quoted', 'accepted', 'declined', 'confirmed', 'completed', 'cancelled'];
+const QUOTE_UNITS = ['per kg', 'per tonne', 'per piece', 'lump sum'];
+
+module.exports = {
+  AREAS, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS,
+  PICKUP_STATUSES, QUOTE_UNITS,
+};

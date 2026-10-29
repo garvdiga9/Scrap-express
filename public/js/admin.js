@@ -111,6 +111,26 @@ const requestsBody = document.getElementById('requestsBody');
 const statusFilter = document.getElementById('statusFilter');
 let allRequests = [];
 
+// Same lists as PICKUP_STATUSES / QUOTE_UNITS in data/business.js.
+const PICKUP_STATUS_LABELS = {
+  pending: 'Pending',
+  quoted: 'Quote sent',
+  accepted: 'Quote accepted',
+  declined: 'Quote declined',
+  confirmed: 'Confirmed',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+};
+const QUOTE_UNITS = ['per kg', 'per tonne', 'per piece', 'lump sum'];
+
+const formatDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+// Matches formatQuoteRate in server.js: "₹18 per kg", "₹18.50 per kg".
+function formatRate({ rate, unit }) {
+  const n = Number(rate);
+  const digits = Number.isInteger(n) ? 0 : 2;
+  return `₹${n.toLocaleString('en-IN', { minimumFractionDigits: digits, maximumFractionDigits: digits })} ${unit}`;
+}
+
 async function loadRequests() {
   requestsBody.innerHTML = '<tr><td colspan="10" class="table-empty">Loading requests…</td></tr>';
   try {
@@ -138,7 +158,7 @@ function renderRequests() {
       ? (r.business_type ? `${r.company_name} · ${r.business_type}` : r.company_name)
       : '-';
     const cells = [
-      new Date(r.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+      formatDate(r.created_at),
       company,
       r.name,
       r.phone,
@@ -156,10 +176,10 @@ function renderRequests() {
     const statusTd = document.createElement('td');
     const select = document.createElement('select');
     select.className = `status-select status-${r.status}`;
-    ['pending', 'confirmed', 'completed', 'cancelled'].forEach((s) => {
+    Object.entries(PICKUP_STATUS_LABELS).forEach(([s, label]) => {
       const opt = document.createElement('option');
       opt.value = s;
-      opt.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+      opt.textContent = label;
       if (s === r.status) opt.selected = true;
       select.appendChild(opt);
     });
@@ -181,6 +201,13 @@ function renderRequests() {
     tr.appendChild(statusTd);
 
     const actionTd = document.createElement('td');
+    actionTd.className = 'row-actions';
+    const viewBtn = document.createElement('button');
+    viewBtn.className = 'view-btn';
+    viewBtn.textContent = r.quote_items ? 'View Quote' : 'View & Quote';
+    viewBtn.addEventListener('click', () => openRequestDialog(r));
+    actionTd.appendChild(viewBtn);
+
     const delBtn = document.createElement('button');
     delBtn.className = 'icon-btn';
     delBtn.title = 'Delete request';
@@ -198,6 +225,200 @@ function renderRequests() {
   });
 }
 statusFilter.addEventListener('change', renderRequests);
+
+/* ---------- Request details & quote dialog ---------- */
+const requestDialog = document.getElementById('requestDialog');
+const requestDetails = document.getElementById('requestDetails');
+const quoteForm = document.getElementById('quoteForm');
+const quoteLines = document.getElementById('quoteLines');
+const quoteNote = document.getElementById('quoteNote');
+const quoteHint = document.getElementById('quoteHint');
+const quoteAlert = document.getElementById('quoteAlert');
+const sendQuoteBtn = document.getElementById('sendQuoteBtn');
+const whatsappLink = document.getElementById('whatsappLink');
+let dialogRequest = null;
+
+document.getElementById('dialogClose').addEventListener('click', () => requestDialog.close());
+// Clicking the dimmed backdrop (outside the dialog box) closes it too.
+requestDialog.addEventListener('click', (e) => { if (e.target === requestDialog) requestDialog.close(); });
+document.getElementById('addQuoteLine').addEventListener('click', () => {
+  quoteLines.appendChild(buildQuoteLine({ material: '', rate: '', unit: 'per kg' }));
+  quoteLines.lastElementChild.querySelector('input').focus();
+});
+
+// "Paper & Cardboard, Plastic, Other: wooden pallets, rubber" → one entry per
+// type. "Other: …" is always last and may itself contain commas.
+function splitScrapTypes(text) {
+  const at = text.indexOf('Other: ');
+  const known = (at === -1 ? text : text.slice(0, at)).split(', ').filter(Boolean);
+  return at === -1 ? known : [...known, text.slice(at + 'Other: '.length)];
+}
+
+function buildQuoteLine({ material, rate, unit }) {
+  const line = document.createElement('div');
+  line.className = 'quote-line';
+
+  const materialInput = document.createElement('input');
+  materialInput.type = 'text';
+  materialInput.maxLength = 100;
+  materialInput.placeholder = 'Material';
+  materialInput.value = material;
+  materialInput.setAttribute('aria-label', 'Material');
+
+  const rateWrap = document.createElement('div');
+  rateWrap.className = 'rate-input';
+  const rateInput = document.createElement('input');
+  rateInput.type = 'number';
+  rateInput.min = '0';
+  rateInput.step = '0.01';
+  rateInput.placeholder = 'Rate';
+  rateInput.value = rate;
+  rateInput.setAttribute('aria-label', 'Rate in rupees');
+  rateWrap.append('₹', rateInput);
+
+  const unitSelect = document.createElement('select');
+  unitSelect.setAttribute('aria-label', 'Unit');
+  QUOTE_UNITS.forEach((u) => {
+    const opt = document.createElement('option');
+    opt.value = u;
+    opt.textContent = u;
+    if (u === unit) opt.selected = true;
+    unitSelect.appendChild(opt);
+  });
+
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button';
+  removeBtn.className = 'icon-btn';
+  removeBtn.title = 'Remove line';
+  removeBtn.innerHTML = '<svg class="icon"><use href="#icon-trash"/></svg>';
+  removeBtn.addEventListener('click', () => line.remove());
+
+  line.append(materialInput, rateWrap, unitSelect, removeBtn);
+  return line;
+}
+
+function addDetail(label, value, href) {
+  if (!value) return;
+  const dt = document.createElement('dt');
+  dt.textContent = label;
+  const dd = document.createElement('dd');
+  if (href) {
+    const a = document.createElement('a');
+    a.href = href;
+    a.textContent = value;
+    dd.appendChild(a);
+  } else {
+    dd.textContent = value;
+  }
+  requestDetails.append(dt, dd);
+}
+
+// A ready-to-send WhatsApp message with the quote, opened from your own
+// WhatsApp. Customers without an account only get the quote this way or by call.
+function updateWhatsappLink(r) {
+  const digits = String(r.phone || '').replace(/\D/g, '').slice(-10);
+  if (!r.quote_items || digits.length !== 10) {
+    whatsappLink.hidden = true;
+    return;
+  }
+  const lines = [
+    `Hello ${r.name}, here is the Scrap Express quote for your pickup request #${r.id}${r.company_name ? ` (${r.company_name})` : ''}:`,
+    '',
+    ...r.quote_items.map((item) => `• ${item.material}: ${formatRate(item)}`),
+  ];
+  if (r.quote_note) lines.push('', r.quote_note);
+  lines.push('', 'The final amount is worked out from the weighbridge weight at pickup.');
+  lines.push(r.customer_id
+    ? `You can accept or decline it here: ${window.location.origin}/account`
+    : 'Reply here to confirm and we will schedule the pickup.');
+  whatsappLink.href = `https://wa.me/91${digits}?text=${encodeURIComponent(lines.join('\n'))}`;
+  whatsappLink.hidden = false;
+}
+
+function openRequestDialog(r) {
+  dialogRequest = r;
+  document.getElementById('dialogTitle').textContent = `Pickup Request #${r.id}`;
+
+  requestDetails.innerHTML = '';
+  addDetail('Received', formatDate(r.created_at));
+  addDetail('Status', PICKUP_STATUS_LABELS[r.status] || r.status);
+  addDetail('Company', r.company_name);
+  addDetail('Business type', r.business_type);
+  addDetail('GSTIN', r.gstin);
+  addDetail('Contact person', r.name);
+  addDetail('Phone', r.phone, `tel:${r.phone}`);
+  addDetail('Email', r.email, r.email ? `mailto:${r.email}` : null);
+  addDetail('Site address', r.address);
+  addDetail('Area', r.area);
+  addDetail('Pincode', r.pincode);
+  addDetail('Scrap types', r.scrap_type);
+  addDetail('Quantity', r.approx_quantity);
+  addDetail('Frequency', r.pickup_frequency);
+  addDetail('Notes', r.notes);
+  addDetail('Customer account', r.customer_id ? 'Yes — sees the quote in My Account' : 'No — share the quote by call or WhatsApp');
+  if (r.quote_response) {
+    addDetail('Customer answer', `${r.quote_response === 'accepted' ? 'Accepted' : 'Declined'} on ${formatDate(r.quote_responded_at)}`);
+  }
+
+  quoteHint.textContent = r.quoted_at
+    ? `Quote sent on ${formatDate(r.quoted_at)}. Sending again replaces it and asks the customer to answer again.`
+    : 'Enter your rate for each material. Sending marks the request as "Quote sent".';
+  quoteLines.innerHTML = '';
+  const items = r.quote_items && r.quote_items.length
+    ? r.quote_items
+    : splitScrapTypes(r.scrap_type || '').map((material) => ({ material, rate: '', unit: 'per kg' }));
+  (items.length ? items : [{ material: '', rate: '', unit: 'per kg' }])
+    .forEach((item) => quoteLines.appendChild(buildQuoteLine(item)));
+  quoteNote.value = r.quote_note || '';
+  quoteAlert.hidden = true;
+  sendQuoteBtn.textContent = r.quoted_at ? 'Send Revised Quote' : 'Send Quote';
+  updateWhatsappLink(r);
+
+  requestDialog.showModal();
+}
+
+quoteForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const r = dialogRequest;
+  const items = [...quoteLines.querySelectorAll('.quote-line')].map((line) => {
+    const [material, rate] = line.querySelectorAll('input');
+    return { material: material.value.trim(), rate: rate.value, unit: line.querySelector('select').value };
+  });
+
+  quoteAlert.hidden = true;
+  const showQuoteError = (message) => {
+    quoteAlert.textContent = message;
+    quoteAlert.className = 'form-alert error';
+    quoteAlert.hidden = false;
+  };
+  if (!items.length) return showQuoteError('Add at least one line to the quote.');
+  if (items.some((item) => !item.material || item.rate === '')) {
+    return showQuoteError('Each line needs a material and a rate.');
+  }
+
+  sendQuoteBtn.disabled = true;
+  try {
+    const res = await fetch(`/api/admin/requests/${r.id}/quote`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items, note: quoteNote.value }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Failed to save the quote.');
+    Object.assign(r, data);
+    renderRequests();
+    openRequestDialog(r);
+    quoteAlert.textContent = r.customer_id
+      ? 'Quote sent. The customer can now see it in My Account. You can also send it on WhatsApp.'
+      : 'Quote saved. This customer has no account, so share it on WhatsApp or by phone.';
+    quoteAlert.className = 'form-alert success';
+    quoteAlert.hidden = false;
+  } catch (err) {
+    showQuoteError(err.message);
+  } finally {
+    sendQuoteBtn.disabled = false;
+  }
+});
 
 /* ---------- Demolition requests ---------- */
 const demolitionBody = document.getElementById('demolitionBody');

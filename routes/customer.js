@@ -108,4 +108,21 @@ router.get('/requests', requireCustomer, async (req, res) => {
   }
 });
 
+// POST /api/customer/requests/:id/quote — accept or decline a quote.
+router.post('/requests/:id/quote', requireCustomer, async (req, res) => {
+  const response = { accept: 'accepted', decline: 'declined' }[req.body.response];
+  if (!response) return res.status(400).json({ error: 'Please choose accept or decline.' });
+  if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ error: 'Request not found.' });
+  try {
+    const updated = await customers.respondToQuote(req.session.customerId, Number(req.params.id), response);
+    if (!updated) {
+      return res.status(409).json({ error: 'This quote can no longer be answered. Please refresh the page.' });
+    }
+    res.json({ ok: true, status: response });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save your answer. Please try again.' });
+  }
+});
+
 module.exports = router;

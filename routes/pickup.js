@@ -92,7 +92,9 @@ router.post('/', async (req, res) => {
     }
     res.status(201).json({
       id: rows[0].id,
-      message: 'Request received! Our team will call you shortly to confirm the details and share a quote.',
+      message: customerId
+        ? 'Request received! Your quote will appear in My Account, and our team may call you to confirm the details.'
+        : 'Request received! Our team will call you shortly to confirm the details and share a quote.',
     });
   } catch (err) {
     console.error(err);

@@ -35,6 +35,39 @@ profileForm.addEventListener('submit', async (e) => {
   }
 });
 
+// Accept / Decline on a quote. The page reloads afterwards so the status
+// badge and quote box show the answer.
+document.querySelectorAll('.quote-actions').forEach((actions) => {
+  const alertBox = actions.nextElementSibling;
+  actions.addEventListener('click', async (e) => {
+    const button = e.target.closest('button[data-response]');
+    if (!button) return;
+    const { response } = button.dataset;
+    if (response === 'decline' && !confirm('Decline this quote? You can call us any time for a revised one.')) return;
+
+    alertBox.hidden = true;
+    actions.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+    try {
+      const res = await fetch(`/api/customer/requests/${actions.dataset.requestId}/quote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ response }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        window.location.href = '/login?next=/account';
+        return;
+      }
+      if (!res.ok) throw new Error(data.error || 'Could not save your answer. Please try again.');
+      window.location.reload();
+    } catch (err) {
+      alertBox.textContent = err.message;
+      alertBox.hidden = false;
+      actions.querySelectorAll('button').forEach((b) => { b.disabled = false; });
+    }
+  });
+});
+
 document.getElementById('logoutBtn').addEventListener('click', async () => {
   await fetch('/api/customer/logout', { method: 'POST' }).catch(() => {});
   window.location.href = '/';

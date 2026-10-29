@@ -76,6 +76,9 @@
         <select id="statusFilter">
           <option value="all">All statuses</option>
           <option value="pending">Pending</option>
+          <option value="quoted">Quote sent</option>
+          <option value="accepted">Quote accepted</option>
+          <option value="declined">Quote declined</option>
           <option value="confirmed">Confirmed</option>
           <option value="completed">Completed</option>
           <option value="cancelled">Cancelled</option>
@@ -175,6 +178,29 @@
 
   </main>
 </div>
+
+<!-- Pickup request details + quote -->
+<dialog class="request-dialog" id="requestDialog" aria-labelledby="dialogTitle">
+  <div class="dialog-head">
+    <h2 id="dialogTitle">Pickup Request</h2>
+    <button type="button" class="dialog-close" id="dialogClose" aria-label="Close">&times;</button>
+  </div>
+  <dl class="detail-list" id="requestDetails"></dl>
+
+  <form class="quote-form" id="quoteForm" novalidate>
+    <h3>Quote</h3>
+    <p class="quote-hint" id="quoteHint"></p>
+    <div class="quote-lines" id="quoteLines"></div>
+    <button type="button" class="add-line-btn" id="addQuoteLine">+ Add line</button>
+    <label for="quoteNote">Note for the customer (optional)</label>
+    <textarea id="quoteNote" rows="3" maxlength="1000" placeholder="e.g. Rates valid for 7 days. Our team handles loading."></textarea>
+    <div id="quoteAlert" class="form-alert" hidden></div>
+    <div class="dialog-actions">
+      <a class="btn btn-outline" id="whatsappLink" target="_blank" rel="noopener" hidden>Send on WhatsApp</a>
+      <button type="submit" class="btn btn-accent" id="sendQuoteBtn">Send Quote</button>
+    </div>
+  </form>
+</dialog>
 
 <script src="js/admin.js"></script>
 </body>

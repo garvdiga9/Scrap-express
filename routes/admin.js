@@ -2,8 +2,11 @@ const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const pool = require('../db/pool');
 const { requireAdmin } = require('../middleware/auth');
+const { PICKUP_STATUSES, QUOTE_UNITS } = require('../data/business');
 
 const ALLOWED_STATUSES = ['pending', 'confirmed', 'completed', 'cancelled'];
+const MAX_QUOTE_LINES = 20;
+const MAX_QUOTE_NOTE = 1000;
 
 // ---- auth ----
 
@@ -52,7 +55,7 @@ router.get('/requests', requireAdmin, async (req, res) => {
 
 router.patch('/requests/:id', requireAdmin, async (req, res) => {
   const { status } = req.body;
-  if (!ALLOWED_STATUSES.includes(status)) {
+  if (!PICKUP_STATUSES.includes(status)) {
     return res.status(400).json({ error: 'Invalid status' });
   }
   try {
@@ -65,6 +68,50 @@ router.patch('/requests/:id', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update request' });
+  }
+});
+
+// Send (or revise) a quote. A revised quote needs a fresh answer, so any
+// earlier accept/decline is cleared.
+router.put('/requests/:id/quote', requireAdmin, async (req, res) => {
+  const lines = Array.isArray(req.body.items) ? req.body.items : [];
+  if (!lines.length || lines.length > MAX_QUOTE_LINES) {
+    return res.status(400).json({ error: `Add between 1 and ${MAX_QUOTE_LINES} quote lines.` });
+  }
+  const items = [];
+  for (const line of lines) {
+    const material = String(line?.material ?? '').trim();
+    const rate = Number(line?.rate);
+    if (!material || material.length > 100) {
+      return res.status(400).json({ error: 'Each line needs a material name (up to 100 characters).' });
+    }
+    if (line.rate === '' || line.rate == null || !Number.isFinite(rate) || rate < 0) {
+      return res.status(400).json({ error: `Please enter a valid rate for "${material}".` });
+    }
+    if (!QUOTE_UNITS.includes(line.unit)) {
+      return res.status(400).json({ error: 'Please choose a unit from the list.' });
+    }
+    items.push({ material, rate: Math.round(rate * 100) / 100, unit: line.unit });
+  }
+  const note = String(req.body.note ?? '').trim();
+  if (note.length > MAX_QUOTE_NOTE) {
+    return res.status(400).json({ error: `Please keep the note under ${MAX_QUOTE_NOTE} characters.` });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      `UPDATE pickup_requests
+       SET quote_items = $1, quote_note = $2, quoted_at = NOW(),
+           quote_response = NULL, quote_responded_at = NULL, status = 'quoted'
+       WHERE id = $3
+       RETURNING *`,
+      [JSON.stringify(items), note || null, req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save the quote' });
   }
 });
 

@@ -567,6 +567,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .request-list { display: flex; flex-direction: column; }
 .request-item {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  flex-wrap: wrap;
   padding: 16px 0;
   border-top: 1px solid var(--color-border);
 }
@@ -586,6 +587,34 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .status-badge.status-confirmed { background: #dbeafe; color: #1e40af; }
 .status-badge.status-completed { background: #dcfce7; color: #166534; }
 .status-badge.status-cancelled { background: #fee2e2; color: #991b1b; }
+.status-badge.status-quoted { background: #ede9fe; color: #5b21b6; }
+.status-badge.status-accepted { background: #ccfbf1; color: #115e59; }
+.status-badge.status-declined { background: #f1f5f9; color: #475569; }
+
+/* Quote shown under a request in My Account */
+.request-main { flex: 1 1 0; }
+.request-quote {
+  flex-basis: 100%;
+  background: #f8fafc;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+}
+.quote-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+.quote-head strong { font-size: 14.5px; color: var(--color-dark); }
+.quote-head span { font-size: 12.5px; color: var(--color-text-light); }
+.quote-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.quote-table td { padding: 7px 0; border-top: 1px solid var(--color-border); }
+.quote-table tr:first-child td { border-top: 0; }
+.quote-table td:last-child { text-align: right; font-weight: 700; color: var(--color-dark); white-space: nowrap; padding-left: 16px; }
+.quote-note { font-size: 14px; color: var(--color-text); margin: 10px 0 0; white-space: pre-line; }
+.quote-fine { font-size: 12.5px; color: var(--color-text-light); margin: 10px 0 0; }
+.quote-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.quote-actions .btn { padding: 10px 20px; font-size: 14px; }
+.quote-alert { margin: 12px 0 0; }
+.quote-response { font-size: 14px; font-weight: 600; margin: 12px 0 0; }
+.quote-response.accepted { color: #115e59; }
+.quote-response.declined { color: #475569; }
 
 /* ---------- Impact ---------- */
 .impact-grid {

@@ -38,6 +38,34 @@
                     <span class="request-meta"><%= [r.quantity, r.frequency, r.location].filter(Boolean).join(' · ') %></span>
                   </div>
                   <span class="status-badge status-<%= r.status %>"><%= statusLabels[r.status] || r.status %></span>
+                  <% if (r.quote_items && r.quote_items.length) { %>
+                    <div class="request-quote">
+                      <div class="quote-head">
+                        <strong>Our Quote</strong>
+                        <span>Sent <%= fmtDate(r.quoted_at) %></span>
+                      </div>
+                      <table class="quote-table">
+                        <tbody>
+                          <% r.quote_items.forEach((item) => { %>
+                            <tr><td><%= item.material %></td><td><%= formatQuoteRate(item) %></td></tr>
+                          <% }) %>
+                        </tbody>
+                      </table>
+                      <% if (r.quote_note) { %><p class="quote-note"><%= r.quote_note %></p><% } %>
+                      <p class="quote-fine">Final amount is worked out from the weighbridge weight at pickup. GST invoice and payment by bank transfer.</p>
+                      <% if (r.status === 'quoted') { %>
+                        <div class="quote-actions" data-request-id="<%= r.id %>">
+                          <button type="button" class="btn btn-accent" data-response="accept">Accept Quote</button>
+                          <button type="button" class="btn btn-outline" data-response="decline">Decline</button>
+                        </div>
+                        <div class="form-alert error quote-alert" hidden></div>
+                      <% } else if (r.quote_response === 'accepted') { %>
+                        <p class="quote-response accepted">You accepted this quote on <%= fmtDate(r.quote_responded_at) %>.<% if (r.status === 'accepted') { %> We'll call you to schedule the pickup.<% } %></p>
+                      <% } else if (r.quote_response === 'declined') { %>
+                        <p class="quote-response declined">You declined this quote on <%= fmtDate(r.quote_responded_at) %>. Call us if you'd like a revised quote.</p>
+                      <% } %>
+                    </div>
+                  <% } %>
                 </li>
               <% }) %>
             </ul>

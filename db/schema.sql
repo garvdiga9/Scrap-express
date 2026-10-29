@@ -88,6 +88,15 @@ ALTER TABLE demolition_requests ADD COLUMN IF NOT EXISTS customer_id INT REFEREN
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_customer ON pickup_requests(customer_id);
 CREATE INDEX IF NOT EXISTS idx_demolition_requests_customer ON demolition_requests(customer_id);
 
+-- Quotes sent from the admin dashboard. quote_items is a list of
+-- {material, rate, unit} lines; quote_response is the customer's answer
+-- ('accepted' / 'declined'), kept even after the status moves on.
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS quote_items JSONB;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS quote_note TEXT;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS quoted_at TIMESTAMP;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS quote_response VARCHAR(10);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS quote_responded_at TIMESTAMP;
+
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_status ON pickup_requests(status);
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_created_at ON pickup_requests(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_demolition_requests_status ON demolition_requests(status);

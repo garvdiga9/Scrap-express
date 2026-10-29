@@ -87,7 +87,16 @@ app.locals.businessTypes = BUSINESS_TYPES;
 app.locals.scrapTypes = SCRAP_TYPES;
 app.locals.pickupFrequencies = PICKUP_FREQUENCIES;
 app.locals.minPickupKg = MIN_PICKUP_KG;
-app.locals.statusLabels = { pending: 'Received', confirmed: 'Confirmed', completed: 'Completed', cancelled: 'Cancelled' };
+app.locals.statusLabels = {
+  pending: 'Received', quoted: 'Quote Ready', accepted: 'Quote Accepted', declined: 'Quote Declined',
+  confirmed: 'Confirmed', completed: 'Completed', cancelled: 'Cancelled',
+};
+// "₹18 per kg", "₹18.50 per kg", "₹1,50,000 lump sum"
+app.locals.formatQuoteRate = ({ rate, unit }) => {
+  const n = Number(rate);
+  const digits = Number.isInteger(n) ? 0 : 2;
+  return `₹${n.toLocaleString('en-IN', { minimumFractionDigits: digits, maximumFractionDigits: digits })} ${unit}`;
+};
 
 const PAGES = [
   { path: '/', view: 'index', page: 'home', title: 'Scrap Express - Bulk Scrap Buyers for Businesses in Delhi NCR', description: 'Scrap Express buys scrap in bulk from factories, offices, hospitals, schools, malls, hotels and restaurant chains across Delhi NCR. GST invoice, weighbridge slips and bank transfer payment.' },
