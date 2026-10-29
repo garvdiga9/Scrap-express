@@ -82,62 +82,65 @@ googleBtn.addEventListener('click', async () => {
   }
 });
 
-phoneForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  alertBox.hidden = true;
-  const digits = phoneInput.value.replace(/\D/g, '');
-  if (!/^[6-9][0-9]{9}$/.test(digits)) {
-    showError({ code: 'auth/invalid-phone-number' });
-    phoneInput.focus();
-    return;
-  }
-
-  busy(sendOtpBtn, true, 'Sending OTP…');
-  try {
-    // Invisible reCAPTCHA is Firebase's built-in protection against bots
-    // triggering paid SMS; it only shows a challenge if traffic looks suspicious.
-    if (!recaptcha) {
-      recaptcha = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+// The phone section is only on the page when phone login is switched on.
+if (phoneForm) {
+  phoneForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    alertBox.hidden = true;
+    const digits = phoneInput.value.replace(/\D/g, '');
+    if (!/^[6-9][0-9]{9}$/.test(digits)) {
+      showError({ code: 'auth/invalid-phone-number' });
+      phoneInput.focus();
+      return;
     }
-    confirmation = await signInWithPhoneNumber(auth, `+91${digits}`, recaptcha);
-    document.getElementById('otpPhoneLabel').textContent = `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`;
-    phoneForm.hidden = true;
-    otpForm.hidden = false;
-    otpInput.focus();
-  } catch (err) {
-    showError(err);
-    // A used or failed reCAPTCHA can't be reused; start fresh next time.
-    if (recaptcha) { recaptcha.clear(); recaptcha = null; }
-  } finally {
-    busy(sendOtpBtn, false, 'Send OTP');
-  }
-});
 
-otpForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  alertBox.hidden = true;
-  const code = otpInput.value.replace(/\D/g, '');
-  if (code.length !== 6) {
-    showError({ code: 'auth/missing-verification-code' });
-    otpInput.focus();
-    return;
-  }
+    busy(sendOtpBtn, true, 'Sending OTP…');
+    try {
+      // Invisible reCAPTCHA is Firebase's built-in protection against bots
+      // triggering paid SMS; it only shows a challenge if traffic looks suspicious.
+      if (!recaptcha) {
+        recaptcha = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+      }
+      confirmation = await signInWithPhoneNumber(auth, `+91${digits}`, recaptcha);
+      document.getElementById('otpPhoneLabel').textContent = `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`;
+      phoneForm.hidden = true;
+      otpForm.hidden = false;
+      otpInput.focus();
+    } catch (err) {
+      showError(err);
+      // A used or failed reCAPTCHA can't be reused; start fresh next time.
+      if (recaptcha) { recaptcha.clear(); recaptcha = null; }
+    } finally {
+      busy(sendOtpBtn, false, 'Send OTP');
+    }
+  });
 
-  busy(verifyOtpBtn, true, 'Verifying…');
-  try {
-    const { user } = await confirmation.confirm(code);
-    await finishLogin(user);
-  } catch (err) {
-    showError(err);
-    busy(verifyOtpBtn, false, 'Verify & Log In');
-  }
-});
+  otpForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    alertBox.hidden = true;
+    const code = otpInput.value.replace(/\D/g, '');
+    if (code.length !== 6) {
+      showError({ code: 'auth/missing-verification-code' });
+      otpInput.focus();
+      return;
+    }
 
-document.getElementById('changePhoneBtn').addEventListener('click', () => {
-  confirmation = null;
-  otpInput.value = '';
-  otpForm.hidden = true;
-  phoneForm.hidden = false;
-  alertBox.hidden = true;
-  phoneInput.focus();
-});
+    busy(verifyOtpBtn, true, 'Verifying…');
+    try {
+      const { user } = await confirmation.confirm(code);
+      await finishLogin(user);
+    } catch (err) {
+      showError(err);
+      busy(verifyOtpBtn, false, 'Verify & Log In');
+    }
+  });
+
+  document.getElementById('changePhoneBtn').addEventListener('click', () => {
+    confirmation = null;
+    otpInput.value = '';
+    otpForm.hidden = true;
+    phoneForm.hidden = false;
+    alertBox.hidden = true;
+    phoneInput.focus();
+  });
+}

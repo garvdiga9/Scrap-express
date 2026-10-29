@@ -112,6 +112,7 @@ app.get('/login', (req, res) => {
     noindex: true,
     next,
     firebaseConfig: firebase.clientConfig,
+    phoneLoginEnabled: firebase.phoneEnabled,
   });
 });
 

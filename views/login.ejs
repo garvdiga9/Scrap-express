@@ -28,6 +28,7 @@
             Continue with Google
           </button>
 
+          <% if (phoneLoginEnabled) { %>
           <div class="auth-divider"><span>or log in with your mobile number</span></div>
 
           <form id="phoneForm" novalidate>
@@ -52,6 +53,7 @@
           </form>
 
           <div id="recaptcha-container"></div>
+          <% } %>
           <p class="auth-fine">No account needed to book — you can <a href="/book-pickup">request a pickup</a> anytime.</p>
         <% } %>
       </div>
