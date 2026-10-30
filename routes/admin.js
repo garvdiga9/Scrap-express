@@ -10,6 +10,7 @@ const { mountPushRoutes } = require('./push');
 const ALLOWED_STATUSES = ['pending', 'confirmed', 'completed', 'cancelled'];
 const MAX_QUOTE_LINES = 20;
 const MAX_QUOTE_NOTE = 1000;
+const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30;
 
 // ---- auth ----
 
@@ -24,8 +25,12 @@ router.post('/login', async (req, res) => {
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
+    // A fresh session ID on login (prevents session fixation).
+    await new Promise((resolve, reject) => req.session.regenerate((err) => (err ? reject(err) : resolve())));
     req.session.isAdmin = true;
     req.session.username = user.username;
+    // "Keep me signed in" on a phone; otherwise the default one-day session.
+    if (req.body.remember === true) req.session.cookie.maxAge = THIRTY_DAYS;
     res.json({ message: 'Logged in', username: user.username });
   } catch (err) {
     console.error(err);

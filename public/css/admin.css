@@ -97,6 +97,7 @@
 .status-declined { color: #475569; }
 
 .row-actions { white-space: nowrap; }
+.tel-link { color: var(--color-primary-dark); font-weight: 600; }
 .row-highlight td { background: #fef3c7 !important; transition: background 1s ease; }
 .admin-content .push-card { margin-bottom: 24px; }
 .view-btn {
@@ -211,6 +212,67 @@
 .testimonial-item .review-stars { color: var(--color-accent); display: flex; gap: 2px; margin-bottom: 10px; }
 .testimonial-item .review-stars svg { width: 14px; height: 14px; }
 .testimonial-item .icon-btn { position: absolute; top: 14px; right: 14px; }
+
+.tab-count {
+  display: inline-block; margin-left: 6px;
+  padding: 1px 8px; border-radius: 999px;
+  background: var(--color-accent); color: var(--color-dark);
+  font-size: 11.5px; font-weight: 700;
+}
+.remember-me { display: flex; align-items: center; gap: 8px; margin: -4px 0 18px; font-size: 13.5px; color: var(--color-text); cursor: pointer; }
+.remember-me input { width: 17px; height: 17px; accent-color: var(--color-primary); }
+
+/* ---------- Phones: tables become cards ---------- */
+@media (max-width: 760px) {
+  .welcome-user { display: none; }
+  .admin-topbar .btn-outline { padding: 7px 12px; font-size: 13px; }
+  /* Tabs scroll sideways instead of wrapping. */
+  .admin-tabs { overflow-x: auto; padding: 0 8px; scrollbar-width: none; position: sticky; top: 0; z-index: 9; }
+  .admin-tabs::-webkit-scrollbar { display: none; }
+  .tab-btn { white-space: nowrap; padding: 14px 12px; flex-shrink: 0; }
+  .panel-head select { width: 100%; padding: 11px 14px; font-size: 15px; }
+
+  .table-wrap { background: none; box-shadow: none; overflow: visible; }
+  .admin-table { min-width: 0; }
+  .admin-table thead { display: none; }
+  .admin-table, .admin-table tbody, .admin-table tr, .admin-table td { display: block; width: 100%; }
+  .admin-table tr {
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 12px 16px;
+    margin-bottom: 12px;
+  }
+  .admin-table tr:hover td { background: none; }
+  .admin-table td {
+    display: flex; justify-content: space-between; align-items: center; gap: 14px;
+    padding: 7px 0;
+    border-top: 1px dashed var(--color-border);
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  .admin-table td:first-child { border-top: 0; }
+  .admin-table td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    text-align: left;
+    font-size: 11.5px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+    color: var(--color-text-light);
+  }
+  .admin-table td[data-label=""]::before { content: none; }
+  /* The action buttons get a full-width row with big tap targets. */
+  .admin-table td.row-actions, .admin-table td:last-child { justify-content: flex-end; padding-top: 10px; }
+  .view-btn { padding: 10px 16px; font-size: 14px; }
+  .status-select { padding: 9px 12px; font-size: 14px; }
+  .icon-btn { padding: 10px; }
+  .table-empty { border: 0 !important; }
+  .admin-table tr:has(.table-empty) { background: none; border: 0; box-shadow: none; }
+
+  .price-edit input { width: 90px; }
+  .admin-content .push-card { padding: 14px 16px; }
+  .push-card .btn { flex: 1 1 auto; }
+}
 
 @media (max-width: 640px) {
   .admin-topbar { padding: 14px 16px; }

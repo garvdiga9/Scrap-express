@@ -59,14 +59,19 @@ async function staleWhileRevalidate(event) {
 self.addEventListener('push', (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch (err) { data = { body: event.data && event.data.text() }; }
-  event.waitUntil(self.registration.showNotification(data.title || 'Scrap Express', {
-    body: data.body || '',
-    icon: '/icons/icon-192.png',
-    badge: '/icons/badge-96.png',
-    tag: data.tag,
-    renotify: Boolean(data.tag),
-    data: { url: data.url || '/' },
-  }));
+  event.waitUntil(Promise.all([
+    self.registration.showNotification(data.title || 'Scrap Express', {
+      body: data.body || '',
+      icon: '/icons/icon-192.png',
+      badge: '/icons/badge-96.png',
+      tag: data.tag,
+      renotify: Boolean(data.tag),
+      data: { url: data.url || '/' },
+    }),
+    // Let open pages (the admin dashboard) refresh their lists.
+    self.clients.matchAll({ type: 'window' })
+      .then((windows) => windows.forEach((w) => w.postMessage({ type: 'push', tag: data.tag }))),
+  ]));
 });
 
 // Tapping a notification opens the page it's about, reusing an open app

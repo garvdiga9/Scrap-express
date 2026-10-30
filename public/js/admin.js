@@ -80,6 +80,7 @@ async function submitLogin() {
 
   const username = document.getElementById('username').value;
   const password = document.getElementById('password').value;
+  const remember = document.getElementById('rememberMe').checked;
 
   // Never leave the button stuck on "Signing in…": give up after 20s and say so.
   const controller = new AbortController();
@@ -89,7 +90,7 @@ async function submitLogin() {
     const res = await fetch('/api/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ username, password, remember }),
       signal: controller.signal,
     });
     let data = {};
@@ -159,8 +160,17 @@ const PICKUP_STATUS_LABELS = {
 };
 const QUOTE_UNITS = ['per kg', 'per tonne', 'per piece', 'lump sum'];
 
+// A phone number you can tap to call (handy in the app on your phone).
+function telLink(phone) {
+  const a = document.createElement('a');
+  a.href = `tel:${String(phone).replace(/[^\d+]/g, '')}`;
+  a.className = 'tel-link';
+  a.textContent = phone;
+  return a;
+}
+
 const formatDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-// Matches formatQuoteRate in server.js: "₹18 per kg", "₹18.50 per kg".
+// Matches formatQuoteRate in data/business.js: "₹18 per kg", "₹18.50 per kg".
 function formatRate({ rate, unit }) {
   const n = Number(rate);
   const digits = Number.isInteger(n) ? 0 : 2;
@@ -180,6 +190,7 @@ async function loadRequests() {
 }
 
 function renderRequests() {
+  setTabCount(document.getElementById('pickupCount'), allRequests);
   const filter = statusFilter.value;
   const rows = allRequests.filter((r) => filter === 'all' || r.status === filter);
   if (!rows.length) {
@@ -208,6 +219,7 @@ function renderRequests() {
       td.textContent = text;
       tr.appendChild(td);
     });
+    tr.children[3].replaceChildren(telLink(r.phone));
 
     const statusTd = document.createElement('td');
     const select = document.createElement('select');
@@ -229,6 +241,7 @@ function renderRequests() {
         });
         if (!res.ok) throw new Error();
         r.status = select.value;
+        renderRequests();
       } catch (err) {
         alert('Failed to update status.');
       }
@@ -537,6 +550,7 @@ async function loadDemolitionRequests() {
     if (!res.ok) throw new Error();
     allDemolitionRequests = await res.json();
     renderDemolitionRequests();
+    setTabCount(document.getElementById('demolitionCount'), allDemolitionRequests);
   } catch (err) {
     demolitionBody.innerHTML = '<tr><td colspan="9" class="table-empty">Failed to load requests.</td></tr>';
   }
@@ -567,6 +581,7 @@ function renderDemolitionRequests() {
       td.textContent = text;
       tr.appendChild(td);
     });
+    tr.children[2].replaceChildren(telLink(r.phone));
 
     const mediaTd = document.createElement('td');
     if (r.media && r.media.length) {
@@ -605,6 +620,7 @@ function renderDemolitionRequests() {
         });
         if (!res.ok) throw new Error();
         r.status = select.value;
+        setTabCount(document.getElementById('demolitionCount'), allDemolitionRequests);
       } catch (err) {
         alert('Failed to update status.');
       }
@@ -822,5 +838,43 @@ addTestimonialForm.addEventListener('submit', async (e) => {
     alert(err.message);
   }
 });
+
+/* ---------- Phone layout & staying up to date ---------- */
+// On phones each table row is shown as a card (admin.css); every cell gets
+// its column name as a label. Rows are rebuilt often, so label on change.
+document.querySelectorAll('.admin-table').forEach((table) => {
+  const headers = [...table.querySelectorAll('thead th')].map((th) => th.textContent.trim());
+  const body = table.querySelector('tbody');
+  const label = () => body.querySelectorAll('tr').forEach((tr) => {
+    [...tr.children].forEach((td, i) => { if (!td.colSpan || td.colSpan === 1) td.dataset.label = headers[i] || ''; });
+  });
+  new MutationObserver(label).observe(body, { childList: true });
+  label();
+});
+
+// "3 new" on the request tabs.
+function setTabCount(el, list) {
+  const pending = list.filter((r) => r.status === 'pending').length;
+  el.textContent = pending ? `${pending} new` : '';
+  el.hidden = !pending;
+}
+
+// Reload the request lists when the app comes back to the screen (e.g. after
+// tapping a notification) or when a notification arrives while it's open.
+let lastLoaded = Date.now();
+function refreshRequests() {
+  if (dashboard.hidden) return;
+  lastLoaded = Date.now();
+  loadRequests();
+  loadDemolitionRequests();
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && Date.now() - lastLoaded > 60 * 1000) refreshRequests();
+});
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'push') refreshRequests();
+  });
+}
 
 checkSession();

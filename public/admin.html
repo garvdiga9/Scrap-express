@@ -43,6 +43,10 @@
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required autocomplete="current-password">
       </div>
+      <label class="remember-me">
+        <input type="checkbox" id="rememberMe">
+        <span>Keep me signed in on this device for 30 days</span>
+      </label>
       <button type="submit" class="btn btn-accent btn-lg btn-block" id="loginBtn">Sign In</button>
     </form>
     <a href="index.html" class="back-to-site">&larr; Back to website</a>
@@ -65,8 +69,8 @@
   </header>
 
   <div class="admin-tabs">
-    <button class="tab-btn active" data-tab="requests">Pickup Requests</button>
-    <button class="tab-btn" data-tab="demolition">Demolition Requests</button>
+    <button class="tab-btn active" data-tab="requests">Pickup Requests <span class="tab-count" id="pickupCount" hidden></span></button>
+    <button class="tab-btn" data-tab="demolition">Demolition Requests <span class="tab-count" id="demolitionCount" hidden></span></button>
     <button class="tab-btn" data-tab="rates">Scrap Rates</button>
     <button class="tab-btn" data-tab="testimonials">Testimonials</button>
   </div>
