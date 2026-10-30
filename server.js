@@ -54,6 +54,20 @@ app.use(session({
   },
 }));
 
+// Digital Asset Links: proves to Android that the Play Store app and this
+// website belong together, so the app opens full-screen without a browser bar.
+// The fingerprint comes from the app's signing key (Play Console → App
+// integrity); several can be given, comma-separated.
+app.get('/.well-known/assetlinks.json', (req, res) => {
+  const fingerprints = String(process.env.ANDROID_SHA256_CERT_FINGERPRINTS || '')
+    .split(',').map((f) => f.trim().toUpperCase()).filter(Boolean);
+  const packageName = process.env.ANDROID_PACKAGE_NAME || 'com.scrapexpress.app';
+  res.json(fingerprints.length ? [{
+    relation: ['delegate_permission/common.handle_all_urls'],
+    target: { namespace: 'android_app', package_name: packageName, sha256_cert_fingerprints: fingerprints },
+  }] : []);
+});
+
 // Public key browsers need to subscribe to push notifications.
 app.get('/api/push/key', async (req, res) => {
   try {
@@ -111,6 +125,8 @@ const PAGES = [
   { path: '/what-we-buy', view: 'what-we-buy', page: 'what-we-buy', title: 'What We Buy - Industrial & Office Scrap - Scrap Express', description: 'We buy AC plants, generators, motors, IT equipment, office furniture, glass and more from businesses across Delhi NCR. Quotes based on volume and condition.' },
   { path: '/book-pickup', view: 'book-pickup', page: 'book-pickup', title: 'Request a Bulk Scrap Pickup in Delhi NCR - Scrap Express', description: 'Request a one-time or scheduled bulk scrap pickup from your factory, office or site in Delhi NCR. GST invoice, weighbridge slip, payment by bank transfer.' },
   { path: '/demolition', view: 'demolition', page: 'demolition', title: 'Commercial Demolition Services in Delhi NCR - Scrap Express', description: 'Demolition of schools, hospitals, factories, warehouses, malls and commercial buildings across Delhi NCR, with site survey and detailed quote.' },
+  { path: '/privacy', view: 'privacy', page: 'privacy', title: 'Privacy Policy - Scrap Express', description: 'How Scrap Express collects, uses and protects information from customers of our website and app.' },
+  { path: '/delete-account', view: 'delete-account', page: 'delete-account', title: 'Delete Your Account - Scrap Express', description: 'How to delete your Scrap Express account and what happens to your data.' },
   { path: '/areas', view: 'areas', page: 'areas', title: 'Industrial Areas We Serve in Delhi NCR - Scrap Express', description: 'Scrap Express collects bulk scrap from businesses in Okhla, Naraina, Mayapuri, Wazirpur, Bawana, Noida, Gurugram, Manesar, Faridabad and across Delhi NCR.' },
 ];
 
@@ -145,6 +161,7 @@ app.get('/account', async (req, res) => {
       description: 'Your Scrap Express requests and business details.',
       noindex: true,
       requests,
+      firebaseConfig: firebase.clientConfig,
     });
   } catch (err) {
     console.error(err);

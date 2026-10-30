@@ -140,6 +140,16 @@
           </form>
         </section>
       </div>
+
+      <section class="account-card danger-card">
+        <div>
+          <h2>Delete Account</h2>
+          <p>Permanently deletes your account, saved details, and the photos and videos you sent us. Records of past requests are kept for tax purposes. <a href="/delete-account">Details</a></p>
+          <div id="deleteAlert" class="form-alert error" hidden></div>
+        </div>
+        <button type="button" class="btn btn-danger" id="deleteAccountBtn"
+                data-config="<%= JSON.stringify(firebaseConfig) %>">Delete My Account</button>
+      </section>
     </div>
   </section>
 
@@ -147,4 +157,5 @@
 
 <script src="/js/push.js"></script>
 <script src="/js/account.js"></script>
+<script type="module" src="/js/account-delete.js"></script>
 <%- include('partials/footer') %>

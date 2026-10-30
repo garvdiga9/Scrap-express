@@ -819,6 +819,19 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .push-copy .push-error { color: #b91c1c; font-weight: 600; }
 .push-card .btn { padding: 10px 20px; font-size: 14px; }
 
+.danger-card {
+  margin-top: 28px;
+  display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+  border-color: #fecaca;
+}
+.danger-card > div { flex: 1 1 320px; }
+.danger-card h2 { font-size: 18px; margin-bottom: 6px; }
+.danger-card p { margin: 0; font-size: 14px; }
+.danger-card a { color: var(--color-primary-dark); font-weight: 600; }
+.danger-card .form-alert { margin: 12px 0 0; }
+.btn-danger { background: #fff; color: #b91c1c; border-color: #fca5a5; }
+.btn-danger:hover { background: #b91c1c; color: #fff; border-color: #b91c1c; }
+
 .account-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 28px; align-items: start; }
 .account-card {
   background: var(--color-white);
@@ -1030,6 +1043,20 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .footer-bottom-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
 .footer-bottom p { margin: 0; font-size: 13px; color: rgba(255,255,255,0.5); }
 .admin-link { font-size: 13px; color: rgba(255,255,255,0.4); }
+.footer-legal { display: flex; gap: 18px; flex-wrap: wrap; }
+
+/* ---------- Privacy policy & other text pages ---------- */
+.legal-page { max-width: 780px; }
+.legal-page h1 { font-size: clamp(28px, 3.4vw, 40px); }
+.legal-page h2 { font-size: 21px; margin-top: 36px; }
+.legal-page h3 { font-size: 16.5px; margin-top: 20px; }
+.legal-page p, .legal-page li { color: var(--color-text); font-size: 15.5px; line-height: 1.7; }
+.legal-page ul, .legal-page ol { padding-left: 22px; margin: 0 0 1em; }
+.legal-page ul { list-style: disc; }
+.legal-page ol { list-style: decimal; }
+.legal-page li { margin-bottom: 6px; }
+.legal-page a { color: var(--color-primary-dark); font-weight: 600; text-decoration: underline; }
+.legal-updated { font-size: 13.5px !important; color: var(--color-text-light) !important; }
 .admin-link:hover { color: var(--color-accent); }
 
 /* ---------- Back to top ---------- */

@@ -43,3 +43,9 @@ services:
         sync: false
       - key: FIREBASE_APP_ID
         sync: false
+      # Play Store app (Trusted Web Activity). The fingerprint comes from Play
+      # Console → Test and release → App integrity → App signing key certificate.
+      - key: ANDROID_PACKAGE_NAME
+        value: com.scrapexpress.app
+      - key: ANDROID_SHA256_CERT_FINGERPRINTS
+        sync: false

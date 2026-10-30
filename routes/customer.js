@@ -112,6 +112,33 @@ router.get('/requests', requireCustomer, async (req, res) => {
 
 mountPushRoutes(router, requireCustomer, (req) => ({ customerId: req.session.customerId }));
 
+// POST /api/customer/delete { idToken } — permanently delete the account.
+// A fresh sign-in token is required, proving the person deleting it is the
+// account owner right now (not just someone holding an unlocked phone's session).
+const FRESH_SIGN_IN_SECONDS = 10 * 60;
+router.post('/delete', requireCustomer, async (req, res) => {
+  let decoded;
+  try {
+    decoded = await firebase.verifyIdToken(String(req.body.idToken || ''));
+  } catch (err) {
+    return res.status(401).json({ error: 'Please confirm by signing in again.' });
+  }
+  try {
+    const uid = await customers.getFirebaseUid(req.session.customerId);
+    if (!uid || uid !== decoded.uid) {
+      return res.status(403).json({ error: 'Please sign in with the same Google account you use for Scrap Express.' });
+    }
+    if (Date.now() / 1000 - decoded.auth_time > FRESH_SIGN_IN_SECONDS) {
+      return res.status(401).json({ error: 'Please confirm by signing in again.' });
+    }
+    await customers.deleteAccount(req.session.customerId);
+    req.session.destroy(() => res.json({ ok: true }));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not delete your account. Please try again or contact us.' });
+  }
+});
+
 // POST /api/customer/requests/:id/quote — accept or decline a quote.
 router.post('/requests/:id/quote', requireCustomer, async (req, res) => {
   const response = { accept: 'accepted', decline: 'declined' }[req.body.response];

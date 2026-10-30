@@ -80,6 +80,10 @@ if (installBanner && !isInstalledApp) {
   });
 }
 
+// Confirmation after "Delete My Account" (account-delete.js sends people here).
+const deletedNotice = document.getElementById('deletedNotice');
+if (deletedNotice && new URLSearchParams(window.location.search).get('done') === '1') deletedNotice.hidden = false;
+
 /* ---------- Sticky header ---------- */
 const header = document.getElementById('siteHeader');
 function onScroll() {
@@ -454,7 +458,9 @@ function setupMediaPicker(form) {
       }
       const size = document.createElement('span');
       size.className = 'media-size';
-      size.textContent = `${(item.file.size / MB).toFixed(1)} MB`;
+      size.textContent = item.file.size < 0.1 * MB
+        ? `${Math.max(1, Math.round(item.file.size / 1024))} KB`
+        : `${(item.file.size / MB).toFixed(1)} MB`;
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
       removeBtn.className = 'media-remove';
