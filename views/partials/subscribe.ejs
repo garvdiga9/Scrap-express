@@ -1,0 +1,31 @@
+<%# "Daily rates" sign-up, shown above the footer on every page. Handled by
+    main.js (email / WhatsApp number) and push.js (app notifications). %>
+<section class="subscribe-band" id="subscribe">
+  <div class="container subscribe-inner">
+    <div class="subscribe-copy">
+      <span class="eyebrow eyebrow-live"><span class="live-dot" aria-hidden="true"></span> Daily Rates</span>
+      <h2>Get today's scrap rates every morning</h2>
+      <p>Free updates by email, WhatsApp or app notification, plus news whenever we launch something new.</p>
+    </div>
+    <div class="subscribe-actions">
+      <form class="subscribe-form" id="subscribeForm" novalidate>
+        <label for="subscribeContact" class="sr-only">Email or WhatsApp number</label>
+        <input id="subscribeContact" name="contact" type="text" autocomplete="email" placeholder="Email or WhatsApp number" maxlength="200">
+        <button class="btn btn-accent" type="submit" id="subscribeBtn">Subscribe</button>
+      </form>
+      <p class="subscribe-msg" id="subscribeMsg" role="status" hidden></p>
+      <div class="subscribe-alt">
+        <div class="push-inline" id="updatesPush" hidden>
+          <button type="button" class="btn btn-outline" data-push-toggle hidden>🔔 Get app alerts</button>
+          <span data-push-status></span>
+        </div>
+        <% if (locals.whatsappChannelUrl) { %>
+          <a class="btn wa-follow" href="<%= whatsappChannelUrl %>" target="_blank" rel="noopener">
+            <svg class="icon"><use href="#icon-whatsapp"/></svg> Follow on WhatsApp
+          </a>
+        <% } %>
+      </div>
+      <p class="subscribe-fine">You can unsubscribe any time. See our <a href="/privacy">Privacy Policy</a>.</p>
+    </div>
+  </div>
+</section>

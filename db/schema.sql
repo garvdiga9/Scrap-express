@@ -134,6 +134,22 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 );
 CREATE INDEX IF NOT EXISTS idx_push_subscriptions_customer ON push_subscriptions(customer_id);
 
+-- Daily rates & news subscribers (email and/or WhatsApp number). Email
+-- addresses must be confirmed from a link before anything is sent to them.
+CREATE TABLE IF NOT EXISTS subscribers (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(200) UNIQUE,
+  phone VARCHAR(20) UNIQUE,
+  token VARCHAR(64) UNIQUE NOT NULL,
+  email_confirmed_at TIMESTAMP,
+  confirmation_sent_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  CHECK (email IS NOT NULL OR phone IS NOT NULL)
+);
+
+-- Phones/browsers that tapped "Get price alerts" (no login needed).
+ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS wants_updates BOOLEAN NOT NULL DEFAULT FALSE;
+
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_status ON pickup_requests(status);
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_created_at ON pickup_requests(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_demolition_requests_status ON demolition_requests(status);

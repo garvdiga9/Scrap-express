@@ -73,6 +73,7 @@
     <button class="tab-btn" data-tab="demolition">Demolition Requests <span class="tab-count" id="demolitionCount" hidden></span></button>
     <button class="tab-btn" data-tab="rates">Scrap Rates</button>
     <button class="tab-btn" data-tab="testimonials">Testimonials</button>
+    <button class="tab-btn" data-tab="subscribers">Subscribers</button>
   </div>
 
   <main class="admin-content container">
@@ -191,6 +192,58 @@
 
       <div class="testimonial-list" id="testimonialList">
         <p class="table-empty">Loading testimonials…</p>
+      </div>
+    </section>
+
+    <!-- Subscribers tab: daily rates & announcements -->
+    <section class="tab-panel" id="tab-subscribers">
+      <div class="panel-head">
+        <h2>Subscribers</h2>
+      </div>
+      <div class="sub-stats" id="subStats"></div>
+      <ul class="sub-channels" id="subChannels"></ul>
+
+      <div class="sub-grid">
+        <form class="admin-card" id="subSettingsForm" novalidate>
+          <h3>Daily rates</h3>
+          <label class="remember-me">
+            <input type="checkbox" id="dailyEnabled">
+            <span>Send today's rates to all subscribers automatically every day</span>
+          </label>
+          <label for="dailyTime">Send time (India time)</label>
+          <input type="time" id="dailyTime">
+          <label for="waChannel">WhatsApp Channel link (optional)</label>
+          <input type="url" id="waChannel" placeholder="https://whatsapp.com/channel/…">
+          <div id="subSettingsAlert" class="form-alert" hidden></div>
+          <div class="admin-card-actions">
+            <button type="submit" class="btn btn-accent">Save</button>
+            <button type="button" class="btn btn-outline" id="sendRatesNow">Send today's rates now</button>
+          </div>
+        </form>
+
+        <form class="admin-card" id="announceForm" novalidate>
+          <h3>Send an announcement</h3>
+          <p class="admin-card-hint">For anything new: a new service, area or offer. Goes to every subscriber.</p>
+          <label for="announceTitle">Title</label>
+          <input type="text" id="announceTitle" maxlength="80" placeholder="e.g. Now buying lead batteries">
+          <label for="announceMessage">Message</label>
+          <textarea id="announceMessage" rows="4" maxlength="600" placeholder="A few lines about what's new."></textarea>
+          <div id="announceAlert" class="form-alert" hidden></div>
+          <div class="admin-card-actions">
+            <button type="submit" class="btn btn-accent">Send to All Subscribers</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="table-wrap">
+        <table class="admin-table" id="subscribersTable">
+          <thead>
+            <tr><th>Date</th><th>Email / WhatsApp</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody id="subscribersBody">
+            <tr><td colspan="4" class="table-empty">Loading subscribers…</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 

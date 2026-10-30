@@ -1,0 +1,26 @@
+<%- include('partials/head') %>
+<%- include('partials/sprite') %>
+<%- include('partials/header') %>
+
+<%# A simple one-message page (subscription confirmed, unsubscribe, etc.).
+    Locals: heading, message, and optionally form = { action, button }. %>
+<main id="top">
+  <section class="section page-top">
+    <div class="container notice-page">
+      <div class="notice-card">
+        <svg class="icon notice-icon"><use href="#<%= locals.icon || 'icon-check' %>"/></svg>
+        <h1><%= heading %></h1>
+        <p><%= message %></p>
+        <% if (locals.form) { %>
+          <form method="post" action="<%= form.action %>">
+            <button type="submit" class="btn btn-accent btn-lg"><%= form.button %></button>
+          </form>
+        <% } else { %>
+          <a href="/" class="btn btn-accent btn-lg">Go to Scrap Express</a>
+        <% } %>
+      </div>
+    </div>
+  </section>
+</main>
+
+<%- include('partials/footer') %>

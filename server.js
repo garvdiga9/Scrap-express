@@ -17,6 +17,8 @@ const customerRouter = require('./routes/customer');
 const firebase = require('./lib/firebase');
 const media = require('./lib/media');
 const push = require('./lib/push');
+const updates = require('./lib/updates');
+const subscribeRouter = require('./routes/subscribe');
 const customers = require('./lib/customers');
 
 const app = express();
@@ -77,6 +79,7 @@ app.get('/api/push/key', async (req, res) => {
   }
 });
 
+app.use('/api/subscribe', express.urlencoded({ extended: false }), subscribeRouter);
 app.use('/api/rates', ratesRouter);
 app.use('/api/pickup', pickupRouter);
 app.use('/api/demolition', demolitionRouter);
@@ -91,6 +94,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(async (req, res, next) => {
   res.locals.customer = null;
   res.locals.loginEnabled = firebase.enabled;
+  // For the "daily rates" sign-up box in the footer (cached, see lib/settings).
+  res.locals.whatsappChannelUrl = await updates.getSettings()
+    .then((s) => s.whatsappChannelUrl).catch(() => '');
   const id = req.session && req.session.customerId;
   if (!id) return next();
   try {
@@ -151,6 +157,34 @@ app.get('/login', (req, res) => {
   });
 });
 
+// ---- daily rates subscription pages (links in emails) ----
+const NOTICE = { page: 'notice', noindex: true, description: 'Scrap Express daily rates and news.' };
+
+app.get('/subscribe/confirm', async (req, res) => {
+  const confirmed = await updates.confirm(req.query.token).catch(() => null);
+  res.render('notice', confirmed
+    ? { ...NOTICE, title: 'Subscribed - Scrap Express', heading: "You're subscribed! 🎉", message: `We'll email today's scrap rates to ${confirmed.email} every morning, plus news about anything new we launch.` }
+    : { ...NOTICE, title: 'Link expired - Scrap Express', icon: 'icon-close', heading: 'This link has expired', message: 'This confirmation link is no longer valid. You can subscribe again from the bottom of any page.' });
+});
+
+// A page with a button, rather than unsubscribing on the GET itself, because
+// email scanners open links automatically.
+app.get('/unsubscribe', async (req, res) => {
+  if (req.query.done) {
+    return res.render('notice', { ...NOTICE, title: 'Unsubscribed - Scrap Express', heading: "You've been unsubscribed", message: "You won't get any more rate updates from us. You can subscribe again any time." });
+  }
+  const sub = await updates.findByToken(req.query.token).catch(() => null);
+  if (!sub) {
+    return res.render('notice', { ...NOTICE, title: 'Unsubscribe - Scrap Express', heading: 'Already unsubscribed', message: "This subscription isn't active any more, so you won't get further updates." });
+  }
+  res.render('notice', {
+    ...NOTICE, title: 'Unsubscribe - Scrap Express', icon: 'icon-mail',
+    heading: 'Stop rate updates?',
+    message: `${sub.email || sub.phone} will no longer get daily scrap rates and news from Scrap Express.`,
+    form: { action: `/api/subscribe/unsubscribe?token=${encodeURIComponent(req.query.token)}`, button: 'Unsubscribe' },
+  });
+});
+
 app.get('/account', async (req, res) => {
   if (!res.locals.customer) return res.redirect('/login?next=/account');
   try {
@@ -180,4 +214,5 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`Scrap Express server running at http://localhost:${PORT}`);
   push.init().catch(() => {}); // prepare notification keys early; logged inside if it fails
+  updates.startSchedule(); // daily rates to subscribers
 });

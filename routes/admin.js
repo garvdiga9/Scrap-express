@@ -6,6 +6,7 @@ const { PICKUP_STATUSES, QUOTE_UNITS, formatQuoteRate } = require('../data/busin
 const media = require('../lib/media');
 const push = require('../lib/push');
 const { mountPushRoutes } = require('./push');
+const updates = require('../lib/updates');
 
 const ALLOWED_STATUSES = ['pending', 'confirmed', 'completed', 'cancelled'];
 const MAX_QUOTE_LINES = 20;
@@ -263,6 +264,56 @@ router.get('/media/:id', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to load the file' });
+  }
+});
+
+// ---- daily rates & news subscribers ----
+
+const sendError = (res, err, fallback) => {
+  if (err.status) return res.status(err.status).json({ error: err.message });
+  console.error(err);
+  return res.status(500).json({ error: fallback });
+};
+
+router.get('/subscribers', requireAdmin, async (req, res) => {
+  try {
+    const [counts, subscribers, settings] = await Promise.all([updates.counts(), updates.list(), updates.getSettings()]);
+    res.json({ counts, subscribers, settings, channels: updates.channels() });
+  } catch (err) {
+    sendError(res, err, 'Failed to load subscribers');
+  }
+});
+
+router.delete('/subscribers/:id', requireAdmin, async (req, res) => {
+  try {
+    await updates.remove(req.params.id);
+    res.json({ ok: true });
+  } catch (err) {
+    sendError(res, err, 'Failed to remove subscriber');
+  }
+});
+
+router.put('/subscribers/settings', requireAdmin, async (req, res) => {
+  try {
+    res.json(await updates.saveSettings(req.body));
+  } catch (err) {
+    sendError(res, err, 'Failed to save settings');
+  }
+});
+
+router.post('/subscribers/send-rates', requireAdmin, async (req, res) => {
+  try {
+    res.json(await updates.sendRates());
+  } catch (err) {
+    sendError(res, err, 'Failed to send the rates');
+  }
+});
+
+router.post('/subscribers/announce', requireAdmin, async (req, res) => {
+  try {
+    res.json(await updates.sendAnnouncement(req.body));
+  } catch (err) {
+    sendError(res, err, 'Failed to send the announcement');
   }
 });
 

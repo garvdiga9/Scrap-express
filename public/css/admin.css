@@ -213,6 +213,35 @@
 .testimonial-item .review-stars svg { width: 14px; height: 14px; }
 .testimonial-item .icon-btn { position: absolute; top: 14px; right: 14px; }
 
+/* ---------- Subscribers tab ---------- */
+.sub-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+.sub-stat { background: #fff; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 16px 18px; }
+.sub-stat strong { display: block; font-family: var(--font-heading); font-size: 26px; color: var(--color-primary-dark); }
+.sub-stat span { font-size: 13px; color: var(--color-text-light); }
+.sub-channels { display: flex; flex-direction: column; gap: 6px; margin: 0 0 20px; }
+.sub-channels li { font-size: 13.5px; padding-left: 22px; position: relative; }
+.sub-channels li::before { content: '●'; position: absolute; left: 4px; font-size: 11px; top: 2px; }
+.sub-channels li.on::before { color: var(--color-primary); }
+.sub-channels li.off { color: var(--color-text-light); }
+.sub-channels li.off::before { color: #cbd5e1; }
+.sub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 24px; }
+.admin-card { background: #fff; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 20px 22px; display: flex; flex-direction: column; }
+.admin-card h3 { font-size: 16px; margin: 0 0 12px; }
+.admin-card-hint { font-size: 13px; margin: -6px 0 12px; }
+.admin-card > label:not(.remember-me) { font-size: 13px; font-weight: 600; margin: 4px 0 6px; }
+.admin-card input[type="time"], .admin-card input[type="url"], .admin-card input[type="text"], .admin-card textarea {
+  padding: 10px 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--color-border);
+  font-family: inherit; font-size: 14px; margin-bottom: 12px;
+}
+.admin-card textarea { resize: vertical; }
+.admin-card .remember-me { margin: 0 0 14px; }
+.admin-card .form-alert { margin: 0 0 12px; }
+.admin-card-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; }
+@media (max-width: 860px) {
+  .sub-stats { grid-template-columns: repeat(2, 1fr); }
+  .sub-grid { grid-template-columns: 1fr; }
+}
+
 .tab-count {
   display: inline-block; margin-left: 6px;
   padding: 1px 8px; border-radius: 999px;

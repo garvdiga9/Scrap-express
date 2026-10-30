@@ -84,6 +84,54 @@ if (installBanner && !isInstalledApp) {
 const deletedNotice = document.getElementById('deletedNotice');
 if (deletedNotice && new URLSearchParams(window.location.search).get('done') === '1') deletedNotice.hidden = false;
 
+/* ---------- Daily rates sign-up (above the footer) ---------- */
+const subscribeForm = document.getElementById('subscribeForm');
+if (subscribeForm) {
+  const contactInput = document.getElementById('subscribeContact');
+  const subscribeBtn = document.getElementById('subscribeBtn');
+  const subscribeMsg = document.getElementById('subscribeMsg');
+  const showSubscribeMsg = (text, ok) => {
+    subscribeMsg.textContent = text;
+    subscribeMsg.className = `subscribe-msg ${ok ? 'ok' : 'error'}`;
+    subscribeMsg.hidden = false;
+  };
+  subscribeForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const contact = contactInput.value.trim();
+    if (!contact) {
+      showSubscribeMsg('Please enter your email or WhatsApp number.', false);
+      contactInput.focus();
+      return;
+    }
+    subscribeBtn.disabled = true;
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contact }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not subscribe you right now. Please try again.');
+      showSubscribeMsg(data.message, true);
+      subscribeForm.reset();
+    } catch (err) {
+      showSubscribeMsg(err.message, false);
+    } finally {
+      subscribeBtn.disabled = false;
+    }
+  });
+
+  if (window.SEPush) {
+    window.SEPush.mount(document.getElementById('updatesPush'), '/api/subscribe', {
+      on: "App alerts are on for this device.",
+      off: '',
+      turnOn: '🔔 Get app alerts',
+      turnOff: 'Stop app alerts',
+      hideUnavailable: true,
+    });
+  }
+}
+
 /* ---------- Sticky header ---------- */
 const header = document.getElementById('siteHeader');
 function onScroll() {

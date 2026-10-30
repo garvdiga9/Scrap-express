@@ -43,6 +43,22 @@ services:
         sync: false
       - key: FIREBASE_APP_ID
         sync: false
+      # Daily rates & announcements. Email turns on once SMTP_USER/SMTP_PASS
+      # (a Gmail App Password) are set; WhatsApp once Meta's API keys are.
+      - key: SITE_URL
+        value: https://scrap-express.onrender.com
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_RATES_TEMPLATE
+        sync: false
+      - key: WHATSAPP_NEWS_TEMPLATE
+        sync: false
       # Play Store app (Trusted Web Activity). The fingerprint comes from Play
       # Console → Test and release → App integrity → App signing key certificate.
       - key: ANDROID_PACKAGE_NAME

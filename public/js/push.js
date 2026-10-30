@@ -78,10 +78,17 @@ window.SEPush = (() => {
     const render = (state, error) => {
       current = state;
       container.dataset.state = state;
+      // Optional for small spots (the footer sign-up): don't show anything
+      // when this browser can't do notifications at all.
+      if (texts.hideUnavailable && ['blocked', 'unsupported'].includes(state) && !error) {
+        container.hidden = true;
+        return;
+      }
+      container.hidden = false;
       statusEl.textContent = error || MESSAGES[state];
       statusEl.classList.toggle('push-error', Boolean(error));
       toggle.hidden = !['on', 'off'].includes(state);
-      toggle.textContent = state === 'on' ? 'Turn Off' : 'Turn On Notifications';
+      toggle.textContent = state === 'on' ? (texts.turnOff || 'Turn Off') : (texts.turnOn || 'Turn On Notifications');
       if (testBtn) testBtn.hidden = state !== 'on';
     };
 
@@ -90,7 +97,6 @@ window.SEPush = (() => {
     } catch (err) {
       render('off');
     }
-    container.hidden = false;
 
     toggle.addEventListener('click', async () => {
       toggle.disabled = true;
