@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#16a34a">
+<title>You're Offline - Scrap Express</title>
+<link rel="icon" href="/icons/favicon-32.png" sizes="32x32">
+<!-- Shown by the service worker when a page can't load without internet.
+     Everything is inline so it works with no connection at all. -->
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: linear-gradient(160deg, #0f172a, #16213a 60%, #123a24);
+    color: #fff; text-align: center;
+  }
+  .card { max-width: 380px; }
+  img { width: 84px; height: 84px; margin-bottom: 18px; }
+  h1 { font-size: 26px; margin: 0 0 8px; }
+  p { color: rgba(255,255,255,0.75); line-height: 1.6; margin: 0 0 26px; }
+  .actions { display: flex; flex-direction: column; gap: 12px; }
+  a, button {
+    display: block; padding: 14px 20px; border-radius: 999px;
+    font-size: 16px; font-weight: 700; text-decoration: none; border: 0; cursor: pointer; font-family: inherit;
+  }
+  .call { background: #f59e0b; color: #0f172a; }
+  .wa { background: #25d366; color: #fff; }
+  .retry { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.4); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <img src="/icons/icon-192.png" alt="Scrap Express">
+    <h1>You're offline</h1>
+    <p>Check your internet connection and try again. You can still call us to book a pickup.</p>
+    <div class="actions">
+      <a class="call" href="tel:+919818826333">Call +91 98188 26333</a>
+      <a class="wa" href="https://wa.me/919818826333">WhatsApp Us</a>
+      <button class="retry" type="button" onclick="location.reload()">Try Again</button>
+    </div>
+  </div>
+</body>
+</html>

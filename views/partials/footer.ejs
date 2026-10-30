@@ -19,6 +19,7 @@
       <a href="/book-pickup">Request Bulk Pickup</a>
       <a href="/demolition">Demolition Services</a>
       <a href="/areas">Areas We Serve</a>
+      <a href="#" id="footerInstall" hidden>Install the App</a>
       <% if (locals.loginEnabled || locals.customer) { %><a href="<%= locals.customer ? '/account' : '/login' %>"><%= locals.customer ? 'My Account' : 'Customer Login' %></a><% } %>
     </div>
     <div class="footer-col">
@@ -36,6 +37,17 @@
     </div>
   </div>
 </footer>
+
+<!-- "Install the app" banner, shown by main.js only when the phone can install it -->
+<div class="install-banner" id="installBanner" role="region" aria-label="Install the Scrap Express app" hidden>
+  <img src="/icons/icon-192.png" alt="" width="46" height="46">
+  <div class="install-text">
+    <strong>Get our free app</strong>
+    <span id="installHint">Book pickups &amp; track quotes faster.</span>
+  </div>
+  <button type="button" class="btn btn-accent" id="installBtn">Install</button>
+  <button type="button" class="install-close" id="installClose" aria-label="Not now">&times;</button>
+</div>
 
 <!-- Always-visible WhatsApp and call buttons -->
 <div class="float-contact">

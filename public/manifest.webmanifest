@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "Scrap Express - Bulk Scrap Buyers, Delhi NCR",
+  "short_name": "Scrap Express",
+  "description": "Request bulk scrap pickups, get quotes and track your requests. GST invoice, weighbridge slip and bank transfer payment.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#16a34a",
+  "lang": "en-IN",
+  "categories": ["business", "utilities"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Request a Bulk Pickup", "short_name": "Bulk Pickup", "url": "/book-pickup", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "My Account", "short_name": "My Account", "url": "/account", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Scrap Rates", "short_name": "Rates", "url": "/rates", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

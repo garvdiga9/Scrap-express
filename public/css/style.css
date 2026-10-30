@@ -1073,6 +1073,35 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   to { opacity: 1; scale: 1; }
 }
 
+/* ---------- "Install the app" banner ---------- */
+.install-banner {
+  position: fixed;
+  left: 16px; right: 16px; bottom: 16px;
+  z-index: 96;
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 12px 12px 14px;
+  background: var(--color-dark);
+  color: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  animation: rise-in 0.4s ease both;
+}
+.install-banner img { border-radius: 11px; flex-shrink: 0; }
+.install-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.install-text strong { font-size: 14.5px; }
+.install-text span { font-size: 12.5px; color: rgba(255,255,255,0.72); line-height: 1.4; }
+.install-banner .btn { padding: 9px 18px; font-size: 14px; flex-shrink: 0; }
+.install-close {
+  background: none; border: 0; padding: 0 4px;
+  color: rgba(255,255,255,0.6); font-size: 24px; line-height: 1;
+}
+.install-close:hover { color: #fff; }
+/* Keep the floating buttons clear of the banner (its height is measured in main.js). */
+.install-banner-open .float-contact,
+.install-banner-open .back-to-top { bottom: var(--install-space, 120px); }
+
 /* ---------- Card hover polish ---------- */
 .why-card, .buy-card, .impact-card, .review-card, .step-card { overflow: hidden; }
 .why-card::before, .buy-card::before, .impact-card::before, .review-card::before, .step-card::before {

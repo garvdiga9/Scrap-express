@@ -7,6 +7,79 @@ if (backToTop) {
   backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 }
 
+/* ---------- Installable app ---------- */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+
+const installBanner = document.getElementById('installBanner');
+const installBtn = document.getElementById('installBtn');
+const footerInstall = document.getElementById('footerInstall');
+const isInstalledApp = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+// iPhones/iPads have no install prompt; Safari users add it from the Share menu.
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const INSTALL_DISMISSED_KEY = 'se-install-dismissed';
+const INSTALL_QUIET_DAYS = 14;
+let installPrompt = null;
+
+function installDismissedRecently() {
+  try {
+    const at = Number(localStorage.getItem(INSTALL_DISMISSED_KEY) || 0);
+    return Date.now() - at < INSTALL_QUIET_DAYS * 24 * 60 * 60 * 1000;
+  } catch (err) {
+    return false;
+  }
+}
+function setInstallBanner(show) {
+  if (!installBanner) return;
+  installBanner.hidden = !show;
+  document.body.classList.toggle('install-banner-open', show);
+  if (show) {
+    const gap = 16 + 12; // banner's bottom margin + breathing room
+    document.documentElement.style.setProperty('--install-space', `${installBanner.offsetHeight + gap}px`);
+  }
+}
+function showIOSSteps() {
+  document.getElementById('installHint').textContent = 'Tap the Share button, then "Add to Home Screen".';
+  installBtn.hidden = true;
+  setInstallBanner(true);
+}
+
+if (installBanner && !isInstalledApp) {
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); // show our own banner instead of the browser's mini bar
+    installPrompt = e;
+    footerInstall.hidden = false;
+    if (!installDismissedRecently()) setInstallBanner(true);
+  });
+  if (isIOS) {
+    footerInstall.hidden = false;
+    if (!installDismissedRecently()) setTimeout(showIOSSteps, 4000);
+  }
+
+  installBtn.addEventListener('click', async () => {
+    if (!installPrompt) return showIOSSteps();
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    installPrompt = null;
+    setInstallBanner(false);
+  });
+  footerInstall.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (installPrompt) installBtn.click();
+    else showIOSSteps();
+  });
+  document.getElementById('installClose').addEventListener('click', () => {
+    setInstallBanner(false);
+    try { localStorage.setItem(INSTALL_DISMISSED_KEY, String(Date.now())); } catch (err) { /* private mode */ }
+  });
+  window.addEventListener('appinstalled', () => {
+    setInstallBanner(false);
+    footerInstall.hidden = true;
+  });
+}
+
 /* ---------- Sticky header ---------- */
 const header = document.getElementById('siteHeader');
 function onScroll() {
