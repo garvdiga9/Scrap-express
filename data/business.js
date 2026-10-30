@@ -68,7 +68,14 @@ const QUANTITY_UNITS = { kg: 1, tonnes: 1000 };
 const PICKUP_STATUSES = ['pending', 'quoted', 'accepted', 'declined', 'confirmed', 'completed', 'cancelled'];
 const QUOTE_UNITS = ['per kg', 'per tonne', 'per piece', 'lump sum'];
 
+// "₹18 per kg", "₹18.50 per kg", "₹1,50,000 lump sum"
+function formatQuoteRate({ rate, unit }) {
+  const n = Number(rate);
+  const digits = Number.isInteger(n) ? 0 : 2;
+  return `₹${n.toLocaleString('en-IN', { minimumFractionDigits: digits, maximumFractionDigits: digits })} ${unit}`;
+}
+
 module.exports = {
   AREAS, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS,
-  PICKUP_STATUSES, QUOTE_UNITS,
+  PICKUP_STATUSES, QUOTE_UNITS, formatQuoteRate,
 };

@@ -2,8 +2,10 @@ const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const pool = require('../db/pool');
 const { requireAdmin } = require('../middleware/auth');
-const { PICKUP_STATUSES, QUOTE_UNITS } = require('../data/business');
+const { PICKUP_STATUSES, QUOTE_UNITS, formatQuoteRate } = require('../data/business');
 const media = require('../lib/media');
+const push = require('../lib/push');
+const { mountPushRoutes } = require('./push');
 
 const ALLOWED_STATUSES = ['pending', 'confirmed', 'completed', 'cancelled'];
 const MAX_QUOTE_LINES = 20;
@@ -42,6 +44,46 @@ router.get('/me', (req, res) => {
   res.status(401).json({ error: 'Not authenticated' });
 });
 
+// ---- notifications to the admin's phone ----
+
+mountPushRoutes(router, requireAdmin, () => ({ admin: true }));
+
+router.post('/push/test', requireAdmin, async (req, res) => {
+  try {
+    const sent = await push.notifyAdmins({
+      title: 'Notifications are working 🔔',
+      body: "You'll get an alert here for every new pickup or demolition request.",
+      url: '/admin.html',
+      tag: 'test',
+    });
+    res.json({ sent });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not send a test notification.' });
+  }
+});
+
+// What a customer is told when their request's status changes.
+const STATUS_NOTICES = {
+  pickup: {
+    confirmed: (id) => ['Pickup confirmed 🚚', `Request #${id} is confirmed. Our team will call you with the pickup time.`],
+    completed: (id) => ['Pickup completed ✅', `Thank you! Request #${id} is complete. Your GST invoice and weight slip will follow.`],
+    cancelled: (id) => ['Request cancelled', `Pickup request #${id} was cancelled. Call us if this is unexpected.`],
+  },
+  demolition: {
+    confirmed: (id) => ['Site visit confirmed', `Demolition request #${id} is confirmed. Our team will call you to schedule the visit.`],
+    completed: (id) => ['Demolition completed ✅', `Thank you! Demolition request #${id} is complete.`],
+    cancelled: (id) => ['Request cancelled', `Demolition request #${id} was cancelled. Call us if this is unexpected.`],
+  },
+};
+
+function notifyStatusChange(kind, row, oldStatus) {
+  const notice = STATUS_NOTICES[kind][row.status];
+  if (!notice || !row.customer_id || row.status === oldStatus) return;
+  const [title, body] = notice(row.id);
+  push.quietly(push.notifyCustomer(row.customer_id, { title, body, url: '/account', tag: `${kind}-${row.id}` }));
+}
+
 // ---- pickup requests ----
 
 router.get('/requests', requireAdmin, async (req, res) => {
@@ -63,12 +105,17 @@ router.patch('/requests/:id', requireAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Invalid status' });
   }
   try {
+    // Joining the row to itself reads the status from before the update.
     const { rows } = await pool.query(
-      'UPDATE pickup_requests SET status = $1 WHERE id = $2 RETURNING *',
+      `UPDATE pickup_requests p SET status = $1 FROM pickup_requests old
+       WHERE p.id = $2 AND old.id = p.id
+       RETURNING p.*, old.status AS old_status`,
       [status, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
-    res.json(rows[0]);
+    const { old_status: oldStatus, ...row } = rows[0];
+    res.json(row);
+    notifyStatusChange('pickup', row, oldStatus);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update request' });
@@ -113,6 +160,14 @@ router.put('/requests/:id/quote', requireAdmin, async (req, res) => {
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     res.json(rows[0]);
+    const lines = items.slice(0, 2).map((item) => `${item.material} ${formatQuoteRate(item)}`);
+    if (items.length > 2) lines.push(`+${items.length - 2} more`);
+    push.quietly(push.notifyCustomer(rows[0].customer_id, {
+      title: 'Your quote is ready 💰',
+      body: `Request #${rows[0].id}: ${lines.join(', ')}. Tap to accept or decline.`,
+      url: '/account',
+      tag: `pickup-${rows[0].id}`,
+    }));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to save the quote' });
@@ -152,11 +207,15 @@ router.patch('/demolition/:id', requireAdmin, async (req, res) => {
   }
   try {
     const { rows } = await pool.query(
-      'UPDATE demolition_requests SET status = $1 WHERE id = $2 RETURNING *',
+      `UPDATE demolition_requests d SET status = $1 FROM demolition_requests old
+       WHERE d.id = $2 AND old.id = d.id
+       RETURNING d.*, old.status AS old_status`,
       [status, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
-    res.json(rows[0]);
+    const { old_status: oldStatus, ...row } = rows[0];
+    res.json(row);
+    notifyStatusChange('demolition', row, oldStatus);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update request' });

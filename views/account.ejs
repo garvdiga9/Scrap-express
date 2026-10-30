@@ -20,6 +20,15 @@
         </div>
       </div>
 
+      <div class="push-card" id="pushCard" hidden>
+        <svg class="icon push-icon"><use href="#icon-bell"/></svg>
+        <div class="push-copy">
+          <strong>Quote &amp; pickup alerts</strong>
+          <span data-push-status></span>
+        </div>
+        <button type="button" class="btn btn-accent" data-push-toggle hidden>Turn On Notifications</button>
+      </div>
+
       <div class="account-grid">
         <section class="account-card">
           <h2>Your Requests</h2>
@@ -136,5 +145,6 @@
 
 </main>
 
+<script src="/js/push.js"></script>
 <script src="/js/account.js"></script>
 <%- include('partials/footer') %>

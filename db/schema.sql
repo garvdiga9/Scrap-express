@@ -112,6 +112,28 @@ CREATE TABLE IF NOT EXISTS request_media (
 );
 CREATE INDEX IF NOT EXISTS idx_request_media_request ON request_media(request_type, request_id);
 
+-- Small key/value store for app settings, e.g. the push notification keys
+-- (generated on first start, so nothing has to be configured by hand).
+CREATE TABLE IF NOT EXISTS app_settings (
+  key VARCHAR(100) PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Phones/browsers that turned on notifications. One row per device; a device
+-- can belong to a customer, to the admin, or both (the owner testing).
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id SERIAL PRIMARY KEY,
+  endpoint TEXT UNIQUE NOT NULL,
+  p256dh VARCHAR(200) NOT NULL,
+  auth VARCHAR(100) NOT NULL,
+  customer_id INT REFERENCES customers(id) ON DELETE CASCADE,
+  is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  last_sent_at TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_customer ON push_subscriptions(customer_id);
+
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_status ON pickup_requests(status);
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_created_at ON pickup_requests(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_demolition_requests_status ON demolition_requests(status);

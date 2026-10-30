@@ -6,6 +6,7 @@ const {
 const { PHONE_RE, GSTIN_RE, GSTIN_ERROR } = require('../lib/validation');
 const customers = require('../lib/customers');
 const media = require('../lib/media');
+const push = require('../lib/push');
 
 const OTHER = 'Other';
 const MAX_OTHER_LENGTH = 100;
@@ -89,8 +90,15 @@ router.post('/', media.acceptMedia, async (req, res) => {
     );
     // As with the profile below, the booking is already saved, so a problem
     // recording the attachments is logged rather than reported as a failure.
-    await media.saveForRequest(req, 'pickup', rows[0].id)
-      .catch((err) => console.error('saving pickup media failed', err));
+    const files = await media.saveForRequest(req, 'pickup', rows[0].id)
+      .catch((err) => { console.error('saving pickup media failed', err); return 0; });
+    push.quietly(push.notifyAdmins({
+      title: `New pickup request #${rows[0].id} 📦`,
+      body: [companyName, quantity, area, files && `${files} photo${files === 1 ? '' : 's'}/video${files === 1 ? '' : 's'}`]
+        .filter(Boolean).join(' · '),
+      url: `/admin.html#pickup-${rows[0].id}`,
+      tag: `pickup-${rows[0].id}`,
+    }));
     if (customerId) {
       // The booking is already saved; a profile hiccup must not report failure
       // and tempt the customer to submit it twice.

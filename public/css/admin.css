@@ -97,6 +97,8 @@
 .status-declined { color: #475569; }
 
 .row-actions { white-space: nowrap; }
+.row-highlight td { background: #fef3c7 !important; transition: background 1s ease; }
+.admin-content .push-card { margin-bottom: 24px; }
 .view-btn {
   background: var(--color-primary-light); color: var(--color-primary-dark);
   border: none; border-radius: 6px; padding: 6px 10px; margin-right: 4px;

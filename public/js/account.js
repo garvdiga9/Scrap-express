@@ -68,6 +68,11 @@ document.querySelectorAll('.quote-actions').forEach((actions) => {
   });
 });
 
+window.SEPush.mount(document.getElementById('pushCard'), '/api/customer', {
+  on: "On — we'll alert this phone when your quote is ready and when your pickup is confirmed.",
+  off: 'Get an alert on this phone the moment your quote is ready.',
+});
+
 document.getElementById('logoutBtn').addEventListener('click', async () => {
   await fetch('/api/customer/logout', { method: 'POST' }).catch(() => {});
   window.location.href = '/';

@@ -791,6 +791,34 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .account-head h1 { font-size: clamp(26px, 3vw, 34px); margin-bottom: 4px; }
 .account-sub { margin: 0; }
 .account-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+/* Notification on/off card (My Account; reused by the admin dashboard) */
+.push-card {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 18px 22px;
+  margin-bottom: 24px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-light);
+  border: 1px solid #bbf7d0;
+}
+.push-card[data-state="on"] { background: #f0fdf4; }
+.push-card[data-state="blocked"], .push-card[data-state="unsupported"], .push-card[data-state="ios-install"] { background: #f8fafc; border-color: var(--color-border); }
+.push-icon {
+  width: 42px; height: 42px; padding: 9px;
+  border-radius: 50%;
+  background: var(--color-white); color: var(--color-primary);
+  flex-shrink: 0;
+}
+.push-card[data-state="on"] .push-icon { animation: bell-ring 1.2s ease 1; }
+@keyframes bell-ring {
+  0%, 100% { rotate: 0deg; }
+  20% { rotate: 14deg; } 40% { rotate: -12deg; } 60% { rotate: 8deg; } 80% { rotate: -4deg; }
+}
+.push-copy { display: flex; flex-direction: column; flex: 1 1 240px; min-width: 0; }
+.push-copy strong { color: var(--color-dark); font-size: 15px; }
+.push-copy span { font-size: 13.5px; color: var(--color-text); }
+.push-copy .push-error { color: #b91c1c; font-weight: 600; }
+.push-card .btn { padding: 10px 20px; font-size: 14px; }
+
 .account-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 28px; align-items: start; }
 .account-card {
   background: var(--color-white);

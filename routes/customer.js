@@ -3,6 +3,8 @@ const firebase = require('../lib/firebase');
 const customers = require('../lib/customers');
 const { AREAS, BUSINESS_TYPES } = require('../data/business');
 const { PHONE_RE, GSTIN_RE, PINCODE_RE, EMAIL_RE, GSTIN_ERROR } = require('../lib/validation');
+const push = require('../lib/push');
+const { mountPushRoutes } = require('./push');
 
 const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30;
 
@@ -108,6 +110,8 @@ router.get('/requests', requireCustomer, async (req, res) => {
   }
 });
 
+mountPushRoutes(router, requireCustomer, (req) => ({ customerId: req.session.customerId }));
+
 // POST /api/customer/requests/:id/quote — accept or decline a quote.
 router.post('/requests/:id/quote', requireCustomer, async (req, res) => {
   const response = { accept: 'accepted', decline: 'declined' }[req.body.response];
@@ -119,6 +123,14 @@ router.post('/requests/:id/quote', requireCustomer, async (req, res) => {
       return res.status(409).json({ error: 'This quote can no longer be answered. Please refresh the page.' });
     }
     res.json({ ok: true, status: response });
+    push.quietly(push.notifyAdmins({
+      title: response === 'accepted' ? `Quote accepted ✅ #${updated.id}` : `Quote declined #${updated.id}`,
+      body: response === 'accepted'
+        ? `${updated.company_name || updated.name} accepted your quote. Call them to schedule the pickup.`
+        : `${updated.company_name || updated.name} declined your quote.`,
+      url: `/admin.html#pickup-${updated.id}`,
+      tag: `pickup-${updated.id}`,
+    }));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not save your answer. Please try again.' });

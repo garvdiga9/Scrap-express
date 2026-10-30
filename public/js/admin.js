@@ -26,15 +26,48 @@ async function checkSession() {
   }
 }
 
+let pushMounted = false;
+
 function enterDashboard(username) {
   loginScreen.hidden = true;
   dashboard.hidden = false;
   welcomeUser.textContent = `Signed in as ${username}`;
-  loadRequests();
-  loadDemolitionRequests();
+  Promise.all([loadRequests(), loadDemolitionRequests()]).then(openFromLink);
   loadRates();
   loadTestimonials();
+  if (!pushMounted) {
+    pushMounted = true;
+    window.SEPush.mount(document.getElementById('adminPushCard'), '/api/admin', {
+      on: "On — this device gets an alert for every new request and quote answer.",
+      off: 'Get an alert on this phone or computer whenever a new request comes in.',
+    });
+  }
 }
+
+function showTab(name) {
+  document.querySelector(`.tab-btn[data-tab="${name}"]`).click();
+}
+
+// Notifications link to /admin.html#pickup-12 or #demolition-4: open that request.
+function openFromLink() {
+  const match = /^#(pickup|demolition)-(\d+)$/.exec(window.location.hash);
+  if (!match) return;
+  const id = Number(match[2]);
+  if (match[1] === 'pickup') {
+    const r = allRequests.find((x) => x.id === id);
+    showTab('requests');
+    if (r) openRequestDialog(r);
+  } else {
+    showTab('demolition');
+    const row = demolitionBody.querySelector(`tr[data-id="${id}"]`);
+    if (row) {
+      row.classList.add('row-highlight');
+      row.scrollIntoView({ block: 'center' });
+    }
+  }
+  history.replaceState(null, '', window.location.pathname);
+}
+window.addEventListener('hashchange', openFromLink);
 
 let loginInFlight = false;
 
@@ -519,6 +552,7 @@ function renderDemolitionRequests() {
   demolitionBody.innerHTML = '';
   rows.forEach((r) => {
     const tr = document.createElement('tr');
+    tr.dataset.id = r.id;
 
     const cells = [
       new Date(r.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
