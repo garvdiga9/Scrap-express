@@ -75,7 +75,7 @@ Then open:
 
 ## Customizing the site
 
-- **Business name, phone number, email:** search for `Scrap Express`, `+91 98188 26333`, and `garvdiga13@gmail.com` in `public/index.html` / `public/admin.html` and replace with your real details.
+- **Business name, phone number, email:** search for `Scrap Express`, `+91 98188 26333`, and `scrapexpress@gmail.com` in `public/index.html` / `public/admin.html` and replace with your real details.
 - **Colors:** edit the CSS variables at the top of `public/css/style.css` (`:root { ... }`).
 - **Areas served:** edit the badge list in the "Areas We Serve" section of `public/index.html`.
 

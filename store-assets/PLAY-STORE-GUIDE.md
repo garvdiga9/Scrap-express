@@ -35,7 +35,7 @@ reaches the app automatically.
 > We also handle demolition of commercial and institutional buildings, with a site survey and detailed quote.
 
 **Category:** Business
-**Contact email:** garvdiga13@gmail.com
+**Contact email:** scrapexpress@gmail.com
 **Phone:** +91 98188 26333
 **Website:** https://scrap-express.onrender.com
 **Privacy policy URL:** https://scrap-express.onrender.com/privacy
