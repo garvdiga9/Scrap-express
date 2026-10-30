@@ -99,9 +99,15 @@
             <label for="otherScrapType">Describe the other scrap *</label>
             <input type="text" id="otherScrapType" name="otherScrapType" maxlength="100" placeholder="e.g. wooden pallets, rubber, lead batteries">
           </div>
+          <%# Shown by main.js when two or more scrap types are ticked. %>
+          <div class="item-quantities" id="itemQuantities" hidden>
+            <p class="item-quantities-title">Quantity for each item * <span class="field-hint">Min. <%= minPickupKg %> kg in total</span></p>
+            <div class="item-quantity-list" id="itemQuantityList"></div>
+            <p class="item-total" id="itemTotal" aria-live="polite"></p>
+          </div>
         </fieldset>
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group" id="totalQuantityGroup">
             <label for="quantity">Approx. Total Quantity * <span class="field-hint">Min. <%= minPickupKg %> kg</span></label>
             <div class="quantity-input">
               <input type="number" id="quantity" name="quantity" required min="0" step="any" inputmode="decimal" placeholder="e.g. 500" data-min-kg="<%= minPickupKg %>">

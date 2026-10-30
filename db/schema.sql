@@ -112,6 +112,10 @@ CREATE TABLE IF NOT EXISTS request_media (
 );
 CREATE INDEX IF NOT EXISTS idx_request_media_request ON request_media(request_type, request_id);
 
+-- When several scrap types are ticked, the quantity of each:
+-- [{type, quantity, unit}]. approx_quantity then holds their total.
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS item_quantities JSONB;
+
 -- Small key/value store for app settings, e.g. the push notification keys
 -- (generated on first start, so nothing has to be configured by hand).
 CREATE TABLE IF NOT EXISTS app_settings (

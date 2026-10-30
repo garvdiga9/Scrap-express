@@ -615,6 +615,104 @@ if (otherCheckbox && otherWrap) {
   pickupForm.addEventListener('reset', () => { otherWrap.hidden = true; });
 }
 
+/* Quantity per item: with two or more scrap types ticked, ask for the
+   quantity of each (added up for the minimum) instead of one total. */
+const KG_PER_UNIT = { kg: 1, tonnes: 1000 };
+const itemQuantitiesBox = document.getElementById('itemQuantities');
+const itemQuantityList = document.getElementById('itemQuantityList');
+const itemTotal = document.getElementById('itemTotal');
+const totalQuantityGroup = document.getElementById('totalQuantityGroup');
+const pickupMinKg = Number(document.getElementById('quantity')?.dataset.minKg || 0);
+// Kept across re-draws so ticking another box doesn't wipe what was typed.
+const itemQuantityValues = new Map();
+
+const formatKg = (kg) => (kg >= 1000
+  ? `${(kg / 1000).toLocaleString('en-IN', { maximumFractionDigits: 2 })} tonnes`
+  : `${kg.toLocaleString('en-IN', { maximumFractionDigits: 2 })} kg`);
+
+function checkedScrapTypes() {
+  return [...pickupForm.querySelectorAll('input[name="scrapTypes"]:checked')].map((box) => box.value);
+}
+
+function readItemQuantities() {
+  return [...itemQuantityList.querySelectorAll('.item-quantity')].map((row) => ({
+    type: row.dataset.type,
+    quantity: row.querySelector('input').value,
+    unit: row.querySelector('select').value,
+  }));
+}
+
+function updateItemTotal() {
+  const items = readItemQuantities();
+  const kg = items.reduce((sum, i) => sum + (Number(i.quantity) > 0 ? Number(i.quantity) * KG_PER_UNIT[i.unit] : 0), 0);
+  itemTotal.textContent = kg ? `Total: ${formatKg(kg)}${kg < pickupMinKg ? ` (minimum is ${pickupMinKg} kg)` : ' ✓'}` : '';
+  itemTotal.classList.toggle('under-min', kg > 0 && kg < pickupMinKg);
+  return kg;
+}
+
+function renderItemQuantities() {
+  if (!itemQuantitiesBox) return;
+  const types = checkedScrapTypes();
+  const several = types.length > 1;
+  itemQuantitiesBox.hidden = !several;
+  totalQuantityGroup.hidden = several;
+  if (!several) return;
+
+  const otherText = document.getElementById('otherScrapType').value.trim();
+  itemQuantityList.innerHTML = '';
+  types.forEach((type) => {
+    const saved = itemQuantityValues.get(type) || { quantity: '', unit: 'kg' };
+    const row = document.createElement('div');
+    row.className = 'item-quantity';
+    row.dataset.type = type;
+
+    const label = document.createElement('label');
+    const inputId = `itemQty-${type.replace(/\W+/g, '-')}`;
+    label.htmlFor = inputId;
+    label.textContent = type === 'Other' ? (otherText || 'Other') : type;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'quantity-input';
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.id = inputId;
+    input.min = '0';
+    input.step = 'any';
+    input.inputMode = 'decimal';
+    input.placeholder = 'Qty';
+    input.value = saved.quantity;
+    const unit = document.createElement('select');
+    unit.setAttribute('aria-label', `Unit for ${label.textContent}`);
+    Object.keys(KG_PER_UNIT).forEach((u) => unit.append(new Option(u, u, false, u === saved.unit)));
+
+    const remember = () => {
+      itemQuantityValues.set(type, { quantity: input.value, unit: unit.value });
+      updateItemTotal();
+    };
+    input.addEventListener('input', remember);
+    unit.addEventListener('change', remember);
+
+    wrap.append(input, unit);
+    row.append(label, wrap);
+    itemQuantityList.appendChild(row);
+  });
+  updateItemTotal();
+}
+
+if (pickupForm && itemQuantitiesBox) {
+  pickupForm.querySelectorAll('input[name="scrapTypes"]').forEach((box) => box.addEventListener('change', renderItemQuantities));
+  // Keep the "Other" row's label in step with its description.
+  document.getElementById('otherScrapType').addEventListener('input', () => {
+    const otherLabel = itemQuantityList.querySelector('.item-quantity[data-type="Other"] label');
+    if (otherLabel) otherLabel.textContent = document.getElementById('otherScrapType').value.trim() || 'Other';
+  });
+  pickupForm.addEventListener('reset', () => {
+    itemQuantityValues.clear();
+    setTimeout(renderItemQuantities); // after the browser has unticked the boxes
+  });
+  renderItemQuantities(); // boxes the browser kept ticked after "back"
+}
+
 if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   formAlert.hidden = true;
@@ -643,18 +741,36 @@ if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
   } else {
     delete payload.otherScrapType;
   }
-  const quantityInput = document.getElementById('quantity');
-  const minKg = Number(quantityInput.dataset.minKg);
-  const quantityKg = Number(payload.quantity) * (payload.quantityUnit === 'tonnes' ? 1000 : 1);
-  if (!payload.quantity || !(quantityKg > 0)) {
-    showAlert(formAlert, 'Please enter the approximate total quantity.', 'error');
-    quantityInput.focus();
-    return;
-  }
-  if (quantityKg < minKg) {
-    showAlert(formAlert, `We handle bulk pickups of ${minKg} kg or more. Please check the quantity.`, 'error');
-    quantityInput.focus();
-    return;
+  if (payload.scrapTypes.length > 1) {
+    // A quantity for each ticked item; the minimum applies to their total.
+    payload.itemQuantities = readItemQuantities();
+    delete payload.quantity;
+    delete payload.quantityUnit;
+    const missing = payload.itemQuantities.find((i) => !(Number(i.quantity) > 0));
+    if (missing) {
+      const name = missing.type === 'Other' ? 'the other scrap' : missing.type;
+      showAlert(formAlert, `Please enter the quantity for ${name}.`, 'error');
+      itemQuantityList.querySelector(`.item-quantity[data-type="${CSS.escape(missing.type)}"] input`).focus();
+      return;
+    }
+    if (updateItemTotal() < pickupMinKg) {
+      showAlert(formAlert, `We handle bulk pickups of ${pickupMinKg} kg or more in total. Please check the quantities.`, 'error');
+      itemQuantityList.querySelector('input').focus();
+      return;
+    }
+  } else {
+    const quantityInput = document.getElementById('quantity');
+    const quantityKg = Number(payload.quantity) * (payload.quantityUnit === 'tonnes' ? 1000 : 1);
+    if (!payload.quantity || !(quantityKg > 0)) {
+      showAlert(formAlert, 'Please enter the approximate total quantity.', 'error');
+      quantityInput.focus();
+      return;
+    }
+    if (quantityKg < pickupMinKg) {
+      showAlert(formAlert, `We handle bulk pickups of ${pickupMinKg} kg or more. Please check the quantity.`, 'error');
+      quantityInput.focus();
+      return;
+    }
   }
 
   if (pickupMedia && pickupMedia.isPreparing()) {

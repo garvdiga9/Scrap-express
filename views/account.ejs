@@ -44,7 +44,10 @@
                   <div class="request-main">
                     <span class="request-kind"><%= r.kind === 'pickup' ? 'Bulk Pickup' : 'Demolition' %> · #<%= r.id %> · <%= fmtDate(r.created_at) %></span>
                     <strong class="request-detail"><%= r.detail %></strong>
-                    <span class="request-meta"><%= [r.quantity, r.frequency, r.location].filter(Boolean).join(' · ') %></span>
+                    <span class="request-meta"><%= [r.quantity && (r.item_quantities ? `${r.quantity} in total` : r.quantity), r.frequency, r.location].filter(Boolean).join(' · ') %></span>
+                    <% if (r.item_quantities && r.item_quantities.length) { %>
+                      <span class="request-items"><%= r.item_quantities.map((i) => `${i.type}: ${i.quantity} ${i.unit}`).join(' · ') %></span>
+                    <% } %>
                   </div>
                   <span class="status-badge status-<%= r.status %>"><%= statusLabels[r.status] || r.status %></span>
                   <% if (r.quote_items && r.quote_items.length) { %>

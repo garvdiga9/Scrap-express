@@ -11,6 +11,16 @@ const push = require('../lib/push');
 const OTHER = 'Other';
 const MAX_OTHER_LENGTH = 100;
 
+// A number plus a unit ("2", "tonnes") → { quantity, unit, kg }, or null.
+function parseQuantity(value, unit) {
+  const quantity = Number(value);
+  if (!(unit in QUANTITY_UNITS) || value === '' || value == null || !Number.isFinite(quantity) || quantity <= 0) return null;
+  return { quantity, unit, kg: quantity * QUANTITY_UNITS[unit] };
+}
+
+// 650 → "650 kg", 1250 → "1.25 tonnes"
+const formatTotal = (kg) => (kg >= 1000 ? `${+(kg / 1000).toFixed(2)} tonnes` : `${+kg.toFixed(2)} kg`);
+
 // POST /api/pickup - public: a business submits a bulk scrap pickup request,
 // optionally with photos/videos of the scrap.
 router.post('/', media.acceptMedia, async (req, res) => {
@@ -19,18 +29,6 @@ router.post('/', media.acceptMedia, async (req, res) => {
     name, phone, email, address, area, pincode,
     notes,
   } = req.body;
-
-  // Quantity arrives as a number plus a unit and is stored as text such as
-  // "2 tonnes", the same shape older free-text entries had.
-  const quantityValue = Number(req.body.quantity);
-  const quantityUnit = req.body.quantityUnit in QUANTITY_UNITS ? req.body.quantityUnit : null;
-  if (!quantityUnit || !Number.isFinite(quantityValue) || quantityValue <= 0) {
-    return res.status(400).json({ error: 'Please enter the approximate total quantity.' });
-  }
-  if (quantityValue * QUANTITY_UNITS[quantityUnit] < MIN_PICKUP_KG) {
-    return res.status(400).json({ error: `We handle bulk pickups of ${MIN_PICKUP_KG} kg or more.` });
-  }
-  const quantity = `${quantityValue} ${quantityUnit}`;
 
   // A business can tick several scrap types. Also accept the older single
   // `scrapType` field so a page cached before this change still submits.
@@ -45,6 +43,7 @@ router.post('/', media.acceptMedia, async (req, res) => {
   }
   // "Other" is only meaningful with a description, which replaces it in the
   // stored list, e.g. "Other: wooden pallets".
+  const chosenTypes = [...scrapTypes];
   if (scrapTypes.includes(OTHER)) {
     const otherText = String(req.body.otherScrapType ?? '').trim();
     if (!otherText) {
@@ -54,6 +53,35 @@ router.post('/', media.acceptMedia, async (req, res) => {
       return res.status(400).json({ error: `Please keep the other scrap description under ${MAX_OTHER_LENGTH} characters.` });
     }
     scrapTypes[scrapTypes.indexOf(OTHER)] = `${OTHER}: ${otherText}`;
+  }
+
+  // Quantity: one scrap type → one total; several → a quantity for each,
+  // added up. Stored as text such as "2 tonnes", like older entries.
+  let totalKg;
+  let quantity;
+  let itemQuantities = null;
+  if (chosenTypes.length > 1) {
+    const entries = Array.isArray(req.body.itemQuantities) ? req.body.itemQuantities : [];
+    itemQuantities = [];
+    for (const [i, type] of chosenTypes.entries()) {
+      const entry = entries.find((e) => e && e.type === type);
+      const q = entry && parseQuantity(entry.quantity, entry.unit);
+      if (!q) {
+        return res.status(400).json({ error: `Please enter the quantity for ${type === OTHER ? 'the other scrap' : type}.` });
+      }
+      itemQuantities.push({ type: scrapTypes[i], quantity: q.quantity, unit: q.unit, kg: q.kg });
+    }
+    totalKg = itemQuantities.reduce((sum, item) => sum + item.kg, 0);
+    quantity = formatTotal(totalKg);
+    itemQuantities = itemQuantities.map(({ kg, ...item }) => item);
+  } else {
+    const q = parseQuantity(req.body.quantity, req.body.quantityUnit);
+    if (!q) return res.status(400).json({ error: 'Please enter the approximate total quantity.' });
+    totalKg = q.kg;
+    quantity = `${q.quantity} ${q.unit}`;
+  }
+  if (totalKg < MIN_PICKUP_KG) {
+    return res.status(400).json({ error: `We handle bulk pickups of ${MIN_PICKUP_KG} kg or more${itemQuantities ? ' in total' : ''}.` });
   }
   if (!PHONE_RE.test(phone)) {
     return res.status(400).json({ error: 'Please enter a valid phone number.' });
@@ -79,13 +107,13 @@ router.post('/', media.acceptMedia, async (req, res) => {
     const { rows } = await pool.query(
       `INSERT INTO pickup_requests
         (company_name, business_type, pickup_frequency, gstin, customer_id,
-         name, phone, email, address, area, pincode, scrap_type, approx_quantity, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+         name, phone, email, address, area, pincode, scrap_type, approx_quantity, item_quantities, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
        RETURNING id`,
       [
         companyName, businessType || null, pickupFrequency || null, gstin, customerId,
         name, phone, email || null, address, area || null, pincode || null,
-        scrapTypes.join(', '), quantity, notes || null,
+        scrapTypes.join(', '), quantity, itemQuantities && JSON.stringify(itemQuantities), notes || null,
       ]
     );
     // As with the profile below, the booking is already saved, so a problem

@@ -470,7 +470,9 @@ function openRequestDialog(r) {
   addDetail('Area', r.area);
   addDetail('Pincode', r.pincode);
   addDetail('Scrap types', r.scrap_type);
-  addDetail('Quantity', r.approx_quantity);
+  addDetail('Quantity', r.item_quantities && r.item_quantities.length
+    ? `${r.approx_quantity} in total\n${r.item_quantities.map((i) => `• ${i.type}: ${i.quantity} ${i.unit}`).join('\n')}`
+    : r.approx_quantity);
   addDetail('Frequency', r.pickup_frequency);
   addDetail('Notes', r.notes);
   addDetail('Customer account', r.customer_id ? 'Yes — sees the quote in My Account' : 'No — share the quote by call or WhatsApp');
