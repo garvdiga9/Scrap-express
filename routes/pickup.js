@@ -155,7 +155,7 @@ router.post('/', media.acceptMedia, async (req, res) => {
       id: rows[0].id,
       message: customerId
         ? 'Request received! Your quote will appear in My Account, and our team may call you to confirm the details.'
-        : 'Request received! Our team will call you shortly to confirm the details and share a quote.',
+        : 'Request received! Our team will call you to confirm the details, and send your quote on WhatsApp or email with a link to accept it. No login needed.',
     });
   } catch (err) {
     console.error(err);

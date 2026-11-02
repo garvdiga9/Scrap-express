@@ -1,0 +1,35 @@
+<%- include('partials/head') %>
+<%- include('partials/sprite') %>
+<%- include('partials/header') %>
+
+<main id="top">
+  <section class="section page-top">
+    <div class="container quote-page">
+      <span class="eyebrow">Your Quote</span>
+      <div id="quoteDetails">
+        <div class="quote-page-head">
+          <div>
+            <h1>Bulk Pickup #<%= r.id %></h1>
+            <p class="request-meta-line"><%= [r.company_name, r.area].filter(Boolean).join(' · ') %></p>
+          </div>
+          <span class="status-badge status-<%= r.status %>"><%= statusLabels[r.status] || r.status %></span>
+        </div>
+        <p class="request-detail"><%= r.scrap_type %></p>
+        <p class="request-meta-line"><%= r.approx_quantity %><%= r.item_quantities ? ' in total' : '' %></p>
+        <% if (r.item_quantities && r.item_quantities.length) { %>
+          <p class="request-items"><%= r.item_quantities.map((i) => `${i.type}: ${i.quantity} ${i.unit}`).join(' · ') %></p>
+        <% } %>
+        <%- include('partials/quote-box', { r, api: `/api/quote/${token}` }) %>
+      </div>
+      <p class="quote-page-help">
+        Questions about this quote?
+        <a href="tel:+919818826333">Call +91 98188 26333</a> or
+        <a href="https://wa.me/919818826333" target="_blank" rel="noopener">WhatsApp us</a>.
+        Our <a href="/rules" target="_blank" rel="noopener">Pickup Rules</a> apply.
+      </p>
+    </div>
+  </section>
+</main>
+
+<script src="/js/quote-page.js" data-token="<%= token %>"></script>
+<%- include('partials/footer') %>

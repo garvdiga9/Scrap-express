@@ -13,6 +13,7 @@ window.SELive = (() => {
   let running = false;
   let lastHeard = 0;
   let wasConnected = false;
+  let query = '';
 
   // Several changes close together cause one refresh, and refreshes never
   // overlap, so an older answer can't overwrite a newer one.
@@ -59,7 +60,7 @@ window.SELive = (() => {
   function connect() {
     disconnect();
     lastHeard = Date.now();
-    source = new EventSource('/api/live');
+    source = new EventSource(`/api/live${query}`);
     source.addEventListener('open', () => {
       lastHeard = Date.now();
       // Anything could have changed while the connection was down.
@@ -86,8 +87,10 @@ window.SELive = (() => {
     if (closed || Date.now() - lastHeard > SILENT_TOO_LONG_MS) connect();
   }
 
-  function start() {
+  // `liveQuery` says what else this page is following, such as a quote link.
+  function start(liveQuery = '') {
     if (running || !('EventSource' in window)) return;
+    query = liveQuery;
     running = true;
     check();
   }

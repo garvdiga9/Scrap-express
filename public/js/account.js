@@ -68,69 +68,9 @@ async function refreshAccount() {
   });
 }
 
-// Accept / Decline on a quote. Listens on the list because its contents get
-// replaced by refreshAccount.
-document.getElementById('accountRequests').addEventListener('click', async (e) => {
-  const button = e.target.closest('.quote-actions button[data-response]');
-  if (!button) return;
-  const actions = button.parentElement;
-  const alertBox = actions.nextElementSibling;
-  const { response } = button.dataset;
-  if (response === 'decline' && !confirm('Decline this quote? You can call us any time for a revised one.')) return;
-
-  alertBox.hidden = true;
-  actions.querySelectorAll('button').forEach((b) => { b.disabled = true; });
-  try {
-    const res = await fetch(`/api/customer/requests/${actions.dataset.requestId}/quote`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ response }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (res.status === 401) {
-      window.location.href = '/login?next=/account';
-      return;
-    }
-    if (!res.ok) throw new Error(data.error || 'Could not save your answer. Please try again.');
-    await refreshAccount().catch(() => window.location.reload());
-  } catch (err) {
-    alertBox.textContent = err.message;
-    alertBox.hidden = false;
-    actions.querySelectorAll('button').forEach((b) => { b.disabled = false; });
-  }
-});
-
-// "My scrap is ready", shown once a quote has been accepted.
-document.getElementById('accountRequests').addEventListener('submit', async (e) => {
-  const form = e.target.closest('.ready-form');
-  if (!form) return;
-  e.preventDefault();
-  const button = form.querySelector('button');
-  const alertBox = form.querySelector('.form-alert');
-  alertBox.hidden = true;
-  button.disabled = true;
-  try {
-    const res = await fetch(`/api/customer/requests/${form.dataset.requestId}/ready`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ readyDate: form.elements.readyDate.value }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (res.status === 401) {
-      window.location.href = '/login?next=/account';
-      return;
-    }
-    if (!res.ok) throw new Error(data.error || 'Could not save that. Please try again.');
-    await refreshAccount().catch(() => window.location.reload());
-  } catch (err) {
-    alertBox.textContent = err.message;
-    alertBox.hidden = false;
-    button.disabled = false;
-  }
-});
-
-// push.js and live.js load with the footer, after this script, so wait for the page.
+// The footer's scripts load after this one, so wait for the page.
 document.addEventListener('DOMContentLoaded', () => {
+  window.SEQuote.wire(document.getElementById('accountRequests'), refreshAccount);
   window.SEPush.mount(document.getElementById('pushCard'), '/api/customer', {
     on: "On — we'll alert this phone when your quote is ready and when your pickup is confirmed.",
     off: 'Get an alert on this phone the moment your quote is ready.',

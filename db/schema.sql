@@ -183,6 +183,10 @@ ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS ready_at TIMESTAMP;
 ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS ready_date DATE;
 ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS dispatch_checked_at TIMESTAMP;
 
+-- The secret in each quote's private link (lib/quotes.js).
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS quote_token VARCHAR(64);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_pickup_requests_quote_token ON pickup_requests(quote_token);
+
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_status ON pickup_requests(status);
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_created_at ON pickup_requests(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_demolition_requests_status ON demolition_requests(status);

@@ -438,8 +438,19 @@ const quoteHint = document.getElementById('quoteHint');
 const quoteAlert = document.getElementById('quoteAlert');
 const sendQuoteBtn = document.getElementById('sendQuoteBtn');
 const whatsappLink = document.getElementById('whatsappLink');
+const copyQuoteLink = document.getElementById('copyQuoteLink');
 let dialogRequest = null;
 
+copyQuoteLink.addEventListener('click', async () => {
+  const link = quoteLinkOf(dialogRequest);
+  try {
+    await navigator.clipboard.writeText(link);
+    copyQuoteLink.textContent = 'Copied!';
+    setTimeout(() => { copyQuoteLink.textContent = 'Copy Quote Link'; }, 1500);
+  } catch (err) {
+    window.prompt('Copy this link:', link);
+  }
+});
 document.getElementById('dialogClose').addEventListener('click', () => requestDialog.close());
 // Clicking the dimmed backdrop (outside the dialog box) closes it too.
 requestDialog.addEventListener('click', (e) => { if (e.target === requestDialog) requestDialog.close(); });
@@ -517,10 +528,14 @@ function addDetail(label, value, href) {
 }
 
 // A ready-to-send WhatsApp message with the quote, opened from your own
-// WhatsApp. Customers without an account only get the quote this way or by call.
+// WhatsApp, with the private link to accept or decline it.
+const quoteLinkOf = (r) => `${window.location.origin}/quote/${r.quote_token}`;
+
 function updateWhatsappLink(r) {
+  copyQuoteLink.hidden = !r.quote_token;
   const digits = String(r.phone || '').replace(/\D/g, '').slice(-10);
-  if (!r.quote_items || digits.length !== 10) {
+  // Landlines can't get WhatsApp messages.
+  if (!r.quote_items || !/^[6-9]\d{9}$/.test(digits) || String(r.phone).startsWith('0')) {
     whatsappLink.hidden = true;
     return;
   }
@@ -531,8 +546,8 @@ function updateWhatsappLink(r) {
   ];
   if (r.quote_note) lines.push('', r.quote_note);
   lines.push('', 'The final amount is worked out from the weighbridge weight at pickup.');
-  lines.push(r.customer_id
-    ? `You can accept or decline it here: ${window.location.origin}/account`
+  lines.push(r.quote_token
+    ? `You can accept or decline it here, no login needed: ${quoteLinkOf(r)}`
     : 'Reply here to confirm and we will schedule the pickup.');
   whatsappLink.href = `https://wa.me/91${digits}?text=${encodeURIComponent(lines.join('\n'))}`;
   whatsappLink.hidden = false;
@@ -562,7 +577,7 @@ function renderRequestSummary(r) {
   addDetail('Frequency', r.pickup_frequency);
   addDetail('Notes', r.notes);
   addDetail('Rules accepted', r.terms_accepted_at ? formatDate(r.terms_accepted_at) : 'Before the rules were added');
-  addDetail('Customer account', r.customer_id ? 'Yes — sees the quote in My Account' : 'No — share the quote by call or WhatsApp');
+  addDetail('Customer account', r.customer_id ? 'Yes — sees the quote in My Account too' : 'No — they answer from the quote link');
   if (r.quote_response) {
     addDetail('Customer answer', `${r.quote_response === 'accepted' ? 'Accepted' : 'Declined'} on ${formatDate(r.quote_responded_at)}`);
   }
@@ -632,10 +647,15 @@ quoteForm.addEventListener('submit', async (e) => {
     Object.assign(r, data);
     renderRequests();
     openRequestDialog(r);
-    quoteAlert.textContent = r.customer_id
-      ? 'Quote sent. The customer can now see it in My Account. You can also send it on WhatsApp.'
-      : 'Quote saved. This customer has no account, so share it on WhatsApp or by phone.';
-    quoteAlert.className = 'form-alert success';
+    const emailNote = {
+      sent: `Emailed to ${r.email}.`,
+      failed: `The email to ${r.email} could not be sent, so please send it on WhatsApp.`,
+      off: 'Email isn\'t set up yet, so please send it on WhatsApp.',
+      none: 'They didn\'t give an email, so please send it on WhatsApp.',
+    }[data.email_status];
+    const accountNote = r.customer_id ? ' They can also see it in My Account.' : '';
+    quoteAlert.textContent = `Quote saved. ${emailNote}${accountNote}`;
+    quoteAlert.className = data.email_status === 'failed' ? 'form-alert error' : 'form-alert success';
     quoteAlert.hidden = false;
   } catch (err) {
     showQuoteError(err.message);

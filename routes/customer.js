@@ -1,14 +1,12 @@
 const router = require('express').Router();
 const firebase = require('../lib/firebase');
 const customers = require('../lib/customers');
-const {
-  AREAS, OTHER_AREA, BUSINESS_TYPES, readyDateRange,
-} = require('../data/business');
+const { AREAS, OTHER_AREA, BUSINESS_TYPES } = require('../data/business');
+const quotes = require('../lib/quotes');
 const { parseSite } = require('../lib/location');
 const {
   GSTIN_RE, GSTIN_ERROR, PHONE_ERROR, EMAIL_ERROR, cleanPhone, cleanEmail,
 } = require('../lib/validation');
-const push = require('../lib/push');
 const { mountPushRoutes } = require('./push');
 const live = require('../lib/live');
 
@@ -166,15 +164,8 @@ router.post('/requests/:id/quote', requireCustomer, async (req, res) => {
       return res.status(409).json({ error: 'This quote can no longer be answered. Please refresh the page.' });
     }
     res.json({ ok: true, status: response });
-    live.requestChanged(req.session.customerId);
-    push.quietly(push.notifyAdmins({
-      title: response === 'accepted' ? `Quote accepted ✅ #${updated.id}` : `Quote declined #${updated.id}`,
-      body: response === 'accepted'
-        ? `${updated.company_name || updated.name} accepted your quote. Call them to schedule the pickup.`
-        : `${updated.company_name || updated.name} declined your quote.`,
-      url: `/admin.html#pickup-${updated.id}`,
-      tag: `pickup-${updated.id}`,
-    }));
+    live.requestChanged(req.session.customerId, updated.quote_token);
+    quotes.notifyAnswer(updated, response);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not save your answer. Please try again.' });
@@ -185,22 +176,13 @@ router.post('/requests/:id/quote', requireCustomer, async (req, res) => {
 router.post('/requests/:id/ready', requireCustomer, async (req, res) => {
   if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ error: 'Request not found.' });
   const { readyDate } = req.body;
-  const { min, max } = readyDateRange();
-  // Dates in this format sort correctly as plain text.
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(readyDate || '') || readyDate < min || readyDate > max) {
-    return res.status(400).json({ error: 'Please choose a date in the next 30 days.' });
-  }
+  if (!quotes.validReadyDate(readyDate)) return res.status(400).json({ error: 'Please choose a date in the next 30 days.' });
   try {
     const updated = await customers.markReady(req.session.customerId, Number(req.params.id), readyDate);
     if (!updated) return res.status(409).json({ error: 'This request has already moved on. Please refresh the page.' });
     res.json({ ok: true });
-    live.requestChanged(req.session.customerId);
-    push.quietly(push.notifyAdmins({
-      title: `Scrap ready 🚚 #${updated.id}`,
-      body: `${updated.company_name || updated.name} says the scrap is ready from ${readyDate}. Call them before sending a truck.`,
-      url: `/admin.html#pickup-${updated.id}`,
-      tag: `pickup-${updated.id}`,
-    }));
+    live.requestChanged(req.session.customerId, updated.quote_token);
+    quotes.notifyReady(updated, readyDate);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not save that. Please try again.' });

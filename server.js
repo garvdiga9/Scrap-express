@@ -20,6 +20,8 @@ const push = require('./lib/push');
 const updates = require('./lib/updates');
 const subscribeRouter = require('./routes/subscribe');
 const locationRouter = require('./routes/location');
+const quoteRouter = require('./routes/quote');
+const quotes = require('./lib/quotes');
 const customers = require('./lib/customers');
 const live = require('./lib/live');
 
@@ -86,6 +88,7 @@ app.get('/api/live', live.connect);
 
 app.use('/api/subscribe', express.urlencoded({ extended: false }), subscribeRouter);
 app.use('/api/location', locationRouter);
+app.use('/api/quote', quoteRouter);
 app.use('/api/rates', ratesRouter);
 app.use('/api/pickup', pickupRouter);
 app.use('/api/demolition', demolitionRouter);
@@ -194,6 +197,35 @@ app.get('/unsubscribe', async (req, res) => {
   });
 });
 
+// The private quote link: no login, so it mustn't be cached or leak elsewhere.
+app.get('/quote/:token', async (req, res) => {
+  res.set({ 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' });
+  try {
+    const request = await quotes.findByToken(req.params.token);
+    if (!request) {
+      return res.status(404).render('notice', {
+        ...NOTICE,
+        title: 'Quote Not Found - Scrap Express',
+        icon: 'icon-close',
+        heading: "We couldn't find this quote",
+        message: 'This link may be incomplete, or the request may have been removed. Please call us on +91 98188 26333 and we will help.',
+      });
+    }
+    res.render('quote', {
+      page: 'quote',
+      title: `Your Quote #${request.id} - Scrap Express`,
+      description: 'Your Scrap Express quote.',
+      noindex: true,
+      r: request,
+      token: req.params.token,
+      readyDates: readyDateRange(),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Could not load this quote. Please refresh the page.');
+  }
+});
+
 app.get('/account', async (req, res) => {
   if (!res.locals.customer) return res.redirect('/login?next=/account');
   try {
@@ -227,4 +259,5 @@ app.listen(PORT, () => {
   console.log(`Scrap Express server running at http://localhost:${PORT}`);
   push.init().catch(() => {}); // prepare notification keys early; logged inside if it fails
   updates.startSchedule(); // daily rates to subscribers
+  quotes.addMissingTokens().catch((err) => console.error('adding quote links failed:', err.message));
 });

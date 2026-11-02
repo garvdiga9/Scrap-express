@@ -8,6 +8,7 @@ const push = require('../lib/push');
 const { mountPushRoutes } = require('./push');
 const updates = require('../lib/updates');
 const live = require('../lib/live');
+const quotes = require('../lib/quotes');
 
 const ALLOWED_STATUSES = ['pending', 'confirmed', 'completed', 'cancelled'];
 const MAX_QUOTE_LINES = 20;
@@ -131,7 +132,7 @@ router.patch('/requests/:id', requireAdmin, async (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     const { old_status: oldStatus, ...row } = rows[0];
     res.json(row);
-    live.requestChanged(row.customer_id);
+    live.requestChanged(row.customer_id, row.quote_token);
     notifyStatusChange('pickup', row, oldStatus);
   } catch (err) {
     console.error(err);
@@ -171,14 +172,17 @@ router.put('/requests/:id/quote', requireAdmin, async (req, res) => {
       `UPDATE pickup_requests
        SET quote_items = $1, quote_note = $2, quoted_at = NOW(),
            quote_response = NULL, quote_responded_at = NULL, status = 'quoted',
-           ready_at = NULL, ready_date = NULL, dispatch_checked_at = NULL
+           ready_at = NULL, ready_date = NULL, dispatch_checked_at = NULL,
+           quote_token = COALESCE(quote_token, $4)
        WHERE id = $3
        RETURNING *`,
-      [JSON.stringify(items), note || null, req.params.id]
+      [JSON.stringify(items), note || null, req.params.id, quotes.newToken()]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
-    res.json(rows[0]);
-    live.requestChanged(rows[0].customer_id);
+    // The admin sees whether the email really went, so it comes before the answer.
+    const emailStatus = await quotes.emailQuote(rows[0]);
+    res.json({ ...rows[0], email_status: emailStatus });
+    live.requestChanged(rows[0].customer_id, rows[0].quote_token);
     const lines = items.slice(0, 2).map((item) => `${item.material} ${formatQuoteRate(item)}`);
     if (items.length > 2) lines.push(`+${items.length - 2} more`);
     push.quietly(push.notifyCustomer(rows[0].customer_id, {
@@ -195,10 +199,10 @@ router.put('/requests/:id/quote', requireAdmin, async (req, res) => {
 
 router.delete('/requests/:id', requireAdmin, async (req, res) => {
   try {
-    const { rows } = await pool.query('DELETE FROM pickup_requests WHERE id = $1 RETURNING customer_id', [req.params.id]);
+    const { rows } = await pool.query('DELETE FROM pickup_requests WHERE id = $1 RETURNING customer_id, quote_token', [req.params.id]);
     await media.removeForRequest('pickup', req.params.id);
     res.json({ message: 'Deleted' });
-    live.requestChanged(rows[0] && rows[0].customer_id);
+    live.requestChanged(rows[0] && rows[0].customer_id, rows[0] && rows[0].quote_token);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete request' });

@@ -1067,6 +1067,15 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .quote-response { font-size: 14px; font-weight: 600; margin: 12px 0 0; }
 .quote-response.accepted { color: #115e59; }
 .quote-response.declined { color: #475569; }
+.quote-page { max-width: 640px; }
+.quote-page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-top: 12px; }
+.quote-page h1 { font-size: clamp(26px, 3vw, 34px); margin-bottom: 4px; }
+.request-meta-line { font-size: 14px; margin: 0 0 8px; }
+.quote-page .request-detail { display: block; margin: 12px 0 4px; color: var(--color-dark); font-weight: 600; }
+.quote-page .request-items { margin: 0 0 8px; }
+.quote-page .request-quote { margin-top: 16px; background: var(--color-white); }
+.quote-page-help { font-size: 14px; margin: 18px 0 0; }
+.quote-page-help a { color: var(--color-primary-dark); font-weight: 600; text-decoration: underline; }
 .ready-form { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--color-border); }
 .ready-form label { display: block; font-size: 13.5px; font-weight: 500; line-height: 1.45; color: var(--color-text); margin-bottom: 10px; }
 .ready-form-row { display: flex; flex-wrap: wrap; gap: 10px; }

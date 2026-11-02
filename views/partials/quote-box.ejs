@@ -1,0 +1,41 @@
+<%# A quote and the customer's next step, in My Account and on the private quote
+    link. Locals: r (the request), api (where the answers go, see quote-actions.js). %>
+<% const fmtQuoteDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }); %>
+<div class="request-quote" data-quote-api="<%= api %>">
+  <div class="quote-head">
+    <strong>Our Quote</strong>
+    <span>Sent <%= fmtQuoteDate(r.quoted_at) %></span>
+  </div>
+  <table class="quote-table">
+    <tbody>
+      <% r.quote_items.forEach((item) => { %>
+        <tr><td><%= item.material %></td><td><%= formatQuoteRate(item) %></td></tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% if (r.quote_note) { %><p class="quote-note"><%= r.quote_note %></p><% } %>
+  <p class="quote-fine">Final amount is worked out from the weighbridge weight at pickup. GST invoice and payment by cash or bank transfer, whichever you prefer.</p>
+  <% if (r.status === 'quoted') { %>
+    <div class="quote-actions">
+      <button type="button" class="btn btn-accent" data-response="accept">Accept Quote</button>
+      <button type="button" class="btn btn-outline" data-response="decline">Decline</button>
+    </div>
+    <div class="form-alert error quote-alert" hidden></div>
+  <% } else if (r.quote_response === 'accepted') { %>
+    <p class="quote-response accepted">You accepted this quote on <%= fmtQuoteDate(r.quote_responded_at) %>.</p>
+    <% if (r.status === 'accepted') { %>
+      <form class="ready-form">
+        <label for="readyDate<%= r.id %>">When will the scrap be ready for us to collect? Please tell us only when it's really there, so our truck doesn't make a wasted trip.</label>
+        <div class="ready-form-row">
+          <input type="date" id="readyDate<%= r.id %>" name="readyDate" required min="<%= readyDates.min %>" max="<%= readyDates.max %>" value="<%= readyDates.min %>">
+          <button type="submit" class="btn btn-accent">My Scrap Is Ready</button>
+        </div>
+        <div class="form-alert error" hidden></div>
+      </form>
+    <% } else if (r.status === 'ready') { %>
+      <p class="quote-response accepted">You told us the scrap is ready<%= r.ready_date ? ` from ${fmtQuoteDate(r.ready_date)}` : '' %>. We'll call you to confirm before sending a truck.</p>
+    <% } %>
+  <% } else if (r.quote_response === 'declined') { %>
+    <p class="quote-response declined">You declined this quote on <%= fmtQuoteDate(r.quote_responded_at) %>. Call us if you'd like a revised quote.</p>
+  <% } %>
+</div>
