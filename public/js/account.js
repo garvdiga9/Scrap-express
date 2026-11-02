@@ -11,6 +11,7 @@ function showProfileAlert(message, type) {
 profileForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   profileAlert.hidden = true;
+  if (!window.SEValidate.checkForm(profileForm)) return;
   saveBtn.disabled = true;
   saveBtn.textContent = 'Saving…';
   try {

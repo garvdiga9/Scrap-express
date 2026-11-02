@@ -744,6 +744,7 @@ if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
     showAlert(formAlert, 'Please fill in all required fields marked with *.', 'error');
     return;
   }
+  if (!window.SEValidate.checkForm(pickupForm)) return;
   if (!payload.scrapTypes.length) {
     showAlert(formAlert, 'Please tick at least one scrap type.', 'error');
     return;
@@ -832,6 +833,7 @@ if (demolitionForm) demolitionForm.addEventListener('submit', async (e) => {
     showAlert(demolitionAlert, 'Please fill in all required fields marked with *.', 'error');
     return;
   }
+  if (!window.SEValidate.checkForm(demolitionForm)) return;
 
   if (demolitionMedia && demolitionMedia.isPreparing()) {
     showAlert(demolitionAlert, 'Your photos are still being prepared. Please try again in a moment.', 'error');

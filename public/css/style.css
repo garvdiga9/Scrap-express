@@ -734,6 +734,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   box-shadow: 0 0 0 3px var(--color-primary-light);
 }
 .form-group textarea { resize: vertical; }
+.form-group input.field-invalid { border-color: #dc2626; }
+.form-group input.field-invalid:focus { border-color: #dc2626; box-shadow: 0 0 0 3px #fee2e2; }
+.field-error { font-size: 12.5px; line-height: 1.4; color: #b91c1c; }
 
 /* ---------- Photo / video attachments ---------- */
 .media-upload { border: 0; padding: 0; margin: 0 0 18px; min-width: 0; }

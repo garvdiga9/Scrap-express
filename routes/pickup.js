@@ -3,7 +3,9 @@ const pool = require('../db/pool');
 const {
   BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS,
 } = require('../data/business');
-const { PHONE_RE, GSTIN_RE, GSTIN_ERROR } = require('../lib/validation');
+const {
+  GSTIN_RE, GSTIN_ERROR, PHONE_ERROR, EMAIL_ERROR, cleanPhone, cleanEmail,
+} = require('../lib/validation');
 const customers = require('../lib/customers');
 const media = require('../lib/media');
 const push = require('../lib/push');
@@ -27,7 +29,7 @@ const formatTotal = (kg) => (kg >= 1000 ? `${+(kg / 1000).toFixed(2)} tonnes` : 
 router.post('/', media.acceptMedia, async (req, res) => {
   const {
     companyName, businessType, pickupFrequency,
-    name, phone, email, address, area, pincode,
+    name, address, area, pincode,
     notes,
   } = req.body;
 
@@ -36,9 +38,15 @@ router.post('/', media.acceptMedia, async (req, res) => {
   const submitted = req.body.scrapTypes ?? req.body.scrapType;
   const scrapTypes = [...new Set((Array.isArray(submitted) ? submitted : [submitted]).filter(Boolean))];
 
-  if (!companyName || !name || !phone || !address || !scrapTypes.length) {
+  if (!companyName || !name || !req.body.phone || !address || !scrapTypes.length) {
     return res.status(400).json({ error: 'Company, contact person, phone, site address and at least one scrap type are required.' });
   }
+  const phone = cleanPhone(req.body.phone);
+  if (!phone) return res.status(400).json({ error: PHONE_ERROR });
+  // Email is optional, but has to be a real address if given.
+  const typedEmail = String(req.body.email ?? '').trim();
+  const email = typedEmail ? cleanEmail(typedEmail) : null;
+  if (typedEmail && !email) return res.status(400).json({ error: EMAIL_ERROR });
   if (scrapTypes.some((type) => type !== OTHER && !SCRAP_TYPES.includes(type))) {
     return res.status(400).json({ error: 'Please choose scrap types from the list.' });
   }
@@ -84,10 +92,7 @@ router.post('/', media.acceptMedia, async (req, res) => {
   if (totalKg < MIN_PICKUP_KG) {
     return res.status(400).json({ error: `We handle bulk pickups of ${MIN_PICKUP_KG} kg or more${itemQuantities ? ' in total' : ''}.` });
   }
-  if (!PHONE_RE.test(phone)) {
-    return res.status(400).json({ error: 'Please enter a valid phone number.' });
-  }
-  if (businessType && !BUSINESS_TYPES.includes(businessType)) {
+  if (businessType &&!BUSINESS_TYPES.includes(businessType)) {
     return res.status(400).json({ error: 'Please choose a business type from the list.' });
   }
   if (pickupFrequency && !PICKUP_FREQUENCIES.includes(pickupFrequency)) {
@@ -113,7 +118,7 @@ router.post('/', media.acceptMedia, async (req, res) => {
        RETURNING id`,
       [
         companyName, businessType || null, pickupFrequency || null, gstin, customerId,
-        name, phone, email || null, address, area || null, pincode || null,
+        name, phone, email, address, area || null, pincode || null,
         scrapTypes.join(', '), quantity, itemQuantities && JSON.stringify(itemQuantities), notes || null,
       ]
     );

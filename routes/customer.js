@@ -2,7 +2,9 @@ const router = require('express').Router();
 const firebase = require('../lib/firebase');
 const customers = require('../lib/customers');
 const { AREAS, BUSINESS_TYPES } = require('../data/business');
-const { PHONE_RE, GSTIN_RE, PINCODE_RE, EMAIL_RE, GSTIN_ERROR } = require('../lib/validation');
+const {
+  GSTIN_RE, PINCODE_RE, GSTIN_ERROR, PHONE_ERROR, EMAIL_ERROR, cleanPhone, cleanEmail,
+} = require('../lib/validation');
 const push = require('../lib/push');
 const { mountPushRoutes } = require('./push');
 const live = require('../lib/live');
@@ -85,8 +87,14 @@ router.put('/me', requireCustomer, async (req, res) => {
     pincode: clean(req.body.pincode, 10),
   };
 
-  if (p.phone && !PHONE_RE.test(p.phone)) return res.status(400).json({ error: 'Please enter a valid phone number.' });
-  if (p.email && !EMAIL_RE.test(p.email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
+  if (p.phone) {
+    p.phone = cleanPhone(p.phone);
+    if (!p.phone) return res.status(400).json({ error: PHONE_ERROR });
+  }
+  if (p.email) {
+    p.email = cleanEmail(p.email);
+    if (!p.email) return res.status(400).json({ error: EMAIL_ERROR });
+  }
   if (p.gstin && !GSTIN_RE.test(p.gstin)) return res.status(400).json({ error: GSTIN_ERROR });
   if (p.pincode && !PINCODE_RE.test(p.pincode)) return res.status(400).json({ error: 'Pincode should be 6 digits.' });
   if (p.businessType && !BUSINESS_TYPES.includes(p.businessType)) return res.status(400).json({ error: 'Please choose a business type from the list.' });
