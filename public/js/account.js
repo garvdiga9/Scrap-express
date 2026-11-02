@@ -100,6 +100,35 @@ document.getElementById('accountRequests').addEventListener('click', async (e) =
   }
 });
 
+// "My scrap is ready", shown once a quote has been accepted.
+document.getElementById('accountRequests').addEventListener('submit', async (e) => {
+  const form = e.target.closest('.ready-form');
+  if (!form) return;
+  e.preventDefault();
+  const button = form.querySelector('button');
+  const alertBox = form.querySelector('.form-alert');
+  alertBox.hidden = true;
+  button.disabled = true;
+  try {
+    const res = await fetch(`/api/customer/requests/${form.dataset.requestId}/ready`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ readyDate: form.elements.readyDate.value }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) {
+      window.location.href = '/login?next=/account';
+      return;
+    }
+    if (!res.ok) throw new Error(data.error || 'Could not save that. Please try again.');
+    await refreshAccount().catch(() => window.location.reload());
+  } catch (err) {
+    alertBox.textContent = err.message;
+    alertBox.hidden = false;
+    button.disabled = false;
+  }
+});
+
 // push.js and live.js load with the footer, after this script, so wait for the page.
 document.addEventListener('DOMContentLoaded', () => {
   window.SEPush.mount(document.getElementById('pushCard'), '/api/customer', {

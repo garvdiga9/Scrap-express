@@ -96,7 +96,12 @@ function notifyStatusChange(kind, row, oldStatus) {
 router.get('/requests', requireAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT p.*, ${media.mediaListSql('pickup', 'p.id')} AS media
+      `SELECT p.*, ${media.mediaListSql('pickup', 'p.id')} AS media,
+              (SELECT COUNT(*)::int FROM pickup_requests other
+               WHERE other.id <> p.id AND other.status = 'no_scrap'
+                 AND (other.customer_id = p.customer_id
+                      OR right(regexp_replace(other.phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(p.phone, '[^0-9]', '', 'g'), 10))
+              ) AS past_no_scrap
        FROM pickup_requests p ORDER BY p.created_at DESC`
     );
     res.json(rows);
@@ -114,7 +119,11 @@ router.patch('/requests/:id', requireAdmin, async (req, res) => {
   try {
     // Joining the row to itself reads the status from before the update.
     const { rows } = await pool.query(
-      `UPDATE pickup_requests p SET status = $1 FROM pickup_requests old
+      `UPDATE pickup_requests p
+       SET status = $1::varchar,
+           ready_at = CASE WHEN $1::varchar = 'ready' THEN COALESCE(old.ready_at, NOW()) ELSE old.ready_at END,
+           dispatch_checked_at = CASE WHEN $1::varchar = 'confirmed' THEN NOW() ELSE old.dispatch_checked_at END
+       FROM pickup_requests old
        WHERE p.id = $2 AND old.id = p.id
        RETURNING p.*, old.status AS old_status`,
       [status, req.params.id]
@@ -161,7 +170,8 @@ router.put('/requests/:id/quote', requireAdmin, async (req, res) => {
     const { rows } = await pool.query(
       `UPDATE pickup_requests
        SET quote_items = $1, quote_note = $2, quoted_at = NOW(),
-           quote_response = NULL, quote_responded_at = NULL, status = 'quoted'
+           quote_response = NULL, quote_responded_at = NULL, status = 'quoted',
+           ready_at = NULL, ready_date = NULL, dispatch_checked_at = NULL
        WHERE id = $3
        RETURNING *`,
       [JSON.stringify(items), note || null, req.params.id]

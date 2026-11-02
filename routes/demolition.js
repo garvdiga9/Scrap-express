@@ -3,6 +3,8 @@ const pool = require('../db/pool');
 const {
   PHONE_ERROR, EMAIL_ERROR, cleanPhone, cleanEmail,
 } = require('../lib/validation');
+const { RULES_VERSION } = require('../data/business');
+const { parseSite } = require('../lib/location');
 const media = require('../lib/media');
 const push = require('../lib/push');
 const live = require('../lib/live');
@@ -10,11 +12,16 @@ const live = require('../lib/live');
 // POST /api/demolition - public: request a demolition site visit & quote,
 // optionally with photos/videos of the building.
 router.post('/', media.acceptMedia, async (req, res) => {
-  const { name, buildingType, location, approxArea, notes } = req.body;
+  const { name, buildingType, approxArea, notes } = req.body;
 
-  if (!name || !req.body.phone || !buildingType || !location) {
-    return res.status(400).json({ error: 'Name, phone, building type, and location are required.' });
+  if (!name || !req.body.phone || !buildingType) {
+    return res.status(400).json({ error: 'Name, phone and building type are required.' });
   }
+  if (!req.body.acceptTerms) {
+    return res.status(400).json({ error: 'Please accept the Rules. If you don\'t see the tick-box, refresh this page.' });
+  }
+  const site = parseSite(req.body);
+  if (site.error) return res.status(400).json({ error: site.error });
   const phone = cleanPhone(req.body.phone);
   if (!phone) return res.status(400).json({ error: PHONE_ERROR });
   // Email is optional, but has to be a real address if given.
@@ -29,17 +36,21 @@ router.post('/', media.acceptMedia, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `INSERT INTO demolition_requests
-        (name, phone, email, building_type, location, approx_area, notes, customer_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        (name, phone, email, building_type, location, approx_area, notes, customer_id,
+         pincode, latitude, longitude, terms_accepted_at, terms_version)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW(),$12)
        RETURNING id`,
-      [name, phone, email, buildingType, location, approxArea || null, notes || null, customerId]
+      [
+        name, phone, email, buildingType, site.address, approxArea || null, notes || null, customerId,
+        site.pincode, site.latitude, site.longitude, RULES_VERSION,
+      ]
     );
     await media.saveForRequest(req, 'demolition', rows[0].id)
       .catch((err) => console.error('saving demolition media failed', err));
     live.requestChanged(customerId);
     push.quietly(push.notifyAdmins({
       title: `New demolition request #${rows[0].id} 🏗️`,
-      body: `${name} · ${buildingType} · ${String(location).slice(0, 60)}`,
+      body: `${name} · ${buildingType} · ${site.address.slice(0, 60)}`,
       url: `/admin.html#demolition-${rows[0].id}`,
       tag: `demolition-${rows[0].id}`,
     }));

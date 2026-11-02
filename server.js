@@ -6,7 +6,7 @@ const pgSession = require('connect-pg-simple')(session);
 
 const pool = require('./db/pool');
 const {
-  AREAS, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, formatQuoteRate,
+  AREAS, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, formatQuoteRate, readyDateRange,
 } = require('./data/business');
 const ratesRouter = require('./routes/rates');
 const pickupRouter = require('./routes/pickup');
@@ -19,6 +19,7 @@ const media = require('./lib/media');
 const push = require('./lib/push');
 const updates = require('./lib/updates');
 const subscribeRouter = require('./routes/subscribe');
+const locationRouter = require('./routes/location');
 const customers = require('./lib/customers');
 const live = require('./lib/live');
 
@@ -84,6 +85,7 @@ app.get('/api/push/key', async (req, res) => {
 app.get('/api/live', live.connect);
 
 app.use('/api/subscribe', express.urlencoded({ extended: false }), subscribeRouter);
+app.use('/api/location', locationRouter);
 app.use('/api/rates', ratesRouter);
 app.use('/api/pickup', pickupRouter);
 app.use('/api/demolition', demolitionRouter);
@@ -125,7 +127,7 @@ app.locals.minPickupKg = MIN_PICKUP_KG;
 app.locals.mediaLimits = media.LIMITS;
 app.locals.statusLabels = {
   pending: 'Received', quoted: 'Quote Ready', accepted: 'Quote Accepted', declined: 'Quote Declined',
-  confirmed: 'Confirmed', completed: 'Completed', cancelled: 'Cancelled',
+  ready: 'Ready for Pickup', confirmed: 'Confirmed', completed: 'Completed', no_scrap: 'No Scrap at Site', cancelled: 'Cancelled',
 };
 app.locals.formatQuoteRate = formatQuoteRate;
 
@@ -135,6 +137,7 @@ const PAGES = [
   { path: '/what-we-buy', view: 'what-we-buy', page: 'what-we-buy', title: 'What We Buy - Industrial & Office Scrap - Scrap Express', description: 'We buy AC plants, generators, motors, IT equipment, office furniture, glass and more from businesses across Delhi NCR. Quotes based on volume and condition.' },
   { path: '/book-pickup', view: 'book-pickup', page: 'book-pickup', title: 'Request a Bulk Scrap Pickup in Delhi NCR - Scrap Express', description: 'Request a one-time or scheduled bulk scrap pickup from your factory, office or site in Delhi NCR. GST invoice, weighbridge slip, payment by cash or bank transfer.' },
   { path: '/demolition', view: 'demolition', page: 'demolition', title: 'Commercial Demolition Services in Delhi NCR - Scrap Express', description: 'Demolition of schools, hospitals, factories, warehouses, malls and commercial buildings across Delhi NCR, with site survey and detailed quote.' },
+  { path: '/rules', view: 'rules', page: 'rules', title: 'Pickup & Demolition Rules - Scrap Express', description: 'The rules for bulk scrap pickups and demolition requests with Scrap Express: accurate details, weighbridge weight, scrap quality and being ready for the truck.' },
   { path: '/privacy', view: 'privacy', page: 'privacy', title: 'Privacy Policy - Scrap Express', description: 'How Scrap Express collects, uses and protects information from customers of our website and app.' },
   { path: '/delete-account', view: 'delete-account', page: 'delete-account', title: 'Delete Your Account - Scrap Express', description: 'How to delete your Scrap Express account and what happens to your data.' },
   { path: '/areas', view: 'areas', page: 'areas', title: 'Industrial Areas We Serve in Delhi NCR - Scrap Express', description: 'Scrap Express collects bulk scrap from businesses in Okhla, Naraina, Mayapuri, Wazirpur, Bawana, Noida, Gurugram, Manesar, Faridabad and across Delhi NCR.' },
@@ -199,6 +202,7 @@ app.get('/account', async (req, res) => {
       description: 'Your Scrap Express requests and business details.',
       noindex: true,
       requests,
+      readyDates: readyDateRange(),
       firebaseConfig: firebase.clientConfig,
     });
   } catch (err) {

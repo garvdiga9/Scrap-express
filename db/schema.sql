@@ -154,6 +154,35 @@ CREATE TABLE IF NOT EXISTS subscribers (
 -- Phones/browsers that tapped "Get price alerts" (no login needed).
 ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS wants_updates BOOLEAN NOT NULL DEFAULT FALSE;
 
+-- Longer addresses are accepted now, as on customer accounts.
+ALTER TABLE pickup_requests ALTER COLUMN email TYPE VARCHAR(200);
+ALTER TABLE demolition_requests ALTER COLUMN email TYPE VARCHAR(200);
+
+-- Site location: an optional exact pin for the driver; the address columns
+-- hold the separate form fields joined into one line.
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS latitude NUMERIC(9,6);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS longitude NUMERIC(9,6);
+ALTER TABLE demolition_requests ADD COLUMN IF NOT EXISTS pincode VARCHAR(10);
+ALTER TABLE demolition_requests ADD COLUMN IF NOT EXISTS latitude NUMERIC(9,6);
+ALTER TABLE demolition_requests ADD COLUMN IF NOT EXISTS longitude NUMERIC(9,6);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS building VARCHAR(150);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS street VARCHAR(300);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS landmark VARCHAR(150);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS city VARCHAR(100);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS state VARCHAR(100);
+
+-- When the customer accepted the pickup rules, and which version.
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMP;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS terms_version VARCHAR(20);
+ALTER TABLE demolition_requests ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMP;
+ALTER TABLE demolition_requests ADD COLUMN IF NOT EXISTS terms_version VARCHAR(20);
+
+-- Before a truck leaves: the customer (or the admin, after a call) says the
+-- scrap is ready, and the admin confirms by phone.
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS ready_at TIMESTAMP;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS ready_date DATE;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS dispatch_checked_at TIMESTAMP;
+
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_status ON pickup_requests(status);
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_created_at ON pickup_requests(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_demolition_requests_status ON demolition_requests(status);

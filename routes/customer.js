@@ -1,9 +1,10 @@
 const router = require('express').Router();
 const firebase = require('../lib/firebase');
 const customers = require('../lib/customers');
-const { AREAS, BUSINESS_TYPES } = require('../data/business');
+const { AREAS, BUSINESS_TYPES, readyDateRange } = require('../data/business');
+const { parseSite } = require('../lib/location');
 const {
-  GSTIN_RE, PINCODE_RE, GSTIN_ERROR, PHONE_ERROR, EMAIL_ERROR, cleanPhone, cleanEmail,
+  GSTIN_RE, GSTIN_ERROR, PHONE_ERROR, EMAIL_ERROR, cleanPhone, cleanEmail,
 } = require('../lib/validation');
 const push = require('../lib/push');
 const { mountPushRoutes } = require('./push');
@@ -82,10 +83,13 @@ router.put('/me', requireCustomer, async (req, res) => {
     companyName: clean(req.body.companyName, 200),
     businessType: clean(req.body.businessType, 100),
     gstin: clean(req.body.gstin, 15)?.toUpperCase() ?? null,
-    address: clean(req.body.address, 500),
     area: clean(req.body.area, 100),
-    pincode: clean(req.body.pincode, 10),
   };
+  const site = parseSite(req.body, { required: false });
+  if (site.error) return res.status(400).json({ error: site.error });
+  ['address', 'building', 'street', 'landmark', 'city', 'state', 'pincode'].forEach((field) => {
+    p[field] = site[field] || null;
+  });
 
   if (p.phone) {
     p.phone = cleanPhone(p.phone);
@@ -96,7 +100,6 @@ router.put('/me', requireCustomer, async (req, res) => {
     if (!p.email) return res.status(400).json({ error: EMAIL_ERROR });
   }
   if (p.gstin && !GSTIN_RE.test(p.gstin)) return res.status(400).json({ error: GSTIN_ERROR });
-  if (p.pincode && !PINCODE_RE.test(p.pincode)) return res.status(400).json({ error: 'Pincode should be 6 digits.' });
   if (p.businessType && !BUSINESS_TYPES.includes(p.businessType)) return res.status(400).json({ error: 'Please choose a business type from the list.' });
   if (p.area && p.area !== 'Other Delhi NCR' && !AREAS.includes(p.area)) return res.status(400).json({ error: 'Please choose an area from the list.' });
 
@@ -173,6 +176,32 @@ router.post('/requests/:id/quote', requireCustomer, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not save your answer. Please try again.' });
+  }
+});
+
+// POST /api/customer/requests/:id/ready { readyDate } — "My scrap is ready".
+router.post('/requests/:id/ready', requireCustomer, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ error: 'Request not found.' });
+  const { readyDate } = req.body;
+  const { min, max } = readyDateRange();
+  // Dates in this format sort correctly as plain text.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(readyDate || '') || readyDate < min || readyDate > max) {
+    return res.status(400).json({ error: 'Please choose a date in the next 30 days.' });
+  }
+  try {
+    const updated = await customers.markReady(req.session.customerId, Number(req.params.id), readyDate);
+    if (!updated) return res.status(409).json({ error: 'This request has already moved on. Please refresh the page.' });
+    res.json({ ok: true });
+    live.requestChanged(req.session.customerId);
+    push.quietly(push.notifyAdmins({
+      title: `Scrap ready 🚚 #${updated.id}`,
+      body: `${updated.company_name || updated.name} says the scrap is ready from ${readyDate}. Call them before sending a truck.`,
+      url: `/admin.html#pickup-${updated.id}`,
+      tag: `pickup-${updated.id}`,
+    }));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save that. Please try again.' });
   }
 });
 

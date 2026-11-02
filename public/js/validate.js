@@ -1,4 +1,4 @@
-// Checks phone and email fields as customers fill in a form, so they can fix a
+// Checks phone, email and pincode fields as customers fill in a form, so they can fix a
 // typo before sending. The server checks again (lib/validation.js, same rules).
 window.SEValidate = (() => {
   const EMAIL_RE = /^[a-z0-9_%+'-]+(\.[a-z0-9_%+'-]+)*@([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i;
@@ -15,7 +15,9 @@ window.SEValidate = (() => {
   const RULES = {
     tel: { ok: phoneOk, message: 'Please enter a valid 10-digit mobile number, or a landline with its area code.' },
     email: { ok: (value) => value.length <= 200 && EMAIL_RE.test(value), message: 'Please enter a valid email address, e.g. name@company.com.' },
+    pincode: { ok: (value) => /^[1-9]\d{5}$/.test(value), message: 'Please enter a valid 6-digit pincode.' },
   };
+  const ruleFor = (field) => (field.name === 'pincode' ? RULES.pincode : RULES[field.type]);
 
   function setError(field, message) {
     const group = field.closest('.form-group');
@@ -40,13 +42,13 @@ window.SEValidate = (() => {
   // Blank is fine here: forms already ask for the fields they require.
   function checkField(field) {
     const value = field.value.trim();
-    const rule = RULES[field.type];
+    const rule = ruleFor(field);
     const ok = !value || rule.ok(value);
     setError(field, ok ? null : rule.message);
     return ok;
   }
 
-  const fieldsOf = (form) => [...form.querySelectorAll('input[type="tel"], input[type="email"]')];
+  const fieldsOf = (form) => [...form.querySelectorAll('input[type="tel"], input[type="email"], input[name="pincode"]')];
 
   // Shows every problem and takes the customer to the first one.
   function checkForm(form) {
@@ -56,6 +58,19 @@ window.SEValidate = (() => {
     invalid[0].focus({ preventScroll: true });
     return false;
   }
+
+  // The rules tick-box on request forms.
+  function rulesAccepted(form) {
+    const box = form.querySelector('[data-rules-check]');
+    if (box.checked) return true;
+    setError(box, 'Please tick this box to accept the rules before sending.');
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    box.focus({ preventScroll: true });
+    return false;
+  }
+  document.querySelectorAll('[data-rules-check]').forEach((box) => {
+    box.addEventListener('change', () => { if (box.checked) setError(box, null); });
+  });
 
   document.querySelectorAll('.book-form, #profileForm').forEach((form) => {
     fieldsOf(form).forEach((field) => {
@@ -68,5 +83,5 @@ window.SEValidate = (() => {
     form.addEventListener('reset', () => fieldsOf(form).forEach((field) => setError(field, null)));
   });
 
-  return { checkForm };
+  return { checkForm, rulesAccepted };
 })();

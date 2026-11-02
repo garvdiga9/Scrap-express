@@ -740,7 +740,7 @@ if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
   payload.scrapTypes = formData.getAll('scrapTypes');
 
   if (!payload.companyName || !payload.businessType || !payload.name || !payload.phone
-    || !payload.address) {
+    || !payload.building || !payload.street || !payload.pincode || !payload.city || !payload.state || !payload.area) {
     showAlert(formAlert, 'Please fill in all required fields marked with *.', 'error');
     return;
   }
@@ -796,6 +796,7 @@ if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
     return;
   }
   if (pickupMedia && !pickupMedia.requireOne()) return;
+  if (!window.SEValidate.rulesAccepted(pickupForm)) return;
 
   submitBtn.disabled = true;
   submitBtn.textContent = 'Submitting…';
@@ -829,7 +830,8 @@ if (demolitionForm) demolitionForm.addEventListener('submit', async (e) => {
   const formData = new FormData(demolitionForm);
   const payload = Object.fromEntries(formData.entries());
 
-  if (!payload.name || !payload.phone || !payload.buildingType || !payload.location) {
+  if (!payload.name || !payload.phone || !payload.buildingType
+    || !payload.building || !payload.street || !payload.pincode || !payload.city || !payload.state) {
     showAlert(demolitionAlert, 'Please fill in all required fields marked with *.', 'error');
     return;
   }
@@ -840,6 +842,7 @@ if (demolitionForm) demolitionForm.addEventListener('submit', async (e) => {
     return;
   }
   if (demolitionMedia && !demolitionMedia.requireOne()) return;
+  if (!window.SEValidate.rulesAccepted(demolitionForm)) return;
 
   demoSubmitBtn.disabled = true;
   demoSubmitBtn.textContent = 'Submitting…';

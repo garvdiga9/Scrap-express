@@ -49,10 +49,8 @@
             </select>
           </div>
         </div>
-        <div class="form-group">
-          <label for="demoLocation">Site Location / Address *</label>
-          <textarea id="demoLocation" name="location" required rows="2" placeholder="Full address of the site"></textarea>
-        </div>
+        <h2 class="form-section-title">Where is the building?</h2>
+        <%- include('partials/location-fields', { prefix: 'demo', c: {}, site: true }) %>
         <div class="form-group">
           <label for="approxArea">Approx. Built-up Area</label>
           <input type="text" id="approxArea" name="approxArea" placeholder="e.g. 20,000 sq. ft. / 3 floors">
@@ -62,6 +60,7 @@
           <label for="demoNotes">Additional Notes</label>
           <textarea id="demoNotes" name="notes" rows="2" placeholder="Timeline, special requirements, etc."></textarea>
         </div>
+        <%- include('partials/rules-check') %>
         <button type="submit" class="btn btn-accent btn-lg btn-block" id="demoSubmitBtn">Request Site Visit &amp; Quote</button>
       </form>
     </div>

@@ -65,10 +65,11 @@ Data collected (all for **App functionality** and **Account management**; none a
 | Personal info → Phone number | Yes | Contact for pickups |
 | Personal info → Address | Yes | Pickup / site address |
 | Personal info → Other info | Yes | Company name, GSTIN (optional) |
+| Location → Precise location | Yes (optional) | Only if the customer taps "Use my current location", so the driver can find the site |
 | Photos and videos → Photos, Videos | Yes | Attached to requests for quoting |
 | Device or other IDs | Yes (optional) | Push notification token, only if notifications are turned on |
 
-Not collected: location, contacts, financial/payment info, messages, health, app activity or analytics.
+Not collected: contacts, financial/payment info, messages, health, app activity or analytics.
 
 ## Building the app package (once)
 

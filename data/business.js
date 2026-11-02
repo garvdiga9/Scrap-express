@@ -63,10 +63,23 @@ const MIN_PICKUP_KG = 300;
 const QUANTITY_UNITS = { kg: 1, tonnes: 1000 };
 
 // A pickup request's life: received → quote sent → customer accepts or
-// declines → pickup confirmed → completed (or cancelled at any point).
+// declines → scrap ready → pickup confirmed by phone → completed. It can also
+// end as cancelled, or as no scrap at site if the truck had a wasted trip.
 // public/js/admin.js keeps the same lists for the dashboard.
-const PICKUP_STATUSES = ['pending', 'quoted', 'accepted', 'declined', 'confirmed', 'completed', 'cancelled'];
+const PICKUP_STATUSES = ['pending', 'quoted', 'accepted', 'declined', 'ready', 'confirmed', 'completed', 'no_scrap', 'cancelled'];
 const QUOTE_UNITS = ['per kg', 'per tonne', 'per piece', 'lump sum'];
+
+// Change this whenever views/rules.ejs changes in substance, so each request
+// records which version its customer accepted.
+const RULES_VERSION = '2026-11-02';
+const READY_DATE_MAX_DAYS = 30;
+
+// 'YYYY-MM-DD' in India, and the dates a customer can say their scrap is ready.
+const indiaDate = (date = new Date()) => date.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+function readyDateRange() {
+  const later = new Date(Date.now() + READY_DATE_MAX_DAYS * 24 * 60 * 60 * 1000);
+  return { min: indiaDate(), max: indiaDate(later) };
+}
 
 // "₹18 per kg", "₹18.50 per kg", "₹1,50,000 lump sum"
 function formatQuoteRate({ rate, unit }) {
@@ -77,5 +90,5 @@ function formatQuoteRate({ rate, unit }) {
 
 module.exports = {
   AREAS, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS,
-  PICKUP_STATUSES, QUOTE_UNITS, formatQuoteRate,
+  PICKUP_STATUSES, QUOTE_UNITS, RULES_VERSION, formatQuoteRate, readyDateRange,
 };

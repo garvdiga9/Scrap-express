@@ -1,0 +1,53 @@
+<%# Site address, as separate fields. Handled by public/js/location.js.
+    Locals: prefix (for unique ids), c (saved customer details), and
+    site = true on request forms: required fields and the GPS pin. %>
+<% const star = locals.site ? ' *' : ''; const req = locals.site ? ' required' : ''; %>
+<div class="location-fields" data-location>
+  <% if (locals.site) { %>
+  <div class="location-gps" data-gps hidden>
+    <button type="button" class="btn btn-outline location-gps-btn" data-gps-button>
+      <svg class="icon"><use href="#icon-map"/></svg> <span data-gps-label>Use my current location</span>
+    </button>
+    <p class="field-hint location-gps-hint">Only if you're at the site now. Otherwise, type the address below.</p>
+    <p class="location-status" data-gps-status role="status" hidden></p>
+    <p class="location-pin" data-pin hidden>
+      <a data-pin-link target="_blank" rel="noopener">View pin on map</a>
+      <button type="button" class="location-pin-remove" data-pin-remove>Remove pin</button>
+    </p>
+    <p class="location-credit" data-gps-credit hidden>Address data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</p>
+  </div>
+  <input type="hidden" name="latitude" data-latitude>
+  <input type="hidden" name="longitude" data-longitude>
+  <% } %>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="<%= prefix %>Building">Building / Plot No.<%= star %></label>
+      <input type="text" id="<%= prefix %>Building" name="building"<%= req %> maxlength="150" autocomplete="address-line1" placeholder="e.g. Plot 42, Shed B" value="<%= c.building || '' %>">
+    </div>
+    <div class="form-group">
+      <label for="<%= prefix %>Street">Street / Locality<%= star %></label>
+      <input type="text" id="<%= prefix %>Street" name="street"<%= req %> maxlength="300" autocomplete="address-line2" placeholder="e.g. Okhla Phase 2" value="<%= c.street || c.address || '' %>" data-street>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="<%= prefix %>Landmark">Nearby Landmark (optional)</label>
+      <input type="text" id="<%= prefix %>Landmark" name="landmark" maxlength="150" placeholder="e.g. Near metro station gate 2" value="<%= c.landmark || '' %>">
+    </div>
+    <div class="form-group">
+      <label for="<%= prefix %>Pincode">Pincode<%= star %></label>
+      <input type="text" id="<%= prefix %>Pincode" name="pincode"<%= req %> maxlength="6" inputmode="numeric" autocomplete="postal-code" placeholder="110020" value="<%= c.pincode || '' %>" data-pincode>
+      <small class="field-note" data-pincode-note hidden></small>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="<%= prefix %>City">City / District<%= star %></label>
+      <input type="text" id="<%= prefix %>City" name="city"<%= req %> maxlength="100" autocomplete="address-level2" placeholder="Fills in from the pincode" value="<%= c.city || '' %>" data-city>
+    </div>
+    <div class="form-group">
+      <label for="<%= prefix %>State">State<%= star %></label>
+      <input type="text" id="<%= prefix %>State" name="state"<%= req %> maxlength="100" autocomplete="address-level1" placeholder="Fills in from the pincode" value="<%= c.state || '' %>" data-state>
+    </div>
+  </div>
+</div>

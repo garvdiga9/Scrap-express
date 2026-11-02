@@ -64,23 +64,15 @@
             <input type="text" id="gstin" name="gstin" maxlength="15" placeholder="07ABCDE1234F1Z5" value="<%= c.gstin || '' %>">
           </div>
         </div>
+        <h2 class="form-section-title">Where is the scrap?</h2>
+        <%- include('partials/location-fields', { prefix: 'site', c, site: true }) %>
         <div class="form-group">
-          <label for="address">Site Address *</label>
-          <textarea id="address" name="address" required rows="2" placeholder="Plot / building no., industrial area, landmark"><%= c.address || '' %></textarea>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="area">Area *</label>
-            <select id="area" name="area" required>
-              <option value="" disabled<%= c.area ? '' : ' selected' %>>Select your area</option>
-              <% [...areas, 'Other Delhi NCR'].forEach((area) => { %><option<%= c.area === area ? ' selected' : '' %>><%= area %></option>
-              <% }) %>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="pincode">Pincode</label>
-            <input type="text" id="pincode" name="pincode" placeholder="110001" maxlength="6" value="<%= c.pincode || '' %>">
-          </div>
+          <label for="area">Area *</label>
+          <select id="area" name="area" required>
+            <option value="" disabled<%= c.area ? '' : ' selected' %>>Select your area</option>
+            <% [...areas, 'Other Delhi NCR'].forEach((area) => { %><option<%= c.area === area ? ' selected' : '' %>><%= area %></option>
+            <% }) %>
+          </select>
         </div>
         <fieldset class="form-group checkbox-group" id="scrapTypesGroup">
           <legend>Scrap Types * <span class="field-hint">Select all that apply</span></legend>
@@ -130,6 +122,7 @@
           <label for="notes">Additional Notes</label>
           <textarea id="notes" name="notes" rows="2" placeholder="Quantity per scrap type, access timings, loading help needed, etc."></textarea>
         </div>
+        <%- include('partials/rules-check') %>
         <button type="submit" class="btn btn-accent btn-lg btn-block" id="submitBtn">Request Bulk Quote</button>
       </form>
     </div>

@@ -162,8 +162,10 @@ const PICKUP_STATUS_LABELS = {
   quoted: 'Quote sent',
   accepted: 'Quote accepted',
   declined: 'Quote declined',
+  ready: 'Ready for pickup',
   confirmed: 'Confirmed',
   completed: 'Completed',
+  no_scrap: 'No scrap at site',
   cancelled: 'Cancelled',
 };
 const QUOTE_UNITS = ['per kg', 'per tonne', 'per piece', 'lump sum'];
@@ -178,6 +180,24 @@ function telLink(phone) {
 }
 
 const formatDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+// The exact pin when the customer gave one, otherwise a search for the address.
+function mapsUrl(r, address) {
+  return r.latitude && r.longitude
+    ? `https://www.google.com/maps?q=${r.latitude},${r.longitude}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+}
+function mapLink(r, address) {
+  const a = document.createElement('a');
+  a.href = mapsUrl(r, address);
+  a.target = '_blank';
+  a.rel = 'noopener';
+  a.className = 'map-link';
+  a.textContent = r.latitude && r.longitude ? '📍 Open exact pin' : '🗺 Search on map';
+  return a;
+}
+
+const wastedTrips = (n) => `⚠ ${n} wasted trip${n === 1 ? '' : 's'}`;
 // Matches formatQuoteRate in data/business.js: "₹18 per kg", "₹18.50 per kg".
 function formatRate({ rate, unit }) {
   const n = Number(rate);
@@ -268,6 +288,12 @@ function renderRequests() {
       tr.appendChild(td);
     });
     tr.children[3].replaceChildren(telLink(r.phone));
+    if (r.past_no_scrap) {
+      const flag = document.createElement('span');
+      flag.className = 'no-scrap-flag';
+      flag.textContent = wastedTrips(r.past_no_scrap);
+      tr.children[3].appendChild(flag);
+    }
 
     const statusTd = document.createElement('td');
     const select = document.createElement('select');
@@ -280,6 +306,14 @@ function renderRequests() {
       select.appendChild(opt);
     });
     select.addEventListener('change', async () => {
+      // A truck leaves only after a call, so no one is sent to an empty site.
+      if (select.value === 'confirmed' && r.status !== 'confirmed') {
+        const warning = r.past_no_scrap ? `\n\n${wastedTrips(r.past_no_scrap)} on this number before.` : '';
+        if (!confirm(`Have you called ${r.name} and confirmed the scrap is ready?${warning}`)) {
+          select.value = r.status;
+          return;
+        }
+      }
       select.className = `status-select status-${select.value}`;
       try {
         const res = await fetch(`/api/admin/requests/${r.id}`, {
@@ -479,6 +513,7 @@ function addDetail(label, value, href) {
     dd.textContent = value;
   }
   requestDetails.append(dt, dd);
+  return dd;
 }
 
 // A ready-to-send WhatsApp message with the quote, opened from your own
@@ -505,15 +540,19 @@ function updateWhatsappLink(r) {
 
 function renderRequestSummary(r) {
   requestDetails.innerHTML = '';
+  if (r.past_no_scrap) addDetail('Warning', `${wastedTrips(r.past_no_scrap)} on this number or account before.`);
   addDetail('Received', formatDate(r.created_at));
   addDetail('Status', PICKUP_STATUS_LABELS[r.status] || r.status);
+  if (r.status === 'ready') addDetail('Before dispatch', 'Call the customer to confirm the scrap is ready, then set the status to Confirmed.');
+  if (r.ready_date) addDetail('Scrap ready from', formatDate(r.ready_date));
+  if (r.dispatch_checked_at) addDetail('Confirmed by call', formatDate(r.dispatch_checked_at));
   addDetail('Company', r.company_name);
   addDetail('Business type', r.business_type);
   addDetail('GSTIN', r.gstin);
   addDetail('Contact person', r.name);
   addDetail('Phone', r.phone, `tel:${r.phone}`);
   addDetail('Email', r.email, r.email ? `mailto:${r.email}` : null);
-  addDetail('Site address', r.address);
+  addDetail('Site address', r.address).append(document.createElement('br'), mapLink(r, r.address));
   addDetail('Area', r.area);
   addDetail('Pincode', r.pincode);
   addDetail('Scrap types', r.scrap_type);
@@ -522,6 +561,7 @@ function renderRequestSummary(r) {
     : r.approx_quantity);
   addDetail('Frequency', r.pickup_frequency);
   addDetail('Notes', r.notes);
+  addDetail('Rules accepted', r.terms_accepted_at ? formatDate(r.terms_accepted_at) : 'Before the rules were added');
   addDetail('Customer account', r.customer_id ? 'Yes — sees the quote in My Account' : 'No — share the quote by call or WhatsApp');
   if (r.quote_response) {
     addDetail('Customer answer', `${r.quote_response === 'accepted' ? 'Accepted' : 'Declined'} on ${formatDate(r.quote_responded_at)}`);
@@ -655,6 +695,7 @@ function renderDemolitionRequests() {
       tr.appendChild(td);
     });
     tr.children[2].replaceChildren(telLink(r.phone));
+    tr.children[4].append(document.createElement('br'), mapLink(r, r.location));
 
     const mediaTd = document.createElement('td');
     if (r.media && r.media.length) {

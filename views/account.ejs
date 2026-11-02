@@ -72,7 +72,19 @@
                         </div>
                         <div class="form-alert error quote-alert" hidden></div>
                       <% } else if (r.quote_response === 'accepted') { %>
-                        <p class="quote-response accepted">You accepted this quote on <%= fmtDate(r.quote_responded_at) %>.<% if (r.status === 'accepted') { %> We'll call you to schedule the pickup.<% } %></p>
+                        <p class="quote-response accepted">You accepted this quote on <%= fmtDate(r.quote_responded_at) %>.</p>
+                        <% if (r.status === 'accepted') { %>
+                          <form class="ready-form" data-request-id="<%= r.id %>">
+                            <label for="readyDate<%= r.id %>">When will the scrap be ready for us to collect? Please tell us only when it's really there, so our truck doesn't make a wasted trip.</label>
+                            <div class="ready-form-row">
+                              <input type="date" id="readyDate<%= r.id %>" name="readyDate" required min="<%= readyDates.min %>" max="<%= readyDates.max %>" value="<%= readyDates.min %>">
+                              <button type="submit" class="btn btn-accent">My Scrap Is Ready</button>
+                            </div>
+                            <div class="form-alert error" hidden></div>
+                          </form>
+                        <% } else if (r.status === 'ready') { %>
+                          <p class="quote-response accepted">You told us the scrap is ready<%= r.ready_date ? ` from ${fmtDate(r.ready_date)}` : '' %>. We'll call you to confirm before sending a truck.</p>
+                        <% } %>
                       <% } else if (r.quote_response === 'declined') { %>
                         <p class="quote-response declined">You declined this quote on <%= fmtDate(r.quote_responded_at) %>. Call us if you'd like a revised quote.</p>
                       <% } %>
@@ -121,23 +133,14 @@
                 <input type="text" id="pGstin" name="gstin" maxlength="15" placeholder="07ABCDE1234F1Z5" value="<%= c.gstin || '' %>">
               </div>
             </div>
+            <%- include('partials/location-fields', { prefix: 'p', c }) %>
             <div class="form-group">
-              <label for="pAddress">Site Address</label>
-              <textarea id="pAddress" name="address" rows="2" maxlength="500"><%= c.address || '' %></textarea>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="pArea">Area</label>
-                <select id="pArea" name="area">
-                  <option value="">Select area</option>
-                  <% [...areas, 'Other Delhi NCR'].forEach((area) => { %><option<%= c.area === area ? ' selected' : '' %>><%= area %></option>
-                  <% }) %>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="pPincode">Pincode</label>
-                <input type="text" id="pPincode" name="pincode" maxlength="6" inputmode="numeric" value="<%= c.pincode || '' %>">
-              </div>
+              <label for="pArea">Area</label>
+              <select id="pArea" name="area">
+                <option value="">Select area</option>
+                <% [...areas, 'Other Delhi NCR'].forEach((area) => { %><option<%= c.area === area ? ' selected' : '' %>><%= area %></option>
+                <% }) %>
+              </select>
             </div>
             <button type="submit" class="btn btn-accent btn-block" id="saveProfileBtn">Save Details</button>
           </form>

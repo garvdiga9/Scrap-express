@@ -1,8 +1,9 @@
 const router = require('express').Router();
 const pool = require('../db/pool');
 const {
-  BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS,
+  BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS, RULES_VERSION,
 } = require('../data/business');
+const { parseSite } = require('../lib/location');
 const {
   GSTIN_RE, GSTIN_ERROR, PHONE_ERROR, EMAIL_ERROR, cleanPhone, cleanEmail,
 } = require('../lib/validation');
@@ -29,8 +30,7 @@ const formatTotal = (kg) => (kg >= 1000 ? `${+(kg / 1000).toFixed(2)} tonnes` : 
 router.post('/', media.acceptMedia, async (req, res) => {
   const {
     companyName, businessType, pickupFrequency,
-    name, address, area, pincode,
-    notes,
+    name, area, notes,
   } = req.body;
 
   // A business can tick several scrap types. Also accept the older single
@@ -38,9 +38,14 @@ router.post('/', media.acceptMedia, async (req, res) => {
   const submitted = req.body.scrapTypes ?? req.body.scrapType;
   const scrapTypes = [...new Set((Array.isArray(submitted) ? submitted : [submitted]).filter(Boolean))];
 
-  if (!companyName || !name || !req.body.phone || !address || !scrapTypes.length) {
-    return res.status(400).json({ error: 'Company, contact person, phone, site address and at least one scrap type are required.' });
+  if (!companyName || !name || !req.body.phone || !scrapTypes.length) {
+    return res.status(400).json({ error: 'Company, contact person, phone and at least one scrap type are required.' });
   }
+  if (!req.body.acceptTerms) {
+    return res.status(400).json({ error: 'Please accept the Pickup Rules. If you don\'t see the tick-box, refresh this page.' });
+  }
+  const site = parseSite(req.body);
+  if (site.error) return res.status(400).json({ error: site.error });
   const phone = cleanPhone(req.body.phone);
   if (!phone) return res.status(400).json({ error: PHONE_ERROR });
   // Email is optional, but has to be a real address if given.
@@ -113,13 +118,15 @@ router.post('/', media.acceptMedia, async (req, res) => {
     const { rows } = await pool.query(
       `INSERT INTO pickup_requests
         (company_name, business_type, pickup_frequency, gstin, customer_id,
-         name, phone, email, address, area, pincode, scrap_type, approx_quantity, item_quantities, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+         name, phone, email, address, area, pincode, scrap_type, approx_quantity, item_quantities, notes,
+         latitude, longitude, terms_accepted_at, terms_version)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),$18)
        RETURNING id`,
       [
         companyName, businessType || null, pickupFrequency || null, gstin, customerId,
-        name, phone, email, address, area || null, pincode || null,
+        name, phone, email, site.address, area || null, site.pincode,
         scrapTypes.join(', '), quantity, itemQuantities && JSON.stringify(itemQuantities), notes || null,
+        site.latitude, site.longitude, RULES_VERSION,
       ]
     );
     // As with the profile below, the booking is already saved, so a problem
@@ -138,7 +145,7 @@ router.post('/', media.acceptMedia, async (req, res) => {
       // The booking is already saved; a profile hiccup must not report failure
       // and tempt the customer to submit it twice.
       customers.fillBlankProfile(customerId, {
-        name, phone, email, companyName, businessType, gstin, address, area, pincode,
+        name, phone, email, companyName, businessType, gstin, area, ...site,
       }).catch((err) => console.error('fillBlankProfile failed', err))
         .finally(() => live.publishToCustomer(customerId));
     }
