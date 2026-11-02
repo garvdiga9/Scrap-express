@@ -32,7 +32,7 @@ function enterDashboard(username) {
   loginScreen.hidden = true;
   dashboard.hidden = false;
   welcomeUser.textContent = `Signed in as ${username}`;
-  Promise.all([loadRequests(), loadDemolitionRequests()]).then(openFromLink);
+  Promise.all([loadRequests(), loadDemolitionRequests(), loadCallbacks()]).then(openFromLink);
   loadRates();
   loadTestimonials();
   loadSubscribers();
@@ -50,9 +50,9 @@ function showTab(name) {
   document.querySelector(`.tab-btn[data-tab="${name}"]`).click();
 }
 
-// Notifications link to /admin.html#pickup-12 or #demolition-4: open that request.
+// Notifications link to /admin.html#pickup-12, #demolition-4 or #callback-7: open that one.
 function openFromLink() {
-  const match = /^#(pickup|demolition)-(\d+)$/.exec(window.location.hash);
+  const match = /^#(pickup|demolition|callback)-(\d+)$/.exec(window.location.hash);
   if (!match) return;
   const id = Number(match[2]);
   if (match[1] === 'pickup') {
@@ -60,8 +60,9 @@ function openFromLink() {
     showTab('requests');
     if (r) openRequestDialog(r);
   } else {
-    showTab('demolition');
-    const row = demolitionBody.querySelector(`tr[data-id="${id}"]`);
+    const isCallback = match[1] === 'callback';
+    showTab(isCallback ? 'callbacks' : 'demolition');
+    const row = (isCallback ? callbacksBody : demolitionBody).querySelector(`tr[data-id="${id}"]`);
     if (row) {
       row.classList.add('row-highlight');
       row.scrollIntoView({ block: 'center' });
@@ -147,7 +148,7 @@ document.querySelectorAll('.tab-btn').forEach((btn) => {
     document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
-    document.getElementById('adminPushCard').classList.toggle('off-tab', !['requests', 'demolition'].includes(btn.dataset.tab));
+    document.getElementById('adminPushCard').classList.toggle('off-tab', !['requests', 'demolition', 'callbacks'].includes(btn.dataset.tab));
   });
 });
 
@@ -784,6 +785,101 @@ function renderDemolitionRequests() {
 }
 demolitionStatusFilter.addEventListener('change', renderDemolitionRequests);
 
+/* ---------- Call back requests ---------- */
+const callbacksBody = document.getElementById('callbacksBody');
+const CALLBACK_STATUS_LABELS = { pending: 'New', called: 'Called', closed: 'Closed' };
+let allCallbacks = [];
+let newCallbackIds = new Set();
+
+const formatDateTime = (d) => new Date(d).toLocaleString('en-IN', {
+  day: '2-digit', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata',
+});
+
+async function loadCallbacks(background = false) {
+  if (!background) callbacksBody.innerHTML = '<tr><td colspan="6" class="table-empty">Loading call back requests…</td></tr>';
+  try {
+    const res = await fetch('/api/admin/callbacks');
+    if (background && sessionEnded(res)) return;
+    if (!res.ok) throw new Error();
+    const fresh = await res.json();
+    if (background && JSON.stringify(fresh) === JSON.stringify(allCallbacks)) return;
+    const known = new Set(allCallbacks.map((c) => c.id));
+    newCallbackIds = new Set(background ? fresh.map((c) => c.id).filter((id) => !known.has(id)) : []);
+    allCallbacks = fresh;
+    setTabCount(document.getElementById('callbackCount'), allCallbacks);
+    renderWhenFree(callbacksBody, renderCallbacks);
+  } catch (err) {
+    if (background) return;
+    callbacksBody.innerHTML = '<tr><td colspan="6" class="table-empty">Failed to load call back requests.</td></tr>';
+  }
+}
+
+function renderCallbacks() {
+  if (!allCallbacks.length) {
+    callbacksBody.innerHTML = '<tr><td colspan="6" class="table-empty">No call back requests yet.</td></tr>';
+    return;
+  }
+  callbacksBody.innerHTML = '';
+  allCallbacks.forEach((c) => {
+    const tr = document.createElement('tr');
+    tr.dataset.id = c.id;
+    [formatDateTime(c.created_at), c.name, c.phone, c.query].forEach((text) => {
+      const td = document.createElement('td');
+      td.textContent = text;
+      tr.appendChild(td);
+    });
+    tr.children[2].replaceChildren(telLink(c.phone));
+
+    const statusTd = document.createElement('td');
+    const select = document.createElement('select');
+    select.className = `status-select status-${c.status}`;
+    Object.entries(CALLBACK_STATUS_LABELS).forEach(([value, label]) => {
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = label;
+      if (value === c.status) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.addEventListener('change', async () => {
+      select.className = `status-select status-${select.value}`;
+      try {
+        const res = await fetch(`/api/admin/callbacks/${c.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: select.value }),
+        });
+        if (!res.ok) throw new Error();
+        c.status = select.value;
+        setTabCount(document.getElementById('callbackCount'), allCallbacks);
+        select.blur();
+      } catch (err) {
+        alert('Failed to update status.');
+      }
+    });
+    statusTd.appendChild(select);
+    tr.appendChild(statusTd);
+
+    const actionTd = document.createElement('td');
+    const delBtn = document.createElement('button');
+    delBtn.className = 'icon-btn';
+    delBtn.title = 'Delete call back request';
+    delBtn.innerHTML = '<svg class="icon"><use href="#icon-trash"/></svg>';
+    delBtn.addEventListener('click', async () => {
+      if (!confirm(`Delete the call back request from ${c.name}?`)) return;
+      await fetch(`/api/admin/callbacks/${c.id}`, { method: 'DELETE' });
+      allCallbacks = allCallbacks.filter((x) => x.id !== c.id);
+      setTabCount(document.getElementById('callbackCount'), allCallbacks);
+      renderCallbacks();
+    });
+    actionTd.appendChild(delBtn);
+    tr.appendChild(actionTd);
+
+    markNewRow(tr, newCallbackIds, c.id);
+    callbacksBody.appendChild(tr);
+  });
+  newCallbackIds = new Set();
+}
+
 /* ---------- Scrap rates ---------- */
 const ratesBody = document.getElementById('ratesBody');
 const addRateForm = document.getElementById('addRateForm');
@@ -1179,9 +1275,10 @@ function setTabCount(el, list) {
 // notification arriving is one more reason to check the request lists.
 function refreshRequests() {
   if (dashboard.hidden) return Promise.resolve();
-  return Promise.all([loadRequests(true), loadDemolitionRequests(true)]);
+  return Promise.all([loadRequests(true), loadDemolitionRequests(true), loadCallbacks(true)]);
 }
 window.SELive.on('requests', refreshRequests);
+window.SELive.on('callbacks', () => loadCallbacks(true));
 window.SELive.on('rates', () => loadRates(true));
 window.SELive.on('reviews', () => loadTestimonials(true));
 window.SELive.on('subscribers', () => loadSubscribers(true));

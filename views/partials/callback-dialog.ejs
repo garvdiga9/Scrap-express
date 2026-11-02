@@ -1,0 +1,30 @@
+<%# "Request a call back", opened from anything marked data-callback. Handled by
+    public/js/callback.js. Logged-in customers get their details filled in. %>
+<% const caller = locals.customer || {}; %>
+<dialog class="callback-dialog" id="callbackDialog" aria-labelledby="callbackTitle">
+  <button type="button" class="callback-close" id="callbackClose" aria-label="Close">&times;</button>
+  <h2 id="callbackTitle">Request a Call Back</h2>
+  <p class="callback-intro">Have a question? Leave your details and we'll call you.</p>
+  <div id="callbackAlert" class="form-alert" hidden></div>
+  <form id="callbackForm" novalidate>
+    <div class="form-group">
+      <label for="callbackName">Your Name *</label>
+      <input type="text" id="callbackName" name="name" required maxlength="150" autocomplete="name" placeholder="Full name" value="<%= caller.name || '' %>">
+    </div>
+    <div class="form-group">
+      <label for="callbackPhone">Phone Number *</label>
+      <input type="tel" id="callbackPhone" name="phone" required maxlength="20" autocomplete="tel" placeholder="98765 43210" value="<%= caller.phone || '' %>">
+    </div>
+    <div class="form-group">
+      <label for="callbackQuery">Your Query *</label>
+      <textarea id="callbackQuery" name="query" required rows="3" maxlength="1000" placeholder="What would you like to ask us?"></textarea>
+    </div>
+    <%# Hidden from people; only bots fill it in. %>
+    <div class="callback-website" aria-hidden="true">
+      <label for="callbackWebsite">Website</label>
+      <input type="text" id="callbackWebsite" name="website" tabindex="-1" autocomplete="off">
+    </div>
+    <button type="submit" class="btn btn-accent btn-lg btn-block" id="callbackSubmit">Request a Call Back</button>
+    <p class="callback-fine">Or call us now on <a href="tel:+919818826333">+91 98188 26333</a>. Monday: 9 AM – 2 PM, Tuesday – Sunday: 9 AM – 8 PM.</p>
+  </form>
+</dialog>

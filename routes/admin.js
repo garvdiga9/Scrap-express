@@ -259,6 +259,44 @@ router.delete('/demolition/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// ---- call back requests ----
+
+const CALLBACK_STATUSES = ['pending', 'called', 'closed'];
+
+router.get('/callbacks', requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM callback_requests ORDER BY created_at DESC LIMIT 500');
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load call back requests' });
+  }
+});
+
+router.patch('/callbacks/:id', requireAdmin, async (req, res) => {
+  if (!CALLBACK_STATUSES.includes(req.body.status)) return res.status(400).json({ error: 'Invalid status' });
+  try {
+    const { rows } = await pool.query('UPDATE callback_requests SET status = $1 WHERE id = $2 RETURNING *', [req.body.status, req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    res.json(rows[0]);
+    live.publish('callbacks');
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update the call back request' });
+  }
+});
+
+router.delete('/callbacks/:id', requireAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM callback_requests WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Deleted' });
+    live.publish('callbacks');
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete the call back request' });
+  }
+});
+
 // ---- customer photos & videos ----
 
 // GET /api/admin/media/:id — stream one attachment (supports seeking in

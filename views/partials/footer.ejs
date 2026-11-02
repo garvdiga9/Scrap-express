@@ -26,7 +26,7 @@
     </div>
     <div class="footer-col">
       <h4>Contact</h4>
-      <p><svg class="icon"><use href="#icon-phone"/></svg> +91 98188 26333</p>
+      <a href="tel:+919818826333"><svg class="icon"><use href="#icon-phone"/></svg> Mobile: +91 98188 26333</a>
       <a href="mailto:scrapexpress@gmail.com"><svg class="icon"><use href="#icon-mail"/></svg> scrapexpress@gmail.com</a>
       <p><svg class="icon"><use href="#icon-map"/></svg> Within <%= serviceKm %> km of Delhi</p>
       <p class="footer-hours"><svg class="icon"><use href="#icon-clock"/></svg>
@@ -45,6 +45,8 @@
     </div>
   </div>
 </footer>
+
+<%- include('callback-dialog') %>
 
 <!-- "Install the app" banner, shown by main.js only when the phone can install it -->
 <div class="install-banner" id="installBanner" role="region" aria-label="Install the Scrap Express app" hidden>
@@ -79,6 +81,7 @@
 <script src="/js/validate.js"></script>
 <script src="/js/location.js"></script>
 <script src="/js/quote-actions.js"></script>
+<script src="/js/callback.js"></script>
 <script src="/js/main.js"></script>
 </body>
 </html>

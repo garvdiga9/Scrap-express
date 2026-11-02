@@ -187,6 +187,19 @@ ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS dispatch_checked_at TIMESTA
 ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS quote_token VARCHAR(64);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_pickup_requests_quote_token ON pickup_requests(quote_token);
 
+-- "Request a call back": a name, a number and a question. Removed along with
+-- the customer's account, if they have one.
+CREATE TABLE IF NOT EXISTS callback_requests (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  phone VARCHAR(20) NOT NULL,
+  query TEXT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  customer_id INT REFERENCES customers(id) ON DELETE CASCADE,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_callback_requests_created_at ON callback_requests(created_at DESC);
+
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_status ON pickup_requests(status);
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_created_at ON pickup_requests(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_demolition_requests_status ON demolition_requests(status);

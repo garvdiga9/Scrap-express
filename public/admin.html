@@ -71,6 +71,7 @@
   <div class="admin-tabs">
     <button class="tab-btn active" data-tab="requests">Pickup <span class="tab-long">Requests</span> <span class="tab-count" id="pickupCount" hidden></span></button>
     <button class="tab-btn" data-tab="demolition">Demolition <span class="tab-long">Requests</span> <span class="tab-count" id="demolitionCount" hidden></span></button>
+    <button class="tab-btn" data-tab="callbacks">Call Backs <span class="tab-count" id="callbackCount" hidden></span></button>
     <button class="tab-btn" data-tab="rates"><span class="tab-long">Scrap</span> Rates</button>
     <button class="tab-btn" data-tab="testimonials">Reviews</button>
     <button class="tab-btn" data-tab="subscribers">Subscribers</button>
@@ -142,6 +143,23 @@
           </thead>
           <tbody id="demolitionBody">
             <tr><td colspan="9" class="table-empty">Loading requests…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Call back requests tab -->
+    <section class="tab-panel" id="tab-callbacks">
+      <div class="panel-head">
+        <h2>Call Back Requests</h2>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table" id="callbacksTable">
+          <thead>
+            <tr><th>Received</th><th>Name</th><th>Phone</th><th>Query</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody id="callbacksBody">
+            <tr><td colspan="6" class="table-empty">Loading call back requests…</td></tr>
           </tbody>
         </table>
       </div>

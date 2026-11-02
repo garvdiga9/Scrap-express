@@ -73,7 +73,7 @@ window.SEValidate = (() => {
     box.addEventListener('change', () => { if (box.checked) setError(box, null); });
   });
 
-  document.querySelectorAll('.book-form, #profileForm').forEach((form) => {
+  document.querySelectorAll('.book-form, #profileForm, #callbackForm').forEach((form) => {
     fieldsOf(form).forEach((field) => {
       field.addEventListener('blur', () => checkField(field));
       // Clear the message as soon as the typing fixes it.
