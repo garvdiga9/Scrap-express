@@ -26,7 +26,7 @@ const AREAS = [
 ];
 
 // Pickups and demolitions are taken up to this far from Delhi's boundary.
-const SERVICE_KM = 150;
+const SERVICE_KM = 50;
 const OTHER_AREA = `Other (within ${SERVICE_KM} km of Delhi)`;
 
 const BUSINESS_TYPES = [
@@ -75,7 +75,7 @@ const QUOTE_UNITS = ['per kg', 'per tonne', 'per piece', 'lump sum'];
 
 // Change this whenever views/rules.ejs changes in substance, so each request
 // records which version its customer accepted.
-const RULES_VERSION = '2026-11-02c';
+const RULES_VERSION = '2026-11-02d';
 const READY_DATE_MAX_DAYS = 30;
 
 // 'YYYY-MM-DD' in India, and the dates a customer can say their scrap is ready.

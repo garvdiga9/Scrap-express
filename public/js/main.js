@@ -172,7 +172,8 @@ document.querySelectorAll(STAGGER_GRIDS).forEach((grid) => {
   numberChildren(grid);
   new MutationObserver(() => numberChildren(grid)).observe(grid, { childList: true });
 });
-document.querySelectorAll('.book-form, .book-head').forEach((el) => el.classList.add('reveal'));
+// Not the long request forms: they'd stay blank until far down the page.
+document.querySelectorAll('.book-head').forEach((el) => el.classList.add('reveal'));
 
 const revealObserver = new IntersectionObserver(
   (entries, observer) => {

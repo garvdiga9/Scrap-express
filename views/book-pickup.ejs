@@ -71,7 +71,7 @@
           <label for="area">Area *</label>
           <select id="area" name="area" required>
             <option value="" disabled<%= c.area ? '' : ' selected' %>>Select your area</option>
-            <% [...areas, otherArea].forEach((area) => { %><option<%= c.area === area || (area === otherArea && c.area === 'Other Delhi NCR') ? ' selected' : '' %>><%= area %></option>
+            <% [...areas, otherArea].forEach((area) => { %><option<%= c.area === area || (area === otherArea && /^Other/.test(c.area || '')) ? ' selected' : '' %>><%= area %></option>
             <% }) %>
           </select>
         </div>
