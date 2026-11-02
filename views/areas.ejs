@@ -4,14 +4,15 @@
 
 <main id="top">
 
+<%- include('partials/page-hero', {
+  eyebrow: 'Coverage',
+  heading: 'Industrial & Commercial Areas We Serve',
+  text: 'We collect bulk scrap from factories, offices and institutions across these hubs in Delhi NCR. Not listed? Call us — we cover the wider region too.',
+}) %>
+
   <!-- Areas served -->
-  <section class="section page-top" id="areas">
+  <section class="section after-page-hero" id="areas">
     <div class="container">
-      <div class="section-head">
-        <span class="eyebrow">Coverage</span>
-        <h2>Industrial &amp; Commercial Areas We Serve</h2>
-        <p>We collect bulk scrap from factories, offices and institutions across these hubs in Delhi NCR. Not listed? Call us — we cover the wider region too.</p>
-      </div>
       <div class="areas-grid">
         <% areas.forEach((area) => { %><span class="area-badge"><%= area %></span>
         <% }) %>

@@ -147,6 +147,7 @@ document.querySelectorAll('.tab-btn').forEach((btn) => {
     document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+    document.getElementById('adminPushCard').classList.toggle('off-tab', !['requests', 'demolition'].includes(btn.dataset.tab));
   });
 });
 
@@ -377,7 +378,8 @@ function renderMediaGallery(container, list) {
     const download = document.createElement('a');
     download.href = `${url}?download=1`;
     download.textContent = 'Download';
-    caption.append(`${(m.size / (1024 * 1024)).toFixed(1)} MB · `, download);
+    const size = m.size < 1024 * 1024 ? `${Math.max(1, Math.round(m.size / 1024))} KB` : `${(m.size / (1024 * 1024)).toFixed(1)} MB`;
+    caption.append(`${size} · `, download);
     item.appendChild(caption);
     grid.appendChild(item);
   });
@@ -858,20 +860,20 @@ function starRow(rating) {
 }
 
 async function loadTestimonials(background = false) {
-  if (!background) testimonialList.innerHTML = '<p class="table-empty">Loading testimonials…</p>';
+  if (!background) testimonialList.innerHTML = '<p class="table-empty">Loading reviews…</p>';
   try {
     const res = await fetch('/api/testimonials');
     if (!res.ok) throw new Error();
     const items = await res.json();
     if (!items.length) {
-      testimonialList.innerHTML = '<p class="table-empty">No testimonials yet.</p>';
+      testimonialList.innerHTML = '<p class="table-empty">No reviews yet.</p>';
       return;
     }
     testimonialList.innerHTML = '';
     items.forEach((t) => testimonialList.appendChild(buildTestimonialCard(t)));
   } catch (err) {
     if (background) return;
-    testimonialList.innerHTML = '<p class="table-empty">Failed to load testimonials.</p>';
+    testimonialList.innerHTML = '<p class="table-empty">Failed to load reviews.</p>';
   }
 }
 
@@ -898,10 +900,10 @@ function buildTestimonialCard(t) {
 
   const delBtn = document.createElement('button');
   delBtn.className = 'icon-btn';
-  delBtn.title = 'Delete testimonial';
+  delBtn.title = 'Delete review';
   delBtn.innerHTML = '<svg class="icon"><use href="#icon-trash"/></svg>';
   delBtn.addEventListener('click', async () => {
-    if (!confirm('Delete this testimonial?')) return;
+    if (!confirm('Delete this review?')) return;
     await fetch(`/api/admin/testimonials/${t.id}`, { method: 'DELETE' });
     card.remove();
   });
@@ -925,7 +927,7 @@ addTestimonialForm.addEventListener('submit', async (e) => {
       body: JSON.stringify({ customerName, area, rating, message }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to add testimonial');
+    if (!res.ok) throw new Error(data.error || 'Failed to add review');
     await loadTestimonials(true);
     addTestimonialForm.reset();
   } catch (err) {

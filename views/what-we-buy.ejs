@@ -1,121 +1,86 @@
 <%- include('partials/head') %>
 <%- include('partials/sprite') %>
 <%- include('partials/header') %>
+<%
+  const categories = [
+    {
+      id: 'cooling', jump: 'AC & Cooling', title: 'AC, Fridge & Cold Storage', icon: 'snowflake', tone: 'sky',
+      items: ['Normal AC (by ton & brand)', 'Inverter AC', 'Fridge (50L - 800L)', 'AC Cooling Condenser', 'AC Compressor', 'AC Motor', 'AC PCB', 'Air Cooled AC Plant', 'Water Cooled AC Plant', 'Cold Storage'],
+    },
+    {
+      id: 'generators', jump: 'Generators', title: 'Generators & Motors', icon: 'bolt', tone: 'amber',
+      items: ['Generators (0.5 kW - 500 kW)', 'Shri Ram Honda', 'Kirloskar', 'Sudhir', 'Mahindra', 'Motors (0.5 HP - 500 HP)', 'Copper Winding Motor', 'Aluminium Winding Motor'],
+    },
+    {
+      id: 'computers', jump: 'IT Equipment', title: 'Computers & IT Equipment', icon: 'monitor', tone: 'violet',
+      items: ['Complete PC', 'CPU', 'Hard Disk', 'Laptop', 'Motherboard', 'UPS', 'Monitor', 'Keyboard, Mouse & Speakers'],
+    },
+    {
+      id: 'furniture', jump: 'Furniture', title: 'Furniture & Fixtures', icon: 'chair', tone: 'orange',
+      items: ['Office Workstations', 'Office Chairs & Tables', 'Almirahs & Storage Racks', 'Sofas & Lounge Seating', 'Hotel & Hospital Beds', 'Fans & Washing Machines', 'Kitchen Equipment', 'Gym Machines'],
+    },
+    {
+      id: 'glass', jump: 'Glass', title: 'Glass Items', icon: 'bottle', tone: 'teal',
+      items: ['Whiskey & Glass Bottles', 'Showroom Glass', 'Office & Building Glass', 'Factory Glass'],
+    },
+    {
+      id: 'water-heaters', jump: 'Water Heaters', title: 'Water Heaters', icon: 'droplet', tone: 'rose',
+      items: ['Electric Geyser (2L - 50L)', 'Gas Geyser'],
+    },
+  ];
+  const demolitionTypes = ['Banquet Halls', 'Farm Houses', 'Factories', 'Houses', 'Malls', 'Schools', 'Hospitals'];
+%>
 
 <main id="top">
 
-  <!-- Everything We Buy -->
-  <section class="section page-top" id="buy">
+<%- include('partials/page-hero', {
+  eyebrow: 'Beyond Scrap Metal',
+  heading: 'What We Buy',
+  text: "From office IT equipment and factory machinery to full commercial demolitions — if your business has scrap, we'll take it. Pricing depends on brand, tonnage, volume & condition, so we quote after assessing the lot.",
+  links: [
+    ...categories.map((c) => ({ href: `#${c.id}`, label: c.jump })),
+    { href: '#demolition-projects', label: 'Demolition' },
+  ],
+}) %>
+
+  <section class="section after-page-hero" id="buy">
     <div class="container">
-      <div class="section-head">
-        <span class="eyebrow">Beyond Scrap Metal</span>
-        <h2>Everything We Buy</h2>
-        <p>From office IT equipment and factory machinery to full commercial demolitions — if your business has scrap, we'll take it. Pricing depends on brand, tonnage, volume &amp; condition, so we quote after assessing the lot.</p>
-      </div>
       <div class="buy-grid">
-        <div class="buy-card">
-          <div class="buy-icon"><svg class="icon icon-lg"><use href="#icon-snowflake"/></svg></div>
-          <h3>AC, Fridge &amp; Cold Storage</h3>
-          <div class="buy-items">
-            <span>Normal AC (by ton &amp; brand)</span>
-            <span>Inverter AC</span>
-            <span>Fridge (50L - 800L)</span>
-            <span>AC Cooling Condenser</span>
-            <span>AC Compressor</span>
-            <span>AC Motor</span>
-            <span>AC PCB</span>
-            <span>Air Cooled AC Plant</span>
-            <span>Water Cooled AC Plant</span>
-            <span>Cold Storage</span>
+        <% categories.forEach((c) => { %>
+        <article class="buy-card tone-<%= c.tone %>" id="<%= c.id %>">
+          <div class="buy-card-head">
+            <div class="buy-icon"><svg class="icon icon-lg"><use href="#icon-<%= c.icon %>"/></svg></div>
+            <h2><%= c.title %></h2>
           </div>
-          <a href="/book-pickup" class="buy-link">Get a Quote</a>
-        </div>
-
-        <div class="buy-card">
-          <div class="buy-icon"><svg class="icon icon-lg"><use href="#icon-bolt"/></svg></div>
-          <h3>Generators &amp; Motors</h3>
-          <div class="buy-items">
-            <span>Generators (0.5 kW - 500 kW)</span>
-            <span>Shri Ram Honda</span>
-            <span>Kirloskar</span>
-            <span>Sudhir</span>
-            <span>Mahindra</span>
-            <span>Motors (0.5 HP - 500 HP)</span>
-            <span>Copper Winding Motor</span>
-            <span>Aluminium Winding Motor</span>
-          </div>
-          <a href="/book-pickup" class="buy-link">Get a Quote</a>
-        </div>
-
-        <div class="buy-card">
-          <div class="buy-icon"><svg class="icon icon-lg"><use href="#icon-droplet"/></svg></div>
-          <h3>Water Heaters</h3>
-          <div class="buy-items">
-            <span>Electric Geyser (2L - 50L)</span>
-            <span>Gas Geyser</span>
-          </div>
-          <a href="/book-pickup" class="buy-link">Get a Quote</a>
-        </div>
-
-        <div class="buy-card">
-          <div class="buy-icon"><svg class="icon icon-lg"><use href="#icon-monitor"/></svg></div>
-          <h3>Computers &amp; IT Equipment</h3>
-          <div class="buy-items">
-            <span>Complete PC</span>
-            <span>CPU</span>
-            <span>Hard Disk</span>
-            <span>Laptop</span>
-            <span>Motherboard</span>
-            <span>UPS</span>
-            <span>Monitor</span>
-            <span>Keyboard, Mouse &amp; Speakers</span>
-          </div>
-          <a href="/book-pickup" class="buy-link">Get a Quote</a>
-        </div>
-
-        <div class="buy-card">
-          <div class="buy-icon"><svg class="icon icon-lg"><use href="#icon-chair"/></svg></div>
-          <h3>Furniture &amp; Fixtures</h3>
-          <div class="buy-items">
-            <span>Office Workstations</span>
-            <span>Office Chairs &amp; Tables</span>
-            <span>Almirahs &amp; Storage Racks</span>
-            <span>Sofas &amp; Lounge Seating</span>
-            <span>Hotel &amp; Hospital Beds</span>
-            <span>Fans &amp; Washing Machines</span>
-            <span>Kitchen Equipment</span>
-            <span>Gym Machines</span>
-          </div>
-          <a href="/book-pickup" class="buy-link">Get a Quote</a>
-        </div>
-
-        <div class="buy-card">
-          <div class="buy-icon"><svg class="icon icon-lg"><use href="#icon-bottle"/></svg></div>
-          <h3>Glass Items</h3>
-          <div class="buy-items">
-            <span>Whiskey &amp; Glass Bottles</span>
-            <span>Showroom Glass</span>
-            <span>Office &amp; Building Glass</span>
-            <span>Factory Glass</span>
-          </div>
-          <a href="/book-pickup" class="buy-link">Get a Quote</a>
-        </div>
-
-        <div class="buy-card">
-          <div class="buy-icon"><svg class="icon icon-lg"><use href="#icon-crane"/></svg></div>
-          <h3>Demolition Projects</h3>
-          <div class="buy-items">
-            <span>Banquet Halls</span>
-            <span>Farm Houses</span>
-            <span>Factories</span>
-            <span>Houses</span>
-            <span>Malls</span>
-            <span>Schools</span>
-            <span>Hospitals</span>
-          </div>
-          <a href="/demolition" class="buy-link">Request Site Visit</a>
-        </div>
+          <ul class="buy-items">
+            <% c.items.forEach((item) => { %><li><svg class="icon"><use href="#icon-check"/></svg> <%= item %></li>
+            <% }) %>
+          </ul>
+          <a href="/book-pickup" class="buy-link">Get a Quote <span aria-hidden="true">→</span></a>
+        </article>
+        <% }) %>
       </div>
+
+      <article class="buy-demolition" id="demolition-projects">
+        <div class="buy-demolition-copy">
+          <div class="buy-icon"><svg class="icon icon-lg"><use href="#icon-crane"/></svg></div>
+          <div>
+            <h2>Demolition Projects</h2>
+            <ul class="buy-demolition-types">
+              <% demolitionTypes.forEach((type) => { %><li><%= type %></li>
+              <% }) %>
+            </ul>
+          </div>
+        </div>
+        <a href="/demolition" class="btn btn-accent btn-lg">Request Site Visit</a>
+      </article>
+
+      <p class="buy-not-listed">
+        Don't see your item?
+        <a href="https://wa.me/919818826333?text=<%= encodeURIComponent('Hi Scrap Express, do you buy this item?') %>" target="_blank" rel="noopener">
+          <svg class="icon"><use href="#icon-whatsapp"/></svg> Ask us on WhatsApp
+        </a>
+      </p>
     </div>
   </section>
 

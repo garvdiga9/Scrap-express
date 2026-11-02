@@ -10,7 +10,9 @@
         </a>
       </div>
     </div>
+    <%# Fades the same way as the "Daily rates" band below it. %>
     <svg class="section-wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M0,40 C240,0 480,80 720,40 C960,0 1200,80 1440,40 L1440,80 L0,80 Z" fill="var(--color-dark)"/>
+      <linearGradient id="ctaWaveFill"><stop offset="0" stop-color="#f0fdf4"/><stop offset="1" stop-color="#fefce8"/></linearGradient>
+      <path d="M0,40 C240,0 480,80 720,40 C960,0 1200,80 1440,40 L1440,80 L0,80 Z" fill="url(#ctaWaveFill)"/>
     </svg>
   </section>

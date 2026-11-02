@@ -290,8 +290,9 @@ const FAMILY_COLORS = {
   battery: { bg: '#fee2e2', fg: '#b91c1c' },
 };
 
+// Categories added from the admin have no icon of their own.
 function iconForCategory(icon) {
-  return `icon-${icon}`;
+  return document.getElementById(`icon-${icon}`) ? `icon-${icon}` : 'icon-recycle';
 }
 
 function familyColors(icon) {

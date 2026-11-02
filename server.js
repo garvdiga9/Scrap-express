@@ -208,10 +208,12 @@ app.get('/account', async (req, res) => {
 });
 
 app.use((req, res) => {
-  res.status(404).render('index', {
-    page: 'home',
+  res.status(404).render('notice', {
+    ...NOTICE,
     title: 'Page Not Found - Scrap Express',
-    description: 'The page you were looking for could not be found.',
+    icon: 'icon-close',
+    heading: 'Page not found',
+    message: "This page doesn't exist or may have moved. Our home page has everything you need.",
   });
 });
 

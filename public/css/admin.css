@@ -60,7 +60,7 @@
 }
 .tab-btn.active { color: var(--color-primary); border-color: var(--color-primary); }
 
-.admin-content { padding: 32px 24px 64px; max-width: 1180px; }
+.admin-content { padding: 32px 24px 64px; max-width: 1320px; }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
@@ -75,13 +75,15 @@
 .table-wrap { background: #fff; border-radius: var(--radius-md); overflow: auto; box-shadow: var(--shadow-sm); }
 .admin-table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 720px; }
 .admin-table th {
-  text-align: left; padding: 14px 16px;
+  text-align: left; padding: 14px 12px;
   background: #f1f5f9; color: var(--color-text-light);
   font-weight: 600; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.03em;
   white-space: nowrap;
 }
-.admin-table td { padding: 12px 16px; border-top: 1px solid var(--color-border); vertical-align: middle; }
+.admin-table td { padding: 12px; border-top: 1px solid var(--color-border); vertical-align: middle; }
 .admin-table tr:hover td { background: #f8fafc; }
+/* Dates and quantities stay on one line. */
+#requestsTable td:first-child, #requestsTable td:nth-child(7), #demolitionTable td:first-child { white-space: nowrap; }
 .table-empty { text-align: center; color: var(--color-text-light); padding: 32px !important; }
 
 .status-select {
@@ -100,6 +102,8 @@
 .tel-link { color: var(--color-primary-dark); font-weight: 600; }
 .row-highlight td { background: #fef3c7 !important; transition: background 1s ease; }
 .admin-content .push-card { margin-bottom: 24px; }
+/* Request alerts only belong with the request tabs. */
+.admin-content .push-card.off-tab { display: none; }
 .view-btn {
   background: var(--color-primary-light); color: var(--color-primary-dark);
   border: none; border-radius: 6px; padding: 6px 10px; margin-right: 4px;
@@ -251,14 +255,21 @@
 .remember-me { display: flex; align-items: center; gap: 8px; margin: -4px 0 18px; font-size: 13.5px; color: var(--color-text); cursor: pointer; }
 .remember-me input { width: 17px; height: 17px; accent-color: var(--color-primary); }
 
-/* ---------- Phones: tables become cards ---------- */
-@media (max-width: 760px) {
+/* ---------- Small laptops & tablets ---------- */
+@media (min-width: 1024px) and (max-width: 1180px) {
+  /* Area and frequency are still in the request details. */
+  #requestsTable th:nth-child(5), #requestsTable td:nth-child(5),
+  #requestsTable th:nth-child(8), #requestsTable td:nth-child(8) { display: none; }
+}
+
+/* ---------- Phones & tablets: tables become cards ---------- */
+@media (max-width: 1023px) {
   .welcome-user { display: none; }
   .admin-topbar .btn-outline { padding: 7px 12px; font-size: 13px; }
-  /* Tabs scroll sideways instead of wrapping. */
-  .admin-tabs { overflow-x: auto; padding: 0 8px; scrollbar-width: none; position: sticky; top: 0; z-index: 9; }
-  .admin-tabs::-webkit-scrollbar { display: none; }
-  .tab-btn { white-space: nowrap; padding: 14px 12px; flex-shrink: 0; }
+  /* Short names, wrapping onto a second row, so every tab can be seen. */
+  .admin-tabs { flex-wrap: wrap; justify-content: center; gap: 0 2px; padding: 0 6px; position: sticky; top: 0; z-index: 9; }
+  .tab-long { display: none; }
+  .tab-btn { white-space: nowrap; padding: 12px 10px; }
   .panel-head select { width: 100%; padding: 11px 14px; font-size: 15px; }
 
   .table-wrap { background: none; box-shadow: none; overflow: visible; }
@@ -298,7 +309,21 @@
   .table-empty { border: 0 !important; }
   .admin-table tr:has(.table-empty) { background: none; border: 0; box-shadow: none; }
 
-  .price-edit input { width: 90px; }
+  /* A rate is two lines: name and unit, then price, save and delete. */
+  #ratesTable tr:not(:has(.table-empty)) {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 6px 10px;
+    padding: 12px 14px;
+  }
+  #ratesTable td { display: block; width: auto; padding: 0; border: 0; text-align: left; }
+  #ratesTable td::before { content: none; }
+  #ratesTable td:nth-child(1) { font-weight: 600; color: var(--color-dark); }
+  #ratesTable td:nth-child(2) { font-size: 12.5px; color: var(--color-text-light); text-align: right; }
+  #ratesTable td:nth-child(4) { justify-self: end; }
+  .price-edit input { flex: 1 1 auto; width: 0; min-width: 70px; padding: 9px 10px; font-size: 15px; }
+  .save-price-btn { padding: 10px 14px; font-size: 13.5px; }
   .admin-content .push-card { padding: 14px 16px; }
   .push-card .btn { flex: 1 1 auto; }
 }

@@ -4,15 +4,16 @@
 
 <main id="top">
 
+<%- include('partials/page-hero', {
+  eyebrow: 'Indicative Rates',
+  heading: 'Scrap Rates',
+  text: 'Reference prices per kg (unless noted) for common scrap categories. Business lots are priced on volume, grade and location, so your final rate comes in a bulk quote.',
+  links: [{ href: '#subscribe', label: '🔔 Get these rates every morning' }],
+}) %>
+
   <!-- Live Rates -->
-  <section class="section page-top" id="rates">
+  <section class="section after-page-hero" id="rates">
     <div class="container">
-      <div class="section-head">
-        <span class="eyebrow">Indicative Rates</span>
-        <h2>Scrap Rates</h2>
-        <p>Reference prices per kg (unless noted) for common scrap categories. Business lots are priced on volume, grade and location, so your final rate comes in a bulk quote.</p>
-        <a href="#subscribe" class="btn btn-outline rates-subscribe-link">🔔 Get these rates every morning</a>
-      </div>
       <div class="rates-grid" id="ratesGrid">
         <!-- populated by JS -->
         <div class="rates-loading">Loading current rates…</div>
