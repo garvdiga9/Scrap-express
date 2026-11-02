@@ -50,6 +50,7 @@ router.post('/session', async (req, res) => {
     req.session.customerId = customer.id;
     req.session.cookie.maxAge = THIRTY_DAYS;
     res.json({ ok: true });
+    live.publish('customers');
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not sign you in. Please try again.' });
@@ -108,6 +109,7 @@ router.put('/me', requireCustomer, async (req, res) => {
     if (!customer) return res.status(401).json({ error: 'Please log in first.' });
     res.json(customer);
     live.publishToCustomer(customer.id);
+    live.publish('customers');
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not save your details.' });
@@ -146,6 +148,7 @@ router.post('/delete', requireCustomer, async (req, res) => {
     }
     await customers.deleteAccount(req.session.customerId);
     live.requestChanged(req.session.customerId);
+    live.publish('customers');
     req.session.destroy(() => res.json({ ok: true }));
   } catch (err) {
     console.error(err);

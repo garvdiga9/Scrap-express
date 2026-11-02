@@ -149,7 +149,10 @@ router.post('/', media.acceptMedia, async (req, res) => {
       customers.fillBlankProfile(customerId, {
         name, phone, email, companyName, businessType, gstin, area, ...site,
       }).catch((err) => console.error('fillBlankProfile failed', err))
-        .finally(() => live.publishToCustomer(customerId));
+        .finally(() => {
+          live.publishToCustomer(customerId);
+          live.publish('customers');
+        });
     }
     res.status(201).json({
       id: rows[0].id,

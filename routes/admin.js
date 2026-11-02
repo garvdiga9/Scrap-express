@@ -259,6 +259,67 @@ router.delete('/demolition/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// ---- customers ----
+
+// Everyone who has an account, and everyone who sent a request without one.
+// People without an account are grouped by phone number (its last 10 digits),
+// showing their latest details.
+router.get('/customers', requireAdmin, async (req, res) => {
+  try {
+    const [accounts, guests] = await Promise.all([
+      pool.query(
+        `SELECT c.id, c.name, c.email, COALESCE(NULLIF(c.phone, ''), c.verified_phone) AS phone,
+                c.company_name, c.business_type, c.gstin, c.address, c.area, c.created_at, c.last_login_at,
+                (SELECT COUNT(*)::int FROM pickup_requests p WHERE p.customer_id = c.id) AS pickups,
+                (SELECT COUNT(*)::int FROM demolition_requests d WHERE d.customer_id = c.id) AS demolitions,
+                (SELECT COUNT(*)::int FROM pickup_requests p WHERE p.customer_id = c.id AND p.status = 'no_scrap') AS wasted_trips
+         FROM customers c
+         ORDER BY c.last_login_at DESC NULLS LAST, c.created_at DESC
+         LIMIT 1000`
+      ),
+      pool.query(
+        `WITH requests AS (
+           SELECT right(regexp_replace(phone, '[^0-9]', '', 'g'), 10) AS key, 'pickup' AS kind, name, phone, email,
+                  company_name, business_type, gstin, address, area, status, created_at
+           FROM pickup_requests WHERE customer_id IS NULL
+           UNION ALL
+           SELECT right(regexp_replace(phone, '[^0-9]', '', 'g'), 10), 'demolition', name, phone, email,
+                  NULL, NULL, NULL, location, NULL, status, created_at
+           FROM demolition_requests WHERE customer_id IS NULL
+         ),
+         latest AS (
+           SELECT DISTINCT ON (key) * FROM requests ORDER BY key, created_at DESC
+         ),
+         totals AS (
+           SELECT key,
+                  COUNT(*) FILTER (WHERE kind = 'pickup')::int AS pickups,
+                  COUNT(*) FILTER (WHERE kind = 'demolition')::int AS demolitions,
+                  COUNT(*) FILTER (WHERE status = 'no_scrap')::int AS wasted_trips,
+                  MAX(email) AS any_email, MAX(company_name) AS any_company,
+                  MIN(created_at) AS first_request_at, MAX(created_at) AS last_request_at
+           FROM requests GROUP BY key
+         )
+         SELECT l.key, l.name, l.phone, COALESCE(l.email, t.any_email) AS email,
+                COALESCE(l.company_name, t.any_company) AS company_name, l.business_type, l.gstin, l.address, l.area,
+                t.pickups, t.demolitions, t.wasted_trips, t.first_request_at, t.last_request_at,
+                EXISTS (
+                  SELECT 1 FROM customers c
+                  WHERE right(regexp_replace(COALESCE(c.phone, ''), '[^0-9]', '', 'g'), 10) = l.key
+                     OR right(regexp_replace(COALESCE(c.verified_phone, ''), '[^0-9]', '', 'g'), 10) = l.key
+                     OR lower(c.email) = lower(COALESCE(l.email, t.any_email))
+                ) AS has_account
+         FROM latest l JOIN totals t ON t.key = l.key
+         ORDER BY t.last_request_at DESC
+         LIMIT 1000`
+      ),
+    ]);
+    res.json({ accounts: accounts.rows, guests: guests.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load customers' });
+  }
+});
+
 // ---- call back requests ----
 
 const CALLBACK_STATUSES = ['pending', 'called', 'closed'];

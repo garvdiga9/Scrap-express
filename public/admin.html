@@ -72,6 +72,7 @@
     <button class="tab-btn active" data-tab="requests">Pickup <span class="tab-long">Requests</span> <span class="tab-count" id="pickupCount" hidden></span></button>
     <button class="tab-btn" data-tab="demolition">Demolition <span class="tab-long">Requests</span> <span class="tab-count" id="demolitionCount" hidden></span></button>
     <button class="tab-btn" data-tab="callbacks">Call Backs <span class="tab-count" id="callbackCount" hidden></span></button>
+    <button class="tab-btn" data-tab="customers">Customers</button>
     <button class="tab-btn" data-tab="rates"><span class="tab-long">Scrap</span> Rates</button>
     <button class="tab-btn" data-tab="testimonials">Reviews</button>
     <button class="tab-btn" data-tab="subscribers">Subscribers</button>
@@ -160,6 +161,40 @@
           </thead>
           <tbody id="callbacksBody">
             <tr><td colspan="6" class="table-empty">Loading call back requests…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Customers tab -->
+    <section class="tab-panel" id="tab-customers">
+      <div class="panel-head">
+        <h2>Customers</h2>
+        <input type="search" id="customerSearch" class="customer-search" placeholder="Search name, company, phone or email" aria-label="Search customers">
+      </div>
+      <div class="customer-switch" role="group" aria-label="Which customers to show">
+        <button type="button" class="customer-switch-btn active" data-list="accounts" aria-pressed="true">With Login <span id="accountsCount"></span></button>
+        <button type="button" class="customer-switch-btn" data-list="guests" aria-pressed="false">Booked Without Login <span id="guestsCount"></span></button>
+      </div>
+
+      <div class="table-wrap" id="accountsList">
+        <table class="admin-table" id="accountsTable">
+          <thead>
+            <tr><th>Customer</th><th>Phone</th><th>Email</th><th>Location</th><th>Requests</th><th>Joined</th><th>Last Login</th></tr>
+          </thead>
+          <tbody id="accountsBody">
+            <tr><td colspan="7" class="table-empty">Loading customers…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap" id="guestsList" hidden>
+        <table class="admin-table" id="guestsTable">
+          <thead>
+            <tr><th>Customer</th><th>Phone</th><th>Email</th><th>Location</th><th>Requests</th><th>First Request</th><th>Last Request</th></tr>
+          </thead>
+          <tbody id="guestsBody">
+            <tr><td colspan="7" class="table-empty">Loading customers…</td></tr>
           </tbody>
         </table>
       </div>
