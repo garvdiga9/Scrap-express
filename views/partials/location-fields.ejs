@@ -1,8 +1,9 @@
 <%# Site address, as separate fields. Handled by public/js/location.js.
     Locals: prefix (for unique ids), c (saved customer details), and
-    site = true on request forms: required fields and the GPS pin. %>
+    site = true on request forms: required fields, the GPS pin, and a site
+    that must be within our service area. %>
 <% const star = locals.site ? ' *' : ''; const req = locals.site ? ' required' : ''; %>
-<div class="location-fields" data-location>
+<div class="location-fields" data-location<%= locals.site ? ' data-service-area' : '' %>>
   <% if (locals.site) { %>
   <div class="location-gps" data-gps hidden>
     <button type="button" class="btn btn-outline location-gps-btn" data-gps-button>

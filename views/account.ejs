@@ -138,7 +138,7 @@
               <label for="pArea">Area</label>
               <select id="pArea" name="area">
                 <option value="">Select area</option>
-                <% [...areas, 'Other Delhi NCR'].forEach((area) => { %><option<%= c.area === area ? ' selected' : '' %>><%= area %></option>
+                <% [...areas, otherArea].forEach((area) => { %><option<%= c.area === area || (area === otherArea && c.area === 'Other Delhi NCR') ? ' selected' : '' %>><%= area %></option>
                 <% }) %>
               </select>
             </div>

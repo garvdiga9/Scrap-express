@@ -6,7 +6,7 @@ const pgSession = require('connect-pg-simple')(session);
 
 const pool = require('./db/pool');
 const {
-  AREAS, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, formatQuoteRate, readyDateRange,
+  AREAS, OTHER_AREA, SERVICE_KM, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, formatQuoteRate, readyDateRange,
 } = require('./data/business');
 const ratesRouter = require('./routes/rates');
 const pickupRouter = require('./routes/pickup');
@@ -120,6 +120,8 @@ app.use(async (req, res, next) => {
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.locals.areas = AREAS;
+app.locals.otherArea = OTHER_AREA;
+app.locals.serviceKm = SERVICE_KM;
 app.locals.businessTypes = BUSINESS_TYPES;
 app.locals.scrapTypes = SCRAP_TYPES;
 app.locals.pickupFrequencies = PICKUP_FREQUENCIES;
@@ -135,12 +137,12 @@ const PAGES = [
   { path: '/', view: 'index', page: 'home', title: 'Scrap Express - Bulk Scrap Buyers for Businesses in Delhi NCR', description: 'Scrap Express buys scrap in bulk from factories, offices, hospitals, schools, malls, hotels and restaurant chains across Delhi NCR. GST invoice, weighbridge slips and payment by cash or bank transfer.' },
   { path: '/rates', view: 'rates', page: 'rates', title: 'Indicative Scrap Rates in Delhi - Scrap Express', description: 'Indicative per-kg scrap rates in Delhi for paper, plastic, iron, copper, brass, aluminium, wires and more. Request a bulk quote for business volumes.' },
   { path: '/what-we-buy', view: 'what-we-buy', page: 'what-we-buy', title: 'What We Buy - Industrial & Office Scrap - Scrap Express', description: 'We buy AC plants, generators, motors, IT equipment, office furniture, glass and more from businesses across Delhi NCR. Quotes based on volume and condition.' },
-  { path: '/book-pickup', view: 'book-pickup', page: 'book-pickup', title: 'Request a Bulk Scrap Pickup in Delhi NCR - Scrap Express', description: 'Request a one-time or scheduled bulk scrap pickup from your factory, office or site in Delhi NCR. GST invoice, weighbridge slip, payment by cash or bank transfer.' },
-  { path: '/demolition', view: 'demolition', page: 'demolition', title: 'Commercial Demolition Services in Delhi NCR - Scrap Express', description: 'Demolition of schools, hospitals, factories, warehouses, malls and commercial buildings across Delhi NCR, with site survey and detailed quote.' },
+  { path: '/book-pickup', view: 'book-pickup', page: 'book-pickup', title: 'Request a Bulk Scrap Pickup in Delhi NCR - Scrap Express', description: 'Request a one-time or scheduled bulk scrap pickup from your factory, office or site in Delhi NCR or within 150 km of Delhi. GST invoice, weighbridge slip, payment by cash or bank transfer.' },
+  { path: '/demolition', view: 'demolition', page: 'demolition', title: 'Commercial Demolition Services in Delhi NCR - Scrap Express', description: 'Demolition of schools, hospitals, factories, warehouses, malls and commercial buildings across Delhi NCR and within 150 km of Delhi, with site survey and detailed quote.' },
   { path: '/rules', view: 'rules', page: 'rules', title: 'Pickup & Demolition Rules - Scrap Express', description: 'The rules for bulk scrap pickups and demolition requests with Scrap Express: accurate details, weighbridge weight, scrap quality and being ready for the truck.' },
   { path: '/privacy', view: 'privacy', page: 'privacy', title: 'Privacy Policy - Scrap Express', description: 'How Scrap Express collects, uses and protects information from customers of our website and app.' },
   { path: '/delete-account', view: 'delete-account', page: 'delete-account', title: 'Delete Your Account - Scrap Express', description: 'How to delete your Scrap Express account and what happens to your data.' },
-  { path: '/areas', view: 'areas', page: 'areas', title: 'Industrial Areas We Serve in Delhi NCR - Scrap Express', description: 'Scrap Express collects bulk scrap from businesses in Okhla, Naraina, Mayapuri, Wazirpur, Bawana, Noida, Gurugram, Manesar, Faridabad and across Delhi NCR.' },
+  { path: '/areas', view: 'areas', page: 'areas', title: 'Industrial Areas We Serve in Delhi NCR - Scrap Express', description: 'Scrap Express collects bulk scrap from businesses in Okhla, Naraina, Mayapuri, Wazirpur, Bawana, Noida, Gurugram, Manesar, Faridabad, across Delhi NCR and up to 150 km from Delhi.' },
 ];
 
 PAGES.forEach(({ path: routePath, view, page, title, description }) => {

@@ -23,7 +23,7 @@ reaches the app automatically.
 > Scrap Express buys scrap in bulk from factories, offices, hospitals, schools, malls, hotels and restaurant chains across Delhi NCR.
 >
 > With the app you can:
-> • Request a one-time or scheduled bulk pickup (300 kg and above)
+> • Request a one-time or scheduled bulk pickup (300 kg and above, within 150 km of Delhi)
 > • Attach photos and videos of your scrap for an accurate quote
 > • Receive your quote in the app and accept it with one tap
 > • Get notified when your quote is ready and when your pickup is confirmed
@@ -32,7 +32,7 @@ reaches the app automatically.
 >
 > Every pickup is weighed on a weighbridge, billed with a GST invoice and paid by cash or bank transfer, whichever you prefer.
 >
-> We also handle demolition of commercial and institutional buildings, with a site survey and detailed quote.
+> We also handle demolition of commercial and institutional buildings within 150 km of Delhi, with a site survey and detailed quote.
 
 **Category:** Business
 **Contact email:** scrapexpress@gmail.com

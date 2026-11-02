@@ -43,8 +43,9 @@ window.SEValidate = (() => {
   function checkField(field) {
     const value = field.value.trim();
     const rule = ruleFor(field);
-    const ok = !value || rule.ok(value);
-    setError(field, ok ? null : rule.message);
+    // location.js marks a pincode that's too far away.
+    const ok = !value || (rule.ok(value) && !field.dataset.outside);
+    setError(field, ok ? null : field.dataset.outside || rule.message);
     return ok;
   }
 
@@ -83,5 +84,5 @@ window.SEValidate = (() => {
     form.addEventListener('reset', () => fieldsOf(form).forEach((field) => setError(field, null)));
   });
 
-  return { checkForm, rulesAccepted };
+  return { checkForm, checkField, rulesAccepted };
 })();

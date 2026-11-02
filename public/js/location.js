@@ -27,19 +27,31 @@ document.querySelectorAll('[data-location]').forEach((box) => {
     }
   };
 
+  // Shows straight away that this pincode is too far away, and stops the
+  // form sending (validate.js) before any photos are uploaded.
+  function setOutside(message) {
+    const was = pincode.dataset.outside;
+    if (message) pincode.dataset.outside = message;
+    else delete pincode.dataset.outside;
+    if (message || was) window.SEValidate.checkField(pincode);
+  }
+
   let lookupFor = '';
   async function lookUpPincode() {
     const value = pincode.value.trim();
     pincodeNote.hidden = true;
     if (!/^[1-9]\d{5}$/.test(value)) {
       lookupFor = '';
+      setOutside(null);
       return;
     }
     if (value === lookupFor) return;
     lookupFor = value;
+    setOutside(null);
     try {
       const data = await getJson(`/api/location/pincode/${value}`);
       if (lookupFor !== value) return;
+      if ('serviceArea' in box.dataset) setOutside(data.outside);
       if (data.found) {
         fill(city, data.city);
         fill(state, data.state);
@@ -55,7 +67,7 @@ document.querySelectorAll('[data-location]').forEach((box) => {
     pincode.value = pincode.value.replace(/\D/g, '');
     lookUpPincode();
   });
-  if (pincode.value && !city.value) lookUpPincode();
+  if (pincode.value && (!city.value || 'serviceArea' in box.dataset)) lookUpPincode();
 
   /* ---------- Use my current location ---------- */
   const gps = find('[data-gps]');
@@ -92,6 +104,7 @@ document.querySelectorAll('[data-location]').forEach((box) => {
   form.addEventListener('reset', () => {
     removePin();
     lookupFor = '';
+    delete pincode.dataset.outside;
     pincodeNote.hidden = true;
     [street, city, state, pincode].forEach((field) => { delete field.dataset.autoFilled; });
   });

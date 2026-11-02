@@ -16,6 +16,7 @@
           <li><svg class="icon"><use href="#icon-check"/></svg> Payment by cash or bank transfer, whichever you prefer</li>
           <li><svg class="icon"><use href="#icon-check"/></svg> One-time clearances or scheduled pickups</li>
           <li><svg class="icon"><use href="#icon-check"/></svg> Minimum <%= minPickupKg %> kg per pickup</li>
+          <li><svg class="icon"><use href="#icon-check"/></svg> Sites within <%= serviceKm %> km of Delhi's boundary</li>
           <li><svg class="icon"><use href="#icon-check"/></svg> Pickup charges may vary depending on location &amp; quantity</li>
         </ul>
       </div>
@@ -70,7 +71,7 @@
           <label for="area">Area *</label>
           <select id="area" name="area" required>
             <option value="" disabled<%= c.area ? '' : ' selected' %>>Select your area</option>
-            <% [...areas, 'Other Delhi NCR'].forEach((area) => { %><option<%= c.area === area ? ' selected' : '' %>><%= area %></option>
+            <% [...areas, otherArea].forEach((area) => { %><option<%= c.area === area || (area === otherArea && c.area === 'Other Delhi NCR') ? ' selected' : '' %>><%= area %></option>
             <% }) %>
           </select>
         </div>

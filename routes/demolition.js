@@ -4,7 +4,7 @@ const {
   PHONE_ERROR, EMAIL_ERROR, cleanPhone, cleanEmail,
 } = require('../lib/validation');
 const { RULES_VERSION } = require('../data/business');
-const { parseSite } = require('../lib/location');
+const { parseSite, outsideServiceArea } = require('../lib/location');
 const media = require('../lib/media');
 const push = require('../lib/push');
 const live = require('../lib/live');
@@ -30,6 +30,8 @@ router.post('/', media.acceptMedia, async (req, res) => {
   if (typedEmail && !email) return res.status(400).json({ error: EMAIL_ERROR });
   const mediaError = media.missingMediaError(req);
   if (mediaError) return res.status(400).json({ error: mediaError });
+  const tooFar = await outsideServiceArea(site.pincode);
+  if (tooFar) return res.status(400).json({ error: tooFar });
 
   const customerId = (req.session && req.session.customerId) || null;
 

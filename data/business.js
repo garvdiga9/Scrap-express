@@ -25,6 +25,10 @@ const AREAS = [
   'Ghaziabad - Sahibabad',
 ];
 
+// Pickups and demolitions are taken up to this far from Delhi's boundary.
+const SERVICE_KM = 150;
+const OTHER_AREA = `Other (within ${SERVICE_KM} km of Delhi)`;
+
 const BUSINESS_TYPES = [
   'Factory / Manufacturing Unit',
   'Office / IT Park',
@@ -71,7 +75,7 @@ const QUOTE_UNITS = ['per kg', 'per tonne', 'per piece', 'lump sum'];
 
 // Change this whenever views/rules.ejs changes in substance, so each request
 // records which version its customer accepted.
-const RULES_VERSION = '2026-11-02';
+const RULES_VERSION = '2026-11-02c';
 const READY_DATE_MAX_DAYS = 30;
 
 // 'YYYY-MM-DD' in India, and the dates a customer can say their scrap is ready.
@@ -89,6 +93,6 @@ function formatQuoteRate({ rate, unit }) {
 }
 
 module.exports = {
-  AREAS, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS,
+  AREAS, OTHER_AREA, SERVICE_KM, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS,
   PICKUP_STATUSES, QUOTE_UNITS, RULES_VERSION, formatQuoteRate, readyDateRange,
 };

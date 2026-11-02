@@ -18,12 +18,17 @@ function tooMany(ip) {
 
 const UNAVAILABLE = { error: 'Address lookup is not available right now. Please type the address.' };
 
-// GET /api/location/pincode/110020 → { found, city, state }
+// GET /api/location/pincode/110020 → { found, city, state, outside }, where
+// `outside` explains why this pincode is too far away, if it is.
 router.get('/pincode/:pincode', async (req, res) => {
   if (!PINCODE_RE.test(req.params.pincode)) return res.json({ found: false });
   if (tooMany(req.ip)) return res.status(429).json(UNAVAILABLE);
   try {
-    res.json(await location.lookupPincode(req.params.pincode));
+    const [place, outside] = await Promise.all([
+      location.lookupPincode(req.params.pincode),
+      location.outsideServiceArea(req.params.pincode),
+    ]);
+    res.json({ ...place, outside });
   } catch (err) {
     console.error('pincode lookup failed:', err.message);
     res.status(503).json(UNAVAILABLE);

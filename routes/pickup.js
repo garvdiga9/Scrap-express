@@ -3,7 +3,7 @@ const pool = require('../db/pool');
 const {
   BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS, RULES_VERSION,
 } = require('../data/business');
-const { parseSite } = require('../lib/location');
+const { parseSite, outsideServiceArea } = require('../lib/location');
 const {
   GSTIN_RE, GSTIN_ERROR, PHONE_ERROR, EMAIL_ERROR, cleanPhone, cleanEmail,
 } = require('../lib/validation');
@@ -109,6 +109,8 @@ router.post('/', media.acceptMedia, async (req, res) => {
   }
   const mediaError = media.missingMediaError(req);
   if (mediaError) return res.status(400).json({ error: mediaError });
+  const tooFar = await outsideServiceArea(site.pincode);
+  if (tooFar) return res.status(400).json({ error: tooFar });
 
   // Logged-in customers get the request on their account; everyone else can
   // still book without one.

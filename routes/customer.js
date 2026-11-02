@@ -1,7 +1,9 @@
 const router = require('express').Router();
 const firebase = require('../lib/firebase');
 const customers = require('../lib/customers');
-const { AREAS, BUSINESS_TYPES, readyDateRange } = require('../data/business');
+const {
+  AREAS, OTHER_AREA, BUSINESS_TYPES, readyDateRange,
+} = require('../data/business');
 const { parseSite } = require('../lib/location');
 const {
   GSTIN_RE, GSTIN_ERROR, PHONE_ERROR, EMAIL_ERROR, cleanPhone, cleanEmail,
@@ -101,7 +103,7 @@ router.put('/me', requireCustomer, async (req, res) => {
   }
   if (p.gstin && !GSTIN_RE.test(p.gstin)) return res.status(400).json({ error: GSTIN_ERROR });
   if (p.businessType && !BUSINESS_TYPES.includes(p.businessType)) return res.status(400).json({ error: 'Please choose a business type from the list.' });
-  if (p.area && p.area !== 'Other Delhi NCR' && !AREAS.includes(p.area)) return res.status(400).json({ error: 'Please choose an area from the list.' });
+  if (p.area && p.area !== OTHER_AREA && !AREAS.includes(p.area)) return res.status(400).json({ error: 'Please choose an area from the list.' });
 
   try {
     const customer = await customers.updateProfile(req.session.customerId, p);
