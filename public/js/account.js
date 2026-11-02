@@ -26,6 +26,7 @@ profileForm.addEventListener('submit', async (e) => {
     }
     if (!res.ok) throw new Error(data.error || 'Could not save your details.');
     document.getElementById('pGstin').value = data.gstin || '';
+    rememberSavedDetails();
     showProfileAlert('Details saved. They\'ll fill in your next booking automatically.', 'success');
   } catch (err) {
     showProfileAlert(err.message, 'error');
@@ -35,45 +36,77 @@ profileForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Accept / Decline on a quote. The page reloads afterwards so the status
-// badge and quote box show the answer.
-document.querySelectorAll('.quote-actions').forEach((actions) => {
-  const alertBox = actions.nextElementSibling;
-  actions.addEventListener('click', async (e) => {
-    const button = e.target.closest('button[data-response]');
-    if (!button) return;
-    const { response } = button.dataset;
-    if (response === 'decline' && !confirm('Decline this quote? You can call us any time for a revised one.')) return;
+// Details as last saved, to tell them apart from something being typed.
+function rememberSavedDetails() {
+  [...profileForm.elements].forEach((field) => { field.dataset.saved = field.value; });
+}
+rememberSavedDetails();
 
-    alertBox.hidden = true;
-    actions.querySelectorAll('button').forEach((b) => { b.disabled = true; });
-    try {
-      const res = await fetch(`/api/customer/requests/${actions.dataset.requestId}/quote`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ response }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.status === 401) {
-        window.location.href = '/login?next=/account';
-        return;
-      }
-      if (!res.ok) throw new Error(data.error || 'Could not save your answer. Please try again.');
-      window.location.reload();
-    } catch (err) {
-      alertBox.textContent = err.message;
-      alertBox.hidden = false;
-      actions.querySelectorAll('button').forEach((b) => { b.disabled = false; });
-    }
+// Re-read this page and swap in what changed: the request list, and details
+// saved on another device (never over something being typed here).
+async function refreshAccount() {
+  const res = await fetch('/account');
+  if (res.redirected) {
+    window.location.href = '/login?next=/account';
+    return;
+  }
+  if (!res.ok) throw new Error('Could not refresh your account.');
+  const page = new DOMParser().parseFromString(await res.text(), 'text/html');
+
+  document.querySelectorAll('[data-live-block]').forEach((block) => {
+    const fresh = page.getElementById(block.id);
+    if (fresh && fresh.innerHTML !== block.innerHTML) block.innerHTML = fresh.innerHTML;
   });
+
+  const freshForm = page.getElementById('profileForm');
+  [...profileForm.elements].forEach((field) => {
+    const fresh = field.name && freshForm.elements[field.name];
+    if (!fresh || field === document.activeElement || field.value !== field.dataset.saved) return;
+    field.value = fresh.value;
+    field.dataset.saved = fresh.value;
+  });
+}
+
+// Accept / Decline on a quote. Listens on the list because its contents get
+// replaced by refreshAccount.
+document.getElementById('accountRequests').addEventListener('click', async (e) => {
+  const button = e.target.closest('.quote-actions button[data-response]');
+  if (!button) return;
+  const actions = button.parentElement;
+  const alertBox = actions.nextElementSibling;
+  const { response } = button.dataset;
+  if (response === 'decline' && !confirm('Decline this quote? You can call us any time for a revised one.')) return;
+
+  alertBox.hidden = true;
+  actions.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+  try {
+    const res = await fetch(`/api/customer/requests/${actions.dataset.requestId}/quote`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ response }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) {
+      window.location.href = '/login?next=/account';
+      return;
+    }
+    if (!res.ok) throw new Error(data.error || 'Could not save your answer. Please try again.');
+    await refreshAccount().catch(() => window.location.reload());
+  } catch (err) {
+    alertBox.textContent = err.message;
+    alertBox.hidden = false;
+    actions.querySelectorAll('button').forEach((b) => { b.disabled = false; });
+  }
 });
 
-// push.js loads with the footer, after this script, so wait for the page.
+// push.js and live.js load with the footer, after this script, so wait for the page.
 document.addEventListener('DOMContentLoaded', () => {
   window.SEPush.mount(document.getElementById('pushCard'), '/api/customer', {
     on: "On — we'll alert this phone when your quote is ready and when your pickup is confirmed.",
     off: 'Get an alert on this phone the moment your quote is ready.',
   });
+  window.SELive.on('account', refreshAccount);
+  window.SELive.start();
 });
 
 document.getElementById('logoutBtn').addEventListener('click', async () => {

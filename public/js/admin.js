@@ -36,6 +36,7 @@ function enterDashboard(username) {
   loadRates();
   loadTestimonials();
   loadSubscribers();
+  window.SELive.start();
   if (!pushMounted) {
     pushMounted = true;
     window.SEPush.mount(document.getElementById('adminPushCard'), '/api/admin', {
@@ -129,10 +130,15 @@ loginBtn.addEventListener('click', (e) => {
 
 document.getElementById('logoutBtn').addEventListener('click', async () => {
   await fetch('/api/admin/logout', { method: 'POST' });
-  dashboard.hidden = true;
-  loginScreen.hidden = false;
+  showLoginScreen();
   loginForm.reset();
 });
+
+function showLoginScreen() {
+  window.SELive.stop();
+  dashboard.hidden = true;
+  loginScreen.hidden = false;
+}
 
 /* ---------- Tabs ---------- */
 document.querySelectorAll('.tab-btn').forEach((btn) => {
@@ -178,14 +184,54 @@ function formatRate({ rate, unit }) {
   return `₹${n.toLocaleString('en-IN', { minimumFractionDigits: digits, maximumFractionDigits: digits })} ${unit}`;
 }
 
-async function loadRequests() {
-  requestsBody.innerHTML = '<tr><td colspan="10" class="table-empty">Loading requests…</td></tr>';
+// Don't rebuild a table under someone choosing a status; catch up afterwards.
+// Only for a while, as a dropdown that was just left selected counts too.
+const CHECK_FREE_MS = 500;
+const WAIT_FOR_FREE_MS = 10 * 1000;
+function renderWhenFree(table, render, waited = 0) {
+  const focused = document.activeElement;
+  const choosing = focused && focused.tagName === 'SELECT' && table.contains(focused);
+  if (choosing && waited < WAIT_FOR_FREE_MS) {
+    setTimeout(() => renderWhenFree(table, render, waited + CHECK_FREE_MS), CHECK_FREE_MS);
+  } else {
+    render();
+  }
+}
+
+// A request that has just arrived stands out for a few seconds.
+const NEW_ROW_SECONDS = 8;
+function markNewRow(tr, newIds, id) {
+  if (!newIds.has(id)) return;
+  tr.classList.add('row-highlight');
+  setTimeout(() => tr.classList.remove('row-highlight'), NEW_ROW_SECONDS * 1000);
+}
+
+// "background" means a live update, not the first load: no "Loading…", the
+// table stays as it is when nothing changed, and a failure keeps what's showing.
+const sessionEnded = (res) => {
+  if (res.status !== 401) return false;
+  showLoginScreen();
+  return true;
+};
+
+let newRequestIds = new Set();
+
+async function loadRequests(background = false) {
+  if (!background) requestsBody.innerHTML = '<tr><td colspan="10" class="table-empty">Loading requests…</td></tr>';
   try {
     const res = await fetch('/api/admin/requests');
+    if (background && sessionEnded(res)) return;
     if (!res.ok) throw new Error();
-    allRequests = await res.json();
-    renderRequests();
+    const fresh = await res.json();
+    if (background && JSON.stringify(fresh) === JSON.stringify(allRequests)) return;
+    const known = new Set(allRequests.map((r) => r.id));
+    newRequestIds = new Set(background ? fresh.map((r) => r.id).filter((id) => !known.has(id)) : []);
+    allRequests = fresh;
+    setTabCount(document.getElementById('pickupCount'), allRequests);
+    renderWhenFree(requestsBody, renderRequests);
+    updateOpenDialog();
   } catch (err) {
+    if (background) return;
     requestsBody.innerHTML = '<tr><td colspan="10" class="table-empty">Failed to load requests.</td></tr>';
   }
 }
@@ -272,8 +318,10 @@ function renderRequests() {
     actionTd.appendChild(delBtn);
     tr.appendChild(actionTd);
 
+    markNewRow(tr, newRequestIds, r.id);
     requestsBody.appendChild(tr);
   });
+  newRequestIds = new Set();
 }
 statusFilter.addEventListener('change', renderRequests);
 
@@ -453,10 +501,7 @@ function updateWhatsappLink(r) {
   whatsappLink.hidden = false;
 }
 
-function openRequestDialog(r) {
-  dialogRequest = r;
-  document.getElementById('dialogTitle').textContent = `Pickup Request #${r.id}`;
-
+function renderRequestSummary(r) {
   requestDetails.innerHTML = '';
   addDetail('Received', formatDate(r.created_at));
   addDetail('Status', PICKUP_STATUS_LABELS[r.status] || r.status);
@@ -479,11 +524,29 @@ function openRequestDialog(r) {
   if (r.quote_response) {
     addDetail('Customer answer', `${r.quote_response === 'accepted' ? 'Accepted' : 'Declined'} on ${formatDate(r.quote_responded_at)}`);
   }
-  renderMediaGallery(document.getElementById('requestMedia'), r.media || []);
-
   quoteHint.textContent = r.quoted_at
     ? `Quote sent on ${formatDate(r.quoted_at)}. Sending again replaces it and asks the customer to answer again.`
     : 'Enter your rate for each material. Sending marks the request as "Quote sent".';
+  sendQuoteBtn.textContent = r.quoted_at ? 'Send Revised Quote' : 'Send Quote';
+  updateWhatsappLink(r);
+}
+
+// A live update while the dialog is open refreshes the details (such as the
+// customer's answer) but leaves the quote being typed alone.
+function updateOpenDialog() {
+  if (!requestDialog.open || !dialogRequest) return;
+  const fresh = allRequests.find((r) => r.id === dialogRequest.id);
+  if (!fresh) return;
+  dialogRequest = fresh;
+  renderRequestSummary(fresh);
+}
+
+function openRequestDialog(r) {
+  dialogRequest = r;
+  document.getElementById('dialogTitle').textContent = `Pickup Request #${r.id}`;
+  renderRequestSummary(r);
+  renderMediaGallery(document.getElementById('requestMedia'), r.media || []);
+
   quoteLines.innerHTML = '';
   const items = r.quote_items && r.quote_items.length
     ? r.quote_items
@@ -492,8 +555,6 @@ function openRequestDialog(r) {
     .forEach((item) => quoteLines.appendChild(buildQuoteLine(item)));
   quoteNote.value = r.quote_note || '';
   quoteAlert.hidden = true;
-  sendQuoteBtn.textContent = r.quoted_at ? 'Send Revised Quote' : 'Send Quote';
-  updateWhatsappLink(r);
 
   requestDialog.showModal();
 }
@@ -545,16 +606,23 @@ quoteForm.addEventListener('submit', async (e) => {
 const demolitionBody = document.getElementById('demolitionBody');
 const demolitionStatusFilter = document.getElementById('demolitionStatusFilter');
 let allDemolitionRequests = [];
+let newDemolitionIds = new Set();
 
-async function loadDemolitionRequests() {
-  demolitionBody.innerHTML = '<tr><td colspan="9" class="table-empty">Loading requests…</td></tr>';
+async function loadDemolitionRequests(background = false) {
+  if (!background) demolitionBody.innerHTML = '<tr><td colspan="9" class="table-empty">Loading requests…</td></tr>';
   try {
     const res = await fetch('/api/admin/demolition');
+    if (background && sessionEnded(res)) return;
     if (!res.ok) throw new Error();
-    allDemolitionRequests = await res.json();
-    renderDemolitionRequests();
+    const fresh = await res.json();
+    if (background && JSON.stringify(fresh) === JSON.stringify(allDemolitionRequests)) return;
+    const known = new Set(allDemolitionRequests.map((r) => r.id));
+    newDemolitionIds = new Set(background ? fresh.map((r) => r.id).filter((id) => !known.has(id)) : []);
+    allDemolitionRequests = fresh;
+    renderWhenFree(demolitionBody, renderDemolitionRequests);
     setTabCount(document.getElementById('demolitionCount'), allDemolitionRequests);
   } catch (err) {
+    if (background) return;
     demolitionBody.innerHTML = '<tr><td colspan="9" class="table-empty">Failed to load requests.</td></tr>';
   }
 }
@@ -624,6 +692,7 @@ function renderDemolitionRequests() {
         if (!res.ok) throw new Error();
         r.status = select.value;
         setTabCount(document.getElementById('demolitionCount'), allDemolitionRequests);
+        select.blur();
       } catch (err) {
         alert('Failed to update status.');
       }
@@ -645,8 +714,10 @@ function renderDemolitionRequests() {
     actionTd.appendChild(delBtn);
     tr.appendChild(actionTd);
 
+    markNewRow(tr, newDemolitionIds, r.id);
     demolitionBody.appendChild(tr);
   });
+  newDemolitionIds = new Set();
 }
 demolitionStatusFilter.addEventListener('change', renderDemolitionRequests);
 
@@ -654,25 +725,46 @@ demolitionStatusFilter.addEventListener('change', renderDemolitionRequests);
 const ratesBody = document.getElementById('ratesBody');
 const addRateForm = document.getElementById('addRateForm');
 
-async function loadRates() {
-  ratesBody.innerHTML = '<tr><td colspan="4" class="table-empty">Loading rates…</td></tr>';
+async function loadRates(background = false) {
+  if (!background) ratesBody.innerHTML = '<tr><td colspan="4" class="table-empty">Loading rates…</td></tr>';
   try {
     const res = await fetch('/api/admin/rates');
+    if (background && sessionEnded(res)) return;
     if (!res.ok) throw new Error();
     const rates = await res.json();
     if (!rates.length) {
       ratesBody.innerHTML = '<tr><td colspan="4" class="table-empty">No categories yet.</td></tr>';
       return;
     }
-    ratesBody.innerHTML = '';
-    rates.forEach((rate) => ratesBody.appendChild(buildRateRow(rate)));
+    renderRates(rates);
   } catch (err) {
+    if (background) return;
     ratesBody.innerHTML = '<tr><td colspan="4" class="table-empty">Failed to load rates.</td></tr>';
   }
 }
 
+// Rows are kept and updated rather than rebuilt, so a price being typed
+// (not saved yet) survives a live update.
+function renderRates(rates) {
+  const empty = ratesBody.querySelector('.table-empty');
+  if (empty) empty.closest('tr').remove();
+  const rows = new Map([...ratesBody.children].map((tr) => [tr.dataset.id, tr]));
+  rates.forEach((rate, i) => {
+    const tr = rows.get(String(rate.id)) || buildRateRow(rate);
+    rows.delete(String(rate.id));
+    tr.children[0].textContent = rate.name;
+    tr.children[1].textContent = rate.unit;
+    const input = tr.querySelector('input');
+    if (input.value === input.dataset.saved) input.value = rate.price;
+    input.dataset.saved = rate.price;
+    if (ratesBody.children[i] !== tr) ratesBody.insertBefore(tr, ratesBody.children[i] || null);
+  });
+  rows.forEach((tr) => tr.remove());
+}
+
 function buildRateRow(rate) {
   const tr = document.createElement('tr');
+  tr.dataset.id = rate.id;
 
   const nameTd = document.createElement('td');
   nameTd.textContent = rate.name;
@@ -690,6 +782,7 @@ function buildRateRow(rate) {
   input.step = '0.01';
   input.min = '0';
   input.value = rate.price;
+  input.dataset.saved = input.value;
   const saveBtn = document.createElement('button');
   saveBtn.className = 'save-price-btn';
   saveBtn.textContent = 'Save';
@@ -701,6 +794,7 @@ function buildRateRow(rate) {
         body: JSON.stringify({ price: input.value }),
       });
       if (!res.ok) throw new Error();
+      input.dataset.saved = input.value;
       saveBtn.textContent = 'Saved';
       setTimeout(() => (saveBtn.textContent = 'Save'), 1200);
     } catch (err) {
@@ -742,9 +836,7 @@ addRateForm.addEventListener('submit', async (e) => {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to add category');
-    const emptyRow = ratesBody.querySelector('.table-empty');
-    if (emptyRow) emptyRow.closest('tr').remove();
-    ratesBody.appendChild(buildRateRow(data));
+    await loadRates(true);
     addRateForm.reset();
     document.getElementById('newRateUnit').value = 'kg';
   } catch (err) {
@@ -765,8 +857,8 @@ function starRow(rating) {
   return wrap;
 }
 
-async function loadTestimonials() {
-  testimonialList.innerHTML = '<p class="table-empty">Loading testimonials…</p>';
+async function loadTestimonials(background = false) {
+  if (!background) testimonialList.innerHTML = '<p class="table-empty">Loading testimonials…</p>';
   try {
     const res = await fetch('/api/testimonials');
     if (!res.ok) throw new Error();
@@ -778,6 +870,7 @@ async function loadTestimonials() {
     testimonialList.innerHTML = '';
     items.forEach((t) => testimonialList.appendChild(buildTestimonialCard(t)));
   } catch (err) {
+    if (background) return;
     testimonialList.innerHTML = '<p class="table-empty">Failed to load testimonials.</p>';
   }
 }
@@ -833,9 +926,7 @@ addTestimonialForm.addEventListener('submit', async (e) => {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to add testimonial');
-    const emptyMsg = testimonialList.querySelector('.table-empty');
-    if (emptyMsg) emptyMsg.remove();
-    testimonialList.appendChild(buildTestimonialCard(data));
+    await loadTestimonials(true);
     addTestimonialForm.reset();
   } catch (err) {
     alert(err.message);
@@ -862,9 +953,12 @@ function describeSend({ devices, emails, whatsapp, failed }) {
   return `Sent to ${parts.join(', ')}.${failed ? ` ${failed} could not be delivered (see the server log).` : ''}`;
 }
 
-async function loadSubscribers() {
+let shownSubSettings = '';
+
+async function loadSubscribers(background = false) {
   try {
     const res = await fetch('/api/admin/subscribers');
+    if (background && sessionEnded(res)) return;
     if (!res.ok) throw new Error();
     const { counts, subscribers, settings, channels } = await res.json();
 
@@ -894,9 +988,13 @@ async function loadSubscribers() {
       channelList.appendChild(li);
     });
 
-    document.getElementById('dailyEnabled').checked = settings.dailyEnabled;
-    document.getElementById('dailyTime').value = settings.dailyTime;
-    document.getElementById('waChannel').value = settings.whatsappChannelUrl || '';
+    // Only when they really changed, and never mid-edit.
+    if (JSON.stringify(settings) !== shownSubSettings && !subSettingsForm.contains(document.activeElement)) {
+      shownSubSettings = JSON.stringify(settings);
+      document.getElementById('dailyEnabled').checked = settings.dailyEnabled;
+      document.getElementById('dailyTime').value = settings.dailyTime;
+      document.getElementById('waChannel').value = settings.whatsappChannelUrl || '';
+    }
 
     subscribersBody.innerHTML = '';
     if (!subscribers.length) {
@@ -927,6 +1025,7 @@ async function loadSubscribers() {
       subscribersBody.appendChild(tr);
     });
   } catch (err) {
+    if (background) return;
     subscribersBody.innerHTML = '<tr><td colspan="4" class="table-empty">Failed to load subscribers.</td></tr>';
   }
 }
@@ -1013,18 +1112,16 @@ function setTabCount(el, list) {
   el.hidden = !pending;
 }
 
-// Reload the request lists when the app comes back to the screen (e.g. after
-// tapping a notification) or when a notification arrives while it's open.
-let lastLoaded = Date.now();
+// Everything updates by itself while the dashboard is open (see live.js). A
+// notification arriving is one more reason to check the request lists.
 function refreshRequests() {
-  if (dashboard.hidden) return;
-  lastLoaded = Date.now();
-  loadRequests();
-  loadDemolitionRequests();
+  if (dashboard.hidden) return Promise.resolve();
+  return Promise.all([loadRequests(true), loadDemolitionRequests(true)]);
 }
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && Date.now() - lastLoaded > 60 * 1000) refreshRequests();
-});
+window.SELive.on('requests', refreshRequests);
+window.SELive.on('rates', () => loadRates(true));
+window.SELive.on('reviews', () => loadTestimonials(true));
+window.SELive.on('subscribers', () => loadSubscribers(true));
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', (e) => {
     if (e.data && e.data.type === 'push') refreshRequests();

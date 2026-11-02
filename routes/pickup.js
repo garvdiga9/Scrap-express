@@ -7,6 +7,7 @@ const { PHONE_RE, GSTIN_RE, GSTIN_ERROR } = require('../lib/validation');
 const customers = require('../lib/customers');
 const media = require('../lib/media');
 const push = require('../lib/push');
+const live = require('../lib/live');
 
 const OTHER = 'Other';
 const MAX_OTHER_LENGTH = 100;
@@ -120,6 +121,7 @@ router.post('/', media.acceptMedia, async (req, res) => {
     // recording the attachments is logged rather than reported as a failure.
     const files = await media.saveForRequest(req, 'pickup', rows[0].id)
       .catch((err) => { console.error('saving pickup media failed', err); return 0; });
+    live.publish('requests');
     push.quietly(push.notifyAdmins({
       title: `New pickup request #${rows[0].id} 📦`,
       body: [companyName, quantity, area, files && `${files} photo${files === 1 ? '' : 's'}/video${files === 1 ? '' : 's'}`]
@@ -132,7 +134,8 @@ router.post('/', media.acceptMedia, async (req, res) => {
       // and tempt the customer to submit it twice.
       customers.fillBlankProfile(customerId, {
         name, phone, email, companyName, businessType, gstin, address, area, pincode,
-      }).catch((err) => console.error('fillBlankProfile failed', err));
+      }).catch((err) => console.error('fillBlankProfile failed', err))
+        .finally(() => live.publishToCustomer(customerId));
     }
     res.status(201).json({
       id: rows[0].id,

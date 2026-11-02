@@ -300,13 +300,18 @@ function familyColors(icon) {
 }
 
 /* ---------- Load live rates ---------- */
-async function loadRates() {
+// "background" is a live update (see live.js): if it fails, keep what's showing.
+let shownRates = '';
+async function loadRates(background = false) {
   const grid = document.getElementById('ratesGrid');
   if (!grid) return;
   try {
     const res = await fetch('/api/rates');
     if (!res.ok) throw new Error('Failed to load rates');
     const rates = await res.json();
+    const asText = JSON.stringify(rates);
+    if (asText === shownRates) return;
+    shownRates = asText;
     if (!rates.length) {
       grid.innerHTML = '<p class="rates-loading">Rates coming soon. Please call us for current pricing.</p>';
       return;
@@ -345,6 +350,7 @@ async function loadRates() {
       grid.appendChild(card);
     });
   } catch (err) {
+    if (background) return;
     grid.innerHTML = '<p class="rates-loading">Could not load live rates right now. Please call us for current pricing.</p>';
   }
 }
@@ -375,19 +381,21 @@ function colorForName(name) {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
-async function loadTestimonials() {
+let shownReviews = '';
+async function loadTestimonials(background = false) {
   const grid = document.getElementById('reviewsGrid');
   if (!grid) return;
   try {
     const res = await fetch('/api/testimonials');
     if (!res.ok) throw new Error('Failed to load reviews');
     const reviews = await res.json();
-    if (!reviews.length) {
-      // No client reviews yet: hide the whole section rather than show an empty one.
-      const section = document.getElementById('reviews');
-      if (section) section.hidden = true;
-      return;
-    }
+    const asText = JSON.stringify(reviews);
+    if (asText === shownReviews) return;
+    shownReviews = asText;
+    // No client reviews yet: hide the whole section rather than show an empty one.
+    const section = document.getElementById('reviews');
+    if (section) section.hidden = !reviews.length;
+    if (!reviews.length) return;
     grid.innerHTML = '';
     reviews.forEach((review) => {
       const card = document.createElement('div');
@@ -425,10 +433,18 @@ async function loadTestimonials() {
       grid.appendChild(card);
     });
   } catch (err) {
+    if (background) return;
     grid.innerHTML = '<p class="rates-loading">Could not load reviews right now.</p>';
   }
 }
 loadTestimonials();
+
+// Rates and reviews stay current on any page showing them.
+if (document.getElementById('ratesGrid') || document.getElementById('reviewsGrid')) {
+  window.SELive.on('rates', () => loadRates(true));
+  window.SELive.on('reviews', () => loadTestimonials(true));
+  window.SELive.start();
+}
 
 function escapeHtml(str) {
   const div = document.createElement('div');

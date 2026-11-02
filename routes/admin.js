@@ -7,6 +7,7 @@ const media = require('../lib/media');
 const push = require('../lib/push');
 const { mountPushRoutes } = require('./push');
 const updates = require('../lib/updates');
+const live = require('../lib/live');
 
 const ALLOWED_STATUSES = ['pending', 'confirmed', 'completed', 'cancelled'];
 const MAX_QUOTE_LINES = 20;
@@ -121,6 +122,7 @@ router.patch('/requests/:id', requireAdmin, async (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     const { old_status: oldStatus, ...row } = rows[0];
     res.json(row);
+    live.requestChanged(row.customer_id);
     notifyStatusChange('pickup', row, oldStatus);
   } catch (err) {
     console.error(err);
@@ -166,6 +168,7 @@ router.put('/requests/:id/quote', requireAdmin, async (req, res) => {
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     res.json(rows[0]);
+    live.requestChanged(rows[0].customer_id);
     const lines = items.slice(0, 2).map((item) => `${item.material} ${formatQuoteRate(item)}`);
     if (items.length > 2) lines.push(`+${items.length - 2} more`);
     push.quietly(push.notifyCustomer(rows[0].customer_id, {
@@ -182,9 +185,10 @@ router.put('/requests/:id/quote', requireAdmin, async (req, res) => {
 
 router.delete('/requests/:id', requireAdmin, async (req, res) => {
   try {
-    await pool.query('DELETE FROM pickup_requests WHERE id = $1', [req.params.id]);
+    const { rows } = await pool.query('DELETE FROM pickup_requests WHERE id = $1 RETURNING customer_id', [req.params.id]);
     await media.removeForRequest('pickup', req.params.id);
     res.json({ message: 'Deleted' });
+    live.requestChanged(rows[0] && rows[0].customer_id);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete request' });
@@ -221,6 +225,7 @@ router.patch('/demolition/:id', requireAdmin, async (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     const { old_status: oldStatus, ...row } = rows[0];
     res.json(row);
+    live.requestChanged(row.customer_id);
     notifyStatusChange('demolition', row, oldStatus);
   } catch (err) {
     console.error(err);
@@ -230,9 +235,10 @@ router.patch('/demolition/:id', requireAdmin, async (req, res) => {
 
 router.delete('/demolition/:id', requireAdmin, async (req, res) => {
   try {
-    await pool.query('DELETE FROM demolition_requests WHERE id = $1', [req.params.id]);
+    const { rows } = await pool.query('DELETE FROM demolition_requests WHERE id = $1 RETURNING customer_id', [req.params.id]);
     await media.removeForRequest('demolition', req.params.id);
     res.json({ message: 'Deleted' });
+    live.requestChanged(rows[0] && rows[0].customer_id);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete request' });
@@ -340,6 +346,7 @@ router.post('/rates', requireAdmin, async (req, res) => {
       [name, unit || 'kg', price, icon || 'default']
     );
     res.status(201).json(rows[0]);
+    live.publish('rates');
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to add category (name may already exist)' });
@@ -362,6 +369,7 @@ router.put('/rates/:id', requireAdmin, async (req, res) => {
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     res.json(rows[0]);
+    live.publish('rates');
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update category' });
@@ -372,6 +380,7 @@ router.delete('/rates/:id', requireAdmin, async (req, res) => {
   try {
     await pool.query('DELETE FROM scrap_categories WHERE id = $1', [req.params.id]);
     res.json({ message: 'Deleted' });
+    live.publish('rates');
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete category' });
@@ -391,6 +400,7 @@ router.post('/testimonials', requireAdmin, async (req, res) => {
       [customerName, area || null, rating || 5, message]
     );
     res.status(201).json(rows[0]);
+    live.publish('reviews');
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to add testimonial' });
@@ -401,6 +411,7 @@ router.delete('/testimonials/:id', requireAdmin, async (req, res) => {
   try {
     await pool.query('DELETE FROM testimonials WHERE id = $1', [req.params.id]);
     res.json({ message: 'Deleted' });
+    live.publish('reviews');
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete testimonial' });

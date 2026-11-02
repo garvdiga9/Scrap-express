@@ -20,6 +20,7 @@ const push = require('./lib/push');
 const updates = require('./lib/updates');
 const subscribeRouter = require('./routes/subscribe');
 const customers = require('./lib/customers');
+const live = require('./lib/live');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +32,7 @@ app.use(express.json());
 // One line per API call, so a request that stalls or gets dropped shows up in
 // the server log (locally and in Render's Logs tab).
 app.use('/api', (req, res, next) => {
+  if (req.path === '/live') return next(); // stays open for as long as a page does
   const start = Date.now();
   res.on('finish', () => {
     console.log(`${req.method} ${req.originalUrl} -> ${res.statusCode} (${Date.now() - start}ms)`);
@@ -78,6 +80,8 @@ app.get('/api/push/key', async (req, res) => {
     res.status(503).json({ error: 'Notifications are not available right now.' });
   }
 });
+
+app.get('/api/live', live.connect);
 
 app.use('/api/subscribe', express.urlencoded({ extended: false }), subscribeRouter);
 app.use('/api/rates', ratesRouter);

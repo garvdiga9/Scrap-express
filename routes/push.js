@@ -2,8 +2,12 @@
 // /api/customer (for the logged-in customer) and /api/admin (for the admin),
 // each router having already checked who is signed in.
 const push = require('../lib/push');
+const live = require('../lib/live');
 
 function mountPushRoutes(router, requireRole, roleOf) {
+  // The admin's Subscribers tab counts devices signed up for daily rates.
+  const countChanged = (req) => { if (roleOf(req).updates) live.publish('subscribers'); };
+
   // POST /push { subscription } — turn notifications on for this device
   router.post('/push', requireRole, async (req, res) => {
     const sub = push.cleanSubscription(req.body.subscription);
@@ -11,6 +15,7 @@ function mountPushRoutes(router, requireRole, roleOf) {
     try {
       await push.subscribe(sub, roleOf(req));
       res.json({ on: true });
+      countChanged(req);
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Could not turn on notifications. Please try again.' });
@@ -32,6 +37,7 @@ function mountPushRoutes(router, requireRole, roleOf) {
     try {
       await push.unsubscribe(String(req.body.endpoint || ''), roleOf(req));
       res.json({ on: false });
+      countChanged(req);
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Could not turn off notifications. Please try again.' });

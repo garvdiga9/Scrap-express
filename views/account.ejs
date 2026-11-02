@@ -9,7 +9,7 @@
   <section class="section page-top">
     <div class="container">
       <div class="account-head">
-        <div>
+        <div id="accountIntro" data-live-block>
           <span class="eyebrow">My Account</span>
           <h1>Welcome<%= c.name ? `, ${c.name}` : '' %></h1>
           <p class="account-sub">Logged in with <%= c.verified_phone || c.email || 'your account' %><%= c.company_name ? ` · ${c.company_name}` : '' %></p>
@@ -30,7 +30,7 @@
       </div>
 
       <div class="account-grid">
-        <section class="account-card">
+        <section class="account-card" id="accountRequests" data-live-block>
           <h2>Your Requests</h2>
           <% if (!requests.length) { %>
             <div class="account-empty">

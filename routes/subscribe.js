@@ -3,6 +3,7 @@
 const router = require('express').Router();
 const updates = require('../lib/updates');
 const { mountPushRoutes } = require('./push');
+const live = require('../lib/live');
 
 // Anyone can sign up, so cap sign-ups per connection to stop a script from
 // filling the list (or making us email strangers).
@@ -38,6 +39,7 @@ router.post('/', async (req, res) => {
   try {
     const { kind, status } = await updates.subscribe(contact);
     res.json({ message: MESSAGES[`${kind}:${status}`] });
+    live.publish('subscribers');
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not subscribe you right now. Please try again.' });
@@ -48,6 +50,7 @@ router.post('/', async (req, res) => {
 router.post('/unsubscribe', async (req, res) => {
   try {
     await updates.unsubscribe(req.query.token || req.body.token);
+    live.publish('subscribers');
     if (req.accepts(['html', 'json']) === 'html') return res.redirect('/unsubscribe?done=1');
     res.json({ ok: true });
   } catch (err) {

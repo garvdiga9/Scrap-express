@@ -5,6 +5,7 @@ const { AREAS, BUSINESS_TYPES } = require('../data/business');
 const { PHONE_RE, GSTIN_RE, PINCODE_RE, EMAIL_RE, GSTIN_ERROR } = require('../lib/validation');
 const push = require('../lib/push');
 const { mountPushRoutes } = require('./push');
+const live = require('../lib/live');
 
 const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30;
 
@@ -95,6 +96,7 @@ router.put('/me', requireCustomer, async (req, res) => {
     const customer = await customers.updateProfile(req.session.customerId, p);
     if (!customer) return res.status(401).json({ error: 'Please log in first.' });
     res.json(customer);
+    live.publishToCustomer(customer.id);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not save your details.' });
@@ -132,6 +134,7 @@ router.post('/delete', requireCustomer, async (req, res) => {
       return res.status(401).json({ error: 'Please confirm by signing in again.' });
     }
     await customers.deleteAccount(req.session.customerId);
+    live.requestChanged(req.session.customerId);
     req.session.destroy(() => res.json({ ok: true }));
   } catch (err) {
     console.error(err);
@@ -150,6 +153,7 @@ router.post('/requests/:id/quote', requireCustomer, async (req, res) => {
       return res.status(409).json({ error: 'This quote can no longer be answered. Please refresh the page.' });
     }
     res.json({ ok: true, status: response });
+    live.requestChanged(req.session.customerId);
     push.quietly(push.notifyAdmins({
       title: response === 'accepted' ? `Quote accepted ✅ #${updated.id}` : `Quote declined #${updated.id}`,
       body: response === 'accepted'
