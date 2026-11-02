@@ -30,7 +30,7 @@ reaches the app automatically.
 > • Track all your pickup and demolition requests in one place
 > • Save your business details (GSTIN, site address) for faster booking
 >
-> Every pickup is weighed on a weighbridge, billed with a GST invoice and paid by bank transfer to your company account.
+> Every pickup is weighed on a weighbridge, billed with a GST invoice and paid by cash or bank transfer, whichever you prefer.
 >
 > We also handle demolition of commercial and institutional buildings, with a site survey and detailed quote.
 

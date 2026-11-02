@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Scrap Express - Bulk Scrap Buyers, Delhi NCR",
   "short_name": "Scrap Express",
-  "description": "Request bulk scrap pickups, get quotes and track your requests. GST invoice, weighbridge slip and bank transfer payment.",
+  "description": "Request bulk scrap pickups, get quotes and track your requests. GST invoice, weighbridge slip and payment by cash or bank transfer.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
