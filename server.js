@@ -76,6 +76,37 @@ app.get('/.well-known/assetlinks.json', (req, res) => {
   }] : []);
 });
 
+// ---- for search engines ----
+const SITE_URL = (process.env.SITE_URL || 'https://scrap-express.onrender.com').replace(/\/$/, '');
+
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain').send([
+    'User-agent: *',
+    'Disallow: /api/',
+    'Disallow: /admin.html',
+    'Disallow: /account',
+    'Disallow: /login',
+    'Disallow: /quote/',
+    '',
+    `Sitemap: ${SITE_URL}/sitemap.xml`,
+    '',
+  ].join('\n'));
+});
+
+// The public pages, so search engines find them all (PAGES is defined below).
+app.get('/sitemap.xml', (req, res) => {
+  const urls = PAGES.map(({ path: pagePath, priority }) => `  <url>
+    <loc>${SITE_URL}${pagePath}</loc>
+    <changefreq>${pagePath === '/rates' ? 'daily' : 'weekly'}</changefreq>
+    <priority>${priority}</priority>
+  </url>`).join('\n');
+  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>
+`);
+});
+
 // Public key browsers need to subscribe to push notifications.
 app.get('/api/push/key', async (req, res) => {
   try {
@@ -103,6 +134,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Pages (not static files or the API) know who's logged in, so the header can
 // show "My Account" and the booking form can auto-fill.
 app.use(async (req, res, next) => {
+  res.locals.canonicalUrl = `${SITE_URL}${req.path}`;
   res.locals.customer = null;
   res.locals.loginEnabled = firebase.enabled;
   // For the "daily rates" sign-up box in the footer (cached, see lib/settings).
@@ -137,17 +169,63 @@ app.locals.statusLabels = {
   ready: 'Ready for Pickup', confirmed: 'Confirmed', completed: 'Completed', no_scrap: 'No Scrap at Site', cancelled: 'Cancelled',
 };
 app.locals.formatQuoteRate = formatQuoteRate;
+app.locals.siteUrl = SITE_URL;
+// Search Console / Bing Webmaster ownership codes, set on Render once the
+// owner adds the site there.
+app.locals.googleVerification = process.env.GOOGLE_SITE_VERIFICATION || '';
+app.locals.bingVerification = process.env.BING_SITE_VERIFICATION || '';
+// Words people type when they want to sell scrap. Search engines mostly read
+// the titles, descriptions and page text; these are a light extra hint.
+app.locals.siteKeywords = 'sell scrap Delhi, scrap buyer Delhi NCR, bulk scrap buyer, scrap dealer near me, kabadiwala, '
+  + 'scrap rates today Delhi, industrial scrap buyer, e-waste buyer Delhi, raddi, scrap pickup Gurugram Noida Faridabad';
 
+// Each page's title and description are what search results show.
 const PAGES = [
-  { path: '/', view: 'index', page: 'home', title: 'Scrap Express - Bulk Scrap Buyers for Businesses in Delhi NCR', description: 'Scrap Express buys scrap in bulk from factories, offices, hospitals, schools, malls, hotels and restaurant chains across Delhi NCR. GST invoice, weighbridge slips and payment by cash or bank transfer.' },
-  { path: '/rates', view: 'rates', page: 'rates', title: 'Indicative Scrap Rates in Delhi - Scrap Express', description: 'Indicative per-kg scrap rates in Delhi for paper, plastic, iron, copper, brass, aluminium, wires and more. Request a bulk quote for business volumes.' },
-  { path: '/what-we-buy', view: 'what-we-buy', page: 'what-we-buy', title: 'What We Buy - Industrial & Office Scrap - Scrap Express', description: 'We buy AC plants, generators, motors, IT equipment, office furniture, glass and more from businesses across Delhi NCR. Quotes based on volume and condition.' },
-  { path: '/book-pickup', view: 'book-pickup', page: 'book-pickup', title: 'Request a Bulk Scrap Pickup in Delhi NCR - Scrap Express', description: 'Request a one-time or scheduled bulk scrap pickup from your factory, office or site in Delhi NCR or within 50 km of Delhi. GST invoice, weighbridge slip, payment by cash or bank transfer.' },
-  { path: '/demolition', view: 'demolition', page: 'demolition', title: 'Commercial Demolition Services in Delhi NCR - Scrap Express', description: 'Demolition of schools, hospitals, factories, warehouses, malls and commercial buildings across Delhi NCR and within 50 km of Delhi, with site survey and detailed quote.' },
-  { path: '/rules', view: 'rules', page: 'rules', title: 'Pickup & Demolition Rules - Scrap Express', description: 'The rules for bulk scrap pickups and demolition requests with Scrap Express: accurate details, weighbridge weight, scrap quality and being ready for the truck.' },
-  { path: '/privacy', view: 'privacy', page: 'privacy', title: 'Privacy Policy - Scrap Express', description: 'How Scrap Express collects, uses and protects information from customers of our website and app.' },
-  { path: '/delete-account', view: 'delete-account', page: 'delete-account', title: 'Delete Your Account - Scrap Express', description: 'How to delete your Scrap Express account and what happens to your data.' },
-  { path: '/areas', view: 'areas', page: 'areas', title: 'Industrial Areas We Serve in Delhi NCR - Scrap Express', description: 'Scrap Express collects bulk scrap from businesses in Okhla, Naraina, Mayapuri, Wazirpur, Bawana, Noida, Gurugram, Manesar, Faridabad, across Delhi NCR and up to 50 km from Delhi.' },
+  {
+    path: '/', view: 'index', page: 'home', priority: '1.0',
+    title: 'Sell Scrap in Delhi NCR | Bulk Scrap Buyers | Scrap Express',
+    description: 'Sell scrap in Delhi NCR to Scrap Express: bulk scrap buyers for factories, offices, hospitals, hotels and restaurants. Pickup from 300 kg, weighbridge weight, GST invoice, cash or bank payment.',
+  },
+  {
+    path: '/rates', view: 'rates', page: 'rates', priority: '0.9',
+    title: 'Scrap Rates Today in Delhi NCR (per kg) | Scrap Express',
+    description: "Today's scrap rates per kg in Delhi NCR: newspaper (raddi), cardboard, plastic, iron, copper, brass, aluminium and more. Get a bulk quote for business lots.",
+  },
+  {
+    path: '/what-we-buy', view: 'what-we-buy', page: 'what-we-buy', priority: '0.8',
+    title: 'We Buy Old AC, E-Waste & Industrial Scrap | Scrap Express',
+    description: 'We buy old ACs, generators, motors, computers and e-waste, office furniture, glass and industrial scrap from businesses in Delhi NCR. Quotes on volume and condition.',
+  },
+  {
+    path: '/book-pickup', view: 'book-pickup', page: 'book-pickup', priority: '0.9',
+    title: 'Sell Scrap Online: Book a Bulk Pickup in Delhi NCR | Scrap Express',
+    description: 'Sell scrap online: book a one-time or scheduled bulk scrap pickup from your factory, office or site in Delhi NCR or within 50 km of Delhi. Weighbridge weight, GST invoice.',
+  },
+  {
+    path: '/demolition', view: 'demolition', page: 'demolition', priority: '0.8',
+    title: 'Building Demolition Services in Delhi NCR | Scrap Express',
+    description: 'Demolition of schools, hospitals, factories, warehouses, malls and commercial buildings in Delhi NCR and within 50 km of Delhi, with a site survey and detailed quote.',
+  },
+  {
+    path: '/areas', view: 'areas', page: 'areas', priority: '0.7',
+    title: 'Scrap Buyers in Okhla, Gurugram, Noida & Delhi NCR | Scrap Express',
+    description: 'Scrap dealer for businesses in Okhla, Naraina, Mayapuri, Wazirpur, Bawana, Noida, Gurugram, Manesar, Faridabad and Ghaziabad, and anywhere within 50 km of Delhi.',
+  },
+  {
+    path: '/rules', view: 'rules', page: 'rules', priority: '0.3',
+    title: 'Pickup & Demolition Rules - Scrap Express',
+    description: 'The rules for bulk scrap pickups and demolition requests with Scrap Express: accurate details, weighbridge weight, scrap quality and being ready for the truck.',
+  },
+  {
+    path: '/privacy', view: 'privacy', page: 'privacy', priority: '0.2',
+    title: 'Privacy Policy - Scrap Express',
+    description: 'How Scrap Express collects, uses and protects information from customers of our website and app.',
+  },
+  {
+    path: '/delete-account', view: 'delete-account', page: 'delete-account', priority: '0.2',
+    title: 'Delete Your Account - Scrap Express',
+    description: 'How to delete your Scrap Express account and what happens to your data.',
+  },
 ];
 
 PAGES.forEach(({ path: routePath, view, page, title, description }) => {

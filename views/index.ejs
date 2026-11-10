@@ -228,7 +228,64 @@
     </div>
   </section>
 
+  <%# Answers to what people search for. The same answers go to search engines below. %>
+  <% const faqs = [
+    ['Who buys scrap in bulk in Delhi NCR?', `Scrap Express buys scrap in bulk from businesses: factories, offices, IT parks, hospitals, schools, malls, hotels, banquet halls, restaurants and warehouses across Delhi NCR. Book a pickup online or call +91 98188 26333.`],
+    ['Are you a kabadiwala?', `Think of us as a kabadiwala for businesses. We buy bulk scrap of ${minPickupKg} kg or more, weigh it on a weighbridge, and give you a GST invoice, so it's ready for your company's accounts.`],
+    ['What scrap do you buy?', 'Paper and cardboard (raddi), plastic, iron and steel, copper, brass and aluminium, e-waste and IT equipment, old ACs and fridges, generators and motors, furniture and fixtures, glass, and mixed industrial or office scrap.'],
+    ['What is the minimum quantity for a pickup?', `${minPickupKg} kg per pickup. You can add up several kinds of scrap to reach it. For smaller amounts, we may not be the right fit.`],
+    ['Which areas do you cover?', `Delhi and anywhere within ${serviceKm} km of Delhi's boundary, including Gurugram, Manesar, Noida, Greater Noida, Faridabad, Ghaziabad, Sonipat, Bahadurgarh and Meerut.`],
+    ['What are the scrap rates today?', 'Our Scrap Rates page shows indicative rates per kg, updated regularly. Your final rate depends on volume, grade and location, and we send it as a quote after seeing your photos.'],
+    ['How and when will I be paid?', 'By cash or bank transfer, whichever you prefer. The amount is worked out from the weighbridge weight at pickup, with a GST invoice.'],
+    ['Do I need to create an account?', 'No. We send your quote on WhatsApp or email with a private link where you can accept it. An account is optional, and lets you track all your requests in one place.'],
+    ['Do you also do demolition?', `Yes. We demolish commercial and institutional buildings such as schools, hospitals, factories, warehouses and malls within ${serviceKm} km of Delhi, after a site survey and a detailed quote.`],
+  ]; %>
+  <section class="section" id="faq">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Questions</span>
+        <h2>Selling Scrap in Delhi NCR: Common Questions</h2>
+      </div>
+      <div class="faq-list">
+        <% faqs.forEach(([question, answer]) => { %>
+          <details class="faq-item">
+            <summary><%= question %></summary>
+            <p><%= answer %></p>
+          </details>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+
 <%- include('partials/cta') %>
+
+<%# Business details for search engines (Google, Bing), in their standard format. %>
+<% const jsonLd = (data) => JSON.stringify(data).replace(/</g, '\\u003c'); %>
+<script type="application/ld+json"><%- jsonLd({
+  '@context': 'https://schema.org',
+  '@type': 'RecyclingCenter',
+  name: 'Scrap Express',
+  description: 'Bulk scrap buyers for businesses in Delhi NCR: pickup from factories, offices, hospitals, hotels and restaurants, weighbridge weight, GST invoice, and building demolition.',
+  url: `${siteUrl}/`,
+  logo: `${siteUrl}/icons/icon-512.png`,
+  image: `${siteUrl}/images/og-image.png`,
+  telephone: '+91-98188-26333',
+  email: 'scrapexpress@gmail.com',
+  address: { '@type': 'PostalAddress', addressLocality: 'Delhi', addressRegion: 'Delhi', addressCountry: 'IN' },
+  areaServed: ['Delhi', 'Gurugram', 'Noida', 'Greater Noida', 'Faridabad', 'Ghaziabad', 'Sonipat', 'Bahadurgarh', 'Manesar', 'Meerut']
+    .map((city) => ({ '@type': 'City', name: city })),
+  openingHoursSpecification: [
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Monday', opens: '09:00', closes: '14:00' },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], opens: '09:00', closes: '20:00' },
+  ],
+  paymentAccepted: 'Cash, Bank Transfer',
+  knowsAbout: ['Scrap buying', 'Bulk scrap pickup', 'E-waste recycling', 'Industrial scrap', 'Building demolition'],
+}) %></script>
+<script type="application/ld+json"><%- jsonLd({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map(([question, answer]) => ({ '@type': 'Question', name: question, acceptedAnswer: { '@type': 'Answer', text: answer } })),
+}) %></script>
 
 </main>
 

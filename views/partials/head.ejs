@@ -1,11 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><%= title %></title>
 <meta name="description" content="<%= description %>">
-<% if (locals.noindex) { %><meta name="robots" content="noindex"><% } %>
+<% if (locals.noindex) { %><meta name="robots" content="noindex"><% } else { %>
+<%# The one address search engines should list for this page, whichever way it was reached. %>
+<link rel="canonical" href="<%= canonicalUrl %>">
+<meta name="keywords" content="<%= locals.keywords || siteKeywords %>">
+<% } %>
+<%# How the page looks when shared on WhatsApp, Facebook, LinkedIn or X. %>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Scrap Express">
+<meta property="og:locale" content="en_IN">
+<meta property="og:title" content="<%= title %>">
+<meta property="og:description" content="<%= description %>">
+<meta property="og:url" content="<%= canonicalUrl %>">
+<meta property="og:image" content="<%= siteUrl %>/images/og-image.png">
+<meta property="og:image:width" content="1024">
+<meta property="og:image:height" content="500">
+<meta name="twitter:card" content="summary_large_image">
+<% if (googleVerification) { %><meta name="google-site-verification" content="<%= googleVerification %>"><% } %>
+<% if (bingVerification) { %><meta name="msvalidate.01" content="<%= bingVerification %>"><% } %>
 <link rel="icon" href="/icons/favicon-32.png" sizes="32x32">
 <%# Installable app (PWA): manifest, home-screen icons, status bar colour. %>
 <link rel="manifest" href="/manifest.webmanifest">
