@@ -4,7 +4,7 @@
 <% const c = customer; %>
 <% const fmtDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }); %>
 
-<main id="top">
+<main id="top" tabindex="-1">
 
   <section class="section page-top">
     <div class="container">
@@ -50,8 +50,30 @@
                     <% } %>
                   </div>
                   <span class="status-badge status-<%= r.status %>"><%= statusLabels[r.status] || r.status %></span>
+                  <%- include('partials/request-progress', { timeline: r.timeline, docs: r.docs, docBase: '/api/customer/documents/' }) %>
                   <% if (r.quote_items && r.quote_items.length) { %>
                     <%- include('partials/quote-box', { r, api: `/api/customer/requests/${r.id}` }) %>
+                  <% } %>
+                  <% if (r.kind === 'pickup' && ['completed', 'confirmed', 'ready', 'accepted'].includes(r.status)) { %>
+                    <details class="repeat-pickup">
+                      <summary>Repeat this pickup</summary>
+                      <form class="repeat-form" method="post" data-source="<%= r.id %>" novalidate>
+                        <p class="repeat-help">We'll create a new request from this one (same site, scrap and contact) two days before each date, and call you to confirm the quantity.</p>
+                        <div class="repeat-row">
+                          <label>How often
+                            <select name="frequency">
+                              <% Object.entries(repeatFrequencies).forEach(([key, f]) => { %><option value="<%= key %>"<%= key === 'monthly' ? ' selected' : '' %>><%= f.label %></option><% }) %>
+                            </select>
+                          </label>
+                          <label>First pickup on
+                            <input type="date" name="startDate" required min="<%= repeatDates.min %>" max="<%= repeatDates.max %>" value="<%= repeatDates.min %>">
+                          </label>
+                        </div>
+                        <label class="rules-check-label"><input type="checkbox" name="acceptTerms"> <span>The <a href="/rules" target="_blank" rel="noopener">Pickup Rules</a> apply to every repeat pickup.</span></label>
+                        <div class="form-alert error" hidden></div>
+                        <button type="submit" class="btn btn-accent">Set Up Repeat Pickup</button>
+                      </form>
+                    </details>
                   <% } %>
                 </li>
               <% }) %>
@@ -59,11 +81,34 @@
           <% } %>
         </section>
 
+        <% if (repeatPickups.length) { %>
+        <section class="account-card" id="accountRepeats" data-live-block>
+          <h2>Repeat Pickups</h2>
+          <ul class="repeat-list">
+            <% repeatPickups.forEach((s) => { %>
+              <li class="repeat-item<%= s.active ? '' : ' repeat-paused' %>" data-schedule="<%= s.id %>">
+                <div>
+                  <strong><%= s.frequencyLabel %><%= s.active ? '' : (s.frequency === 'once' ? ' (done)' : ' (paused)') %></strong>
+                  <span class="request-meta"><%= [s.scrap_type, s.approx_quantity, s.area].filter(Boolean).join(' · ') %></span>
+                  <% if (s.active) { %><span class="request-meta">Next pickup: <%= new Date(s.next_date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) %></span><% } %>
+                </div>
+                <div class="repeat-actions">
+                  <% if (s.frequency !== 'once') { %>
+                    <button type="button" class="btn btn-outline btn-sm" data-schedule-toggle="<%= s.active ? 'pause' : 'resume' %>"><%= s.active ? 'Pause' : 'Resume' %></button>
+                  <% } %>
+                  <button type="button" class="btn btn-outline btn-sm" data-schedule-delete>Delete</button>
+                </div>
+              </li>
+            <% }) %>
+          </ul>
+        </section>
+        <% } %>
+
         <section class="account-card">
           <h2>Business Details</h2>
           <p class="account-note">Saved details fill in your booking form automatically.</p>
           <div id="profileAlert" class="form-alert" hidden></div>
-          <form id="profileForm" novalidate>
+          <form id="profileForm" method="post" novalidate>
             <div class="form-group">
               <label for="pCompany">Company / Organisation</label>
               <input type="text" id="pCompany" name="companyName" maxlength="200" value="<%= c.company_name || '' %>">

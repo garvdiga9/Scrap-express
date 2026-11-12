@@ -1,0 +1,122 @@
+<%# The bulk pickup request form (two steps, handled by public/js/main.js).
+    Used on /book-pickup and on each area page. Locals: prefill (optional
+    extra values, e.g. { area } on an area page), loginNext (where "Log in"
+    comes back to). %>
+      <%# Logged-in customers get their saved details pre-filled. These are the
+          fields' default values, so the form keeps them after a successful
+          submit's reset, ready for the next booking. %>
+      <% const c = { ...(locals.customer || {}), ...(locals.prefill || {}) }; %>
+      <form class="book-form" id="pickupForm" method="post" novalidate>
+        <% if (locals.customer) { %>
+          <div class="form-alert info">Logged in<%= c.company_name ? ` as ${c.company_name}` : '' %> — your saved details are filled in. This request will appear in <a href="/account">My Account</a>.</div>
+        <% } else if (locals.loginEnabled) { %>
+          <div class="form-alert info">Have an account? <a href="/login?next=<%= encodeURIComponent(locals.loginNext || '/book-pickup') %>">Log in</a> to fill this in automatically and track your request.</div>
+        <% } %>
+        <div id="formAlert" class="form-alert" hidden></div>
+        <%# Two steps. Step 1 is saved as soon as it's sent (a lead the team can
+            call back); step 2 completes the request. Without JavaScript both
+            steps simply show together. %>
+        <ol class="form-steps" id="formSteps" hidden>
+          <li class="form-step-dot is-current" data-step-dot="1"><span>1</span> Your scrap</li>
+          <li class="form-step-dot" data-step-dot="2"><span>2</span> Site &amp; photos</li>
+        </ol>
+        <input type="hidden" name="leadToken" id="leadToken">
+
+        <fieldset class="form-step" data-step="1">
+          <legend class="form-section-title" tabindex="-1">Step 1 of 2: Your scrap</legend>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="companyName">Company / Organisation *</label>
+              <input type="text" id="companyName" name="companyName" required maxlength="200" autocomplete="organization" placeholder="Company name" value="<%= c.company_name || '' %>">
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone Number *</label>
+              <input type="tel" id="phone" name="phone" required maxlength="20" autocomplete="tel" placeholder="98765 43210" value="<%= c.phone || '' %>">
+            </div>
+          </div>
+          <fieldset class="form-group checkbox-group" id="scrapTypesGroup">
+            <legend>Scrap Types * <span class="field-hint">Select all that apply</span></legend>
+            <div class="checkbox-grid">
+              <% scrapTypes.forEach((type) => { %><label class="check-chip">
+                <input type="checkbox" name="scrapTypes" value="<%= type %>">
+                <span><%= type %></span>
+              </label>
+              <% }) %>
+              <label class="check-chip">
+                <input type="checkbox" name="scrapTypes" value="Other" id="scrapTypeOther" aria-controls="otherScrapWrap">
+                <span>Other</span>
+              </label>
+            </div>
+            <div class="other-scrap" id="otherScrapWrap" hidden>
+              <label for="otherScrapType">Describe the other scrap *</label>
+              <input type="text" id="otherScrapType" name="otherScrapType" maxlength="100" placeholder="e.g. wooden pallets, rubber, lead batteries">
+            </div>
+            <%# Shown by main.js when two or more scrap types are ticked. %>
+            <div class="item-quantities" id="itemQuantities" hidden>
+              <p class="item-quantities-title">Quantity for each item * <span class="field-hint">Min. <%= minPickupKg %> kg in total</span></p>
+              <div class="item-quantity-list" id="itemQuantityList"></div>
+              <p class="item-total" id="itemTotal" aria-live="polite"></p>
+            </div>
+          </fieldset>
+          <div class="form-group" id="totalQuantityGroup">
+            <label for="quantity">Approx. Total Quantity * <span class="field-hint">Min. <%= minPickupKg %> kg</span></label>
+            <div class="quantity-input">
+              <input type="number" id="quantity" name="quantity" required min="0" step="any" inputmode="decimal" placeholder="e.g. 500" data-min-kg="<%= minPickupKg %>">
+              <select id="quantityUnit" name="quantityUnit" aria-label="Quantity unit">
+                <option value="kg" selected>kg</option>
+                <option value="tonnes">tonnes</option>
+              </select>
+            </div>
+          </div>
+          <button type="button" class="btn btn-accent btn-lg btn-block form-step-next" id="stepNextBtn" hidden>Continue <span aria-hidden="true">→</span></button>
+          <p class="form-step-note" id="stepOneNote" hidden>We save this step straight away, so our team can call you back even if you don't finish.</p>
+        </fieldset>
+
+        <fieldset class="form-step" data-step="2">
+          <legend class="form-section-title" tabindex="-1">Step 2 of 2: Site, photos &amp; contact</legend>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="name">Contact Person *</label>
+              <input type="text" id="name" name="name" required maxlength="150" autocomplete="name" placeholder="Full name" value="<%= c.name || '' %>">
+            </div>
+            <div class="form-group">
+              <label for="businessType">Business Type *</label>
+              <select id="businessType" name="businessType" required>
+                <option value="" disabled<%= c.business_type ? '' : ' selected' %>>Select type</option>
+                <% businessTypes.forEach((type) => { %><option<%= c.business_type === type ? ' selected' : '' %>><%= type %></option>
+                <% }) %>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">Work Email (optional)</label>
+              <input type="email" id="email" name="email" maxlength="200" autocomplete="email" placeholder="you@company.com" value="<%= c.email || '' %>">
+            </div>
+            <div class="form-group">
+              <label for="gstin">GSTIN (optional)</label>
+              <input type="text" id="gstin" name="gstin" maxlength="15" placeholder="07ABCDE1234F1Z5" value="<%= c.gstin || '' %>">
+            </div>
+          </div>
+          <h3 class="form-subtitle">Where is the scrap?</h3>
+          <%- include('location-fields', { prefix: 'site', c, site: true }) %>
+          <%- include('area-field', { prefix: 'site', c, required: true }) %>
+          <div class="form-group">
+            <label for="pickupFrequency">Pickup Frequency *</label>
+            <select id="pickupFrequency" name="pickupFrequency" required>
+              <% pickupFrequencies.forEach((freq, i) => { %><option<%= i === 0 ? ' selected' : '' %>><%= freq %></option>
+              <% }) %>
+            </select>
+          </div>
+          <%- include('media-upload', { optional: true, hint: 'Photos or a short video of the scrap lot and where it is kept.' }) %>
+          <div class="form-group">
+            <label for="notes">Additional Notes</label>
+            <textarea id="notes" name="notes" rows="2" placeholder="Quantity per scrap type, access timings, loading help needed, etc."></textarea>
+          </div>
+          <%- include('rules-check') %>
+          <div class="form-step-actions">
+            <button type="button" class="btn btn-outline btn-lg form-step-back" id="stepBackBtn" hidden><span aria-hidden="true">←</span> Back</button>
+            <button type="submit" class="btn btn-accent btn-lg btn-block" id="submitBtn">Request Bulk Quote</button>
+          </div>
+        </fieldset>
+      </form>

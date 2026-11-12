@@ -48,6 +48,7 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Something went wrong. Please call us on +91 98188 26333.');
       showMessage(data.message, 'success');
+      if (window.SETrack) window.SETrack('callback_request');
       form.reset();
       form.hidden = true;
     } catch (err) {

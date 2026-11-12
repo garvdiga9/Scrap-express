@@ -2,7 +2,7 @@
 <%- include('partials/sprite') %>
 <%- include('partials/header') %>
 
-<main id="top">
+<main id="top" tabindex="-1">
 
   <!-- Demolition Services -->
   <section class="section page-top" id="demolition">
@@ -20,7 +20,7 @@
         </ul>
       </div>
       <% const c = locals.customer || {}; %>
-      <form class="book-form" id="demolitionForm" novalidate>
+      <form class="book-form" id="demolitionForm" method="post" novalidate>
         <div id="demolitionAlert" class="form-alert" hidden></div>
         <div class="form-row">
           <div class="form-group">

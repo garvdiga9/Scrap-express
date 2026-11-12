@@ -90,3 +90,59 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
   await fetch('/api/customer/logout', { method: 'POST' }).catch(() => {});
   window.location.href = '/';
 });
+
+/* ---------- Repeat pickups ---------- */
+// Listens on the page: the request list is redrawn by live updates.
+document.addEventListener('submit', async (e) => {
+  const form = e.target.closest('.repeat-form');
+  if (!form) return;
+  e.preventDefault();
+  const alertBox = form.querySelector('.form-alert');
+  const button = form.querySelector('button[type="submit"]');
+  alertBox.hidden = true;
+  if (!form.elements.acceptTerms.checked) {
+    alertBox.textContent = 'Please tick the box to accept the Pickup Rules.';
+    alertBox.hidden = false;
+    return;
+  }
+  button.disabled = true;
+  try {
+    const res = await fetch('/api/customer/schedules', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sourceRequestId: form.dataset.source,
+        frequency: form.elements.frequency.value,
+        startDate: form.elements.startDate.value,
+        acceptTerms: true,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) {
+      window.location.href = '/login?next=/account';
+      return;
+    }
+    if (!res.ok) throw new Error(data.error || 'Could not set up the repeat pickup.');
+    window.location.reload(); // shows it under Repeat Pickups
+  } catch (err) {
+    alertBox.textContent = err.message;
+    alertBox.hidden = false;
+    button.disabled = false;
+  }
+});
+
+document.addEventListener('click', async (e) => {
+  const toggle = e.target.closest('[data-schedule-toggle]');
+  const remove = e.target.closest('[data-schedule-delete]');
+  if (!toggle && !remove) return;
+  const item = e.target.closest('[data-schedule]');
+  const id = item.dataset.schedule;
+  if (remove && !confirm('Delete this repeat pickup? Requests already created stay as they are.')) return;
+  const res = await fetch(`/api/customer/schedules/${id}`, remove ? { method: 'DELETE' } : {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ active: toggle.dataset.scheduleToggle === 'resume' }),
+  });
+  if (res.ok) window.location.reload();
+  else alert('Something went wrong. Please try again.');
+});

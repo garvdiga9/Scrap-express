@@ -1,6 +1,28 @@
 const yearEl = document.getElementById('year');
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 
+/* ---------- Conversion tracking ----------
+   Forms are counted by the server when they arrive (Admin → Analytics).
+   Taps on the phone number and WhatsApp can only be seen here, so they're
+   sent to /api/track. Every conversion also goes to Google Analytics when
+   it's switched on (GA_MEASUREMENT_ID on Render). Nothing about who. */
+const PAGE_TRACKED = new Set(['call_click', 'whatsapp_click']);
+window.SETrack = (event) => {
+  if (typeof window.gtag === 'function') window.gtag('event', event, { page_path: window.location.pathname });
+  if (!PAGE_TRACKED.has(event)) return;
+  const body = new Blob([JSON.stringify({ event, page: window.location.pathname })], { type: 'application/json' });
+  if (!(navigator.sendBeacon && navigator.sendBeacon('/api/track', body))) {
+    fetch('/api/track', { method: 'POST', body, keepalive: true, headers: { 'Content-Type': 'application/json' } }).catch(() => {});
+  }
+};
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('a[href]');
+  if (!link || link.hasAttribute('data-callback')) return; // "Request a call back" opens a form instead
+  const href = link.getAttribute('href');
+  if (href.startsWith('tel:')) window.SETrack('call_click');
+  else if (/^https:\/\/(wa\.me|api\.whatsapp\.com|chat\.whatsapp\.com|whatsapp\.com\/channel)/.test(href)) window.SETrack('whatsapp_click');
+}, { capture: true });
+
 /* ---------- Back to top ---------- */
 const backToTop = document.getElementById('backToTop');
 if (backToTop) {
@@ -144,19 +166,55 @@ onScroll();
 /* ---------- Mobile nav ---------- */
 const navToggle = document.getElementById('navToggle');
 const mainNav = document.getElementById('mainNav');
+function setMenu(open) {
+  mainNav.classList.toggle('open', open);
+  navToggle.setAttribute('aria-expanded', String(open));
+  navToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  navToggle.innerHTML = open
+    ? '<svg class="icon" aria-hidden="true"><use href="#icon-close"/></svg>'
+    : '<svg class="icon" aria-hidden="true"><use href="#icon-menu"/></svg>';
+}
 if (navToggle && mainNav) {
-  navToggle.addEventListener('click', () => {
-    const isOpen = mainNav.classList.toggle('open');
-    navToggle.innerHTML = isOpen
-      ? '<svg class="icon"><use href="#icon-close"/></svg>'
-      : '<svg class="icon"><use href="#icon-menu"/></svg>';
+  navToggle.addEventListener('click', () => setMenu(!mainNav.classList.contains('open')));
+  mainNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => setMenu(false)));
+  // Escape closes the menu and puts the keyboard back on its button.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mainNav.classList.contains('open')) {
+      setMenu(false);
+      navToggle.focus();
+    }
   });
-  mainNav.querySelectorAll('a').forEach((link) => {
-    link.addEventListener('click', () => {
-      mainNav.classList.remove('open');
-      navToggle.innerHTML = '<svg class="icon"><use href="#icon-menu"/></svg>';
-    });
+}
+
+/* ---------- Light / dark theme ----------
+   head.ejs already applied the saved choice (or the device's setting). The
+   button switches and remembers it on this device. */
+const themeToggle = document.getElementById('themeToggle');
+function showThemeButton() {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  document.querySelectorAll('[data-theme-toggle]').forEach((button) => button.setAttribute('aria-pressed', String(dark)));
+  if (themeToggle) themeToggle.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', dark ? '#0b1220' : '#16a34a');
+}
+if (themeToggle) {
+  // The header button, and on phones the one inside the menu.
+  document.querySelectorAll('[data-theme-toggle]').forEach((button) => button.addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('se-theme', next); } catch (err) { /* private mode: just for this page */ }
+    showThemeButton();
+  }));
+  // Follow the device's setting until a choice is made here.
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+  media.addEventListener('change', (e) => {
+    let saved = null;
+    try { saved = localStorage.getItem('se-theme'); } catch (err) { /* ignore */ }
+    if (saved) return;
+    document.documentElement.dataset.theme = e.matches ? 'dark' : 'light';
+    showThemeButton();
   });
+  showThemeButton();
 }
 
 /* ---------- Reveal-on-scroll animation ---------- */
@@ -215,7 +273,12 @@ if (rotator && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
   setTimeout(step, HOLD + 600);
 }
 
-/* ---------- Hero stat count-up ---------- */
+/* ---------- Stat count-up ----------
+   The page already shows the real numbers, and they stay until a visitor
+   actually scrolls (search engines and page checkers never do, so they always
+   see real figures). Then a block still below the screen drops to 0 and
+   counts up when it comes into view. Blocks already on screen are left alone,
+   and so is everything for reduced-motion users. */
 function animateCount(el, target) {
   const duration = 1400;
   const start = performance.now();
@@ -227,232 +290,115 @@ function animateCount(el, target) {
   }
   requestAnimationFrame(tick);
 }
-const statObserver = new IntersectionObserver(
-  (entries, observer) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.querySelectorAll('.stat-num, .impact-num').forEach((el) => {
-          animateCount(el, Number(el.dataset.count));
-        });
+if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const statNums = (block) => [...block.querySelectorAll('.stat-num, .impact-num')]
+    .filter((el) => Number.isFinite(Number(el.dataset.count)));
+  const statObserver = new IntersectionObserver(
+    (entries, observer) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        statNums(entry.target).forEach((el) => animateCount(el, Number(el.dataset.count)));
         observer.unobserve(entry.target);
-      }
-    });
-  },
-  { threshold: 0.4 }
-);
-const heroStats = document.getElementById('heroStats');
-if (heroStats) statObserver.observe(heroStats);
-const impactStats = document.getElementById('impactStats');
-if (impactStats) statObserver.observe(impactStats);
-
-/* ---------- Icon + material-family colour lookup for rate categories ---------- */
-const RATE_ICON_FAMILY = {
-  newspaper: 'paper',
-  book: 'paper',
-  box: 'paper',
-  hardboard: 'paper',
-  pipe: 'plastic',
-  granules: 'plastic',
-  'plastic-roll': 'plastic',
-  bottle: 'plastic',
-  'plastic-chunks': 'plastic',
-  rebar: 'metal',
-  corrugated: 'metal',
-  'pipe-fitting': 'metal',
-  'steel-plate': 'metal',
-  'copper-pipe': 'copper',
-  'brass-pot': 'brass',
-  'aluminium-pot': 'aluminium',
-  beam: 'aluminium',
-  gear: 'aluminium',
-  wire: 'wire',
-  'wire-appliance': 'wire',
-  mesh: 'wire',
-  'thick-cable': 'wire',
-  'glass-bottle': 'glass',
-  battery: 'battery',
-  // legacy broad keys, kept for backward compatibility
-  paper: 'paper',
-  plastic: 'plastic',
-  metal: 'metal',
-  glass: 'glass',
-  ewaste: 'metal',
-};
-
-const FAMILY_COLORS = {
-  paper: { bg: '#fef3c7', fg: '#b45309' },
-  plastic: { bg: '#dbeafe', fg: '#1d4ed8' },
-  metal: { bg: '#e2e8f0', fg: '#334155' },
-  copper: { bg: '#ffedd5', fg: '#c2410c' },
-  brass: { bg: '#fef9c3', fg: '#a16207' },
-  aluminium: { bg: '#f1f5f9', fg: '#475569' },
-  wire: { bg: '#e0e7ff', fg: '#4338ca' },
-  glass: { bg: '#ccfbf1', fg: '#0f766e' },
-  battery: { bg: '#fee2e2', fg: '#b91c1c' },
-};
-
-// Categories added from the admin have no icon of their own.
-function iconForCategory(icon) {
-  return document.getElementById(`icon-${icon}`) ? `icon-${icon}` : 'icon-recycle';
+      });
+    },
+    { threshold: 0.4 }
+  );
+  const blocks = ['heroStats', 'impactStats'].map((id) => document.getElementById(id)).filter(Boolean);
+  if (blocks.length) {
+    window.addEventListener('scroll', () => {
+      blocks.forEach((block) => {
+        if (block.getBoundingClientRect().top < window.innerHeight) return; // already seen
+        statNums(block).forEach((el) => { el.textContent = '0'; });
+        statObserver.observe(block);
+      });
+    }, { once: true, passive: true });
+  }
 }
 
-function familyColors(icon) {
-  const family = RATE_ICON_FAMILY[icon] || 'metal';
-  return FAMILY_COLORS[family] || FAMILY_COLORS.metal;
-}
-
-/* ---------- Load live rates ---------- */
-// "background" is a live update (see live.js): if it fails, keep what's showing.
-let shownRates = '';
-async function loadRates(background = false) {
-  const grid = document.getElementById('ratesGrid');
-  if (!grid) return;
+/* ---------- Live sections (rates, reviews, home page numbers) ----------
+   The server draws these (views/partials/rate-card.ejs, views/index.ejs), so
+   they show without JavaScript and to search engines. When the admin changes
+   something, re-read this page and swap in the fresh copies of whatever is
+   marked data-live-section, so there's only one version of how they look. */
+async function refreshLiveSections() {
+  const sections = [...document.querySelectorAll('[data-live-section]')];
+  if (!sections.length) return;
   try {
-    const res = await fetch('/api/rates');
-    if (!res.ok) throw new Error('Failed to load rates');
-    const rates = await res.json();
-    const asText = JSON.stringify(rates);
-    if (asText === shownRates) return;
-    shownRates = asText;
-    if (!rates.length) {
-      grid.innerHTML = '<p class="rates-loading">Rates coming soon. Please call us for current pricing.</p>';
-      return;
-    }
-    grid.innerHTML = '';
-    // Home shows a short teaser; the rates page lists everything.
-    const limit = Number(grid.dataset.limit) || rates.length;
-    rates.slice(0, limit).forEach((rate) => {
-      const card = document.createElement('div');
-      card.className = 'rate-card';
-      const iconId = iconForCategory(rate.icon);
-      const colors = familyColors(rate.icon);
-      // Photo when one has been added for this item, tinted icon otherwise.
-      const iconMedia = `<div class="rate-media rate-media-icon" style="background:${colors.bg};color:${colors.fg}"><svg class="icon"><use href="#${iconId}"/></svg></div>`;
-      card.innerHTML = `
-        ${iconMedia}
-        <h3></h3>
-        <div class="rate-price">₹<span class="price-val"></span> <span>/ ${escapeHtml(rate.unit)}</span></div>
-      `;
-      if (rate.image) {
-        const img = document.createElement('img');
-        img.className = 'rate-media rate-photo';
-        img.src = rate.image;
-        img.alt = rate.name;
-        img.loading = 'lazy';
-        // If the file is missing or corrupt, drop back to the icon tile.
-        img.addEventListener('error', () => img.remove(), { once: true });
-        img.addEventListener('load', () => {
-          const placeholder = card.querySelector('.rate-media-icon');
-          if (placeholder) placeholder.remove();
-        }, { once: true });
-        card.insertBefore(img, card.firstChild);
-      }
-      card.querySelector('h3').textContent = rate.name;
-      card.querySelector('.price-val').textContent = Number(rate.price).toLocaleString('en-IN');
-      grid.appendChild(card);
+    const res = await fetch(window.location.pathname, { headers: { Accept: 'text/html' } });
+    if (!res.ok) return;
+    const page = new DOMParser().parseFromString(await res.text(), 'text/html');
+    sections.forEach((section) => {
+      const fresh = page.getElementById(section.id);
+      if (!fresh || fresh.innerHTML === section.innerHTML) return;
+      section.hidden = fresh.hidden;
+      section.innerHTML = fresh.innerHTML;
+      section.dispatchEvent(new CustomEvent('live-refreshed', { bubbles: true }));
     });
   } catch (err) {
-    if (background) return;
-    grid.innerHTML = '<p class="rates-loading">Could not load live rates right now. Please call us for current pricing.</p>';
+    // Keep what's showing; the next update will try again.
   }
 }
-loadRates();
 
-/* ---------- Load testimonials ---------- */
-function starRow(rating) {
-  const wrap = document.createElement('div');
-  wrap.className = 'review-stars';
-  for (let i = 0; i < 5; i++) {
-    wrap.innerHTML += `<svg class="icon" style="opacity:${i < rating ? 1 : 0.25}"><use href="#icon-star"/></svg>`;
-  }
-  return wrap;
-}
-
-const AVATAR_COLORS = ['#f59e0b', '#16a34a', '#2563eb', '#db2777', '#7c3aed', '#0d9488', '#dc2626', '#ca8a04'];
-
-function initialsFor(name) {
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0] ? parts[0][0] : '';
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
-  return (first + last).toUpperCase();
-}
-
-function colorForName(name) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
-
-let shownReviews = '';
-async function loadTestimonials(background = false) {
-  const grid = document.getElementById('reviewsGrid');
-  if (!grid) return;
-  try {
-    const res = await fetch('/api/testimonials');
-    if (!res.ok) throw new Error('Failed to load reviews');
-    const reviews = await res.json();
-    const asText = JSON.stringify(reviews);
-    if (asText === shownReviews) return;
-    shownReviews = asText;
-    // No client reviews yet: hide the whole section rather than show an empty one.
-    const section = document.getElementById('reviews');
-    if (section) section.hidden = !reviews.length;
-    if (!reviews.length) return;
-    grid.innerHTML = '';
-    reviews.forEach((review) => {
-      const card = document.createElement('div');
-      card.className = 'review-card';
-
-      const quoteMark = document.createElement('svg');
-      quoteMark.className = 'icon quote-mark';
-      quoteMark.innerHTML = '<use href="#icon-quote"/>';
-
-      const stars = starRow(review.rating);
-
-      const msg = document.createElement('p');
-      msg.className = 'review-msg';
-      msg.textContent = review.message;
-
-      const footer = document.createElement('div');
-      footer.className = 'review-footer';
-
-      const avatar = document.createElement('div');
-      avatar.className = 'review-avatar';
-      avatar.style.background = colorForName(review.customer_name);
-      avatar.textContent = initialsFor(review.customer_name);
-
-      const who = document.createElement('div');
-      const author = document.createElement('p');
-      author.className = 'review-author';
-      author.textContent = review.customer_name;
-      const area = document.createElement('p');
-      area.className = 'review-area';
-      area.textContent = review.area || '';
-      who.append(author, area);
-
-      footer.append(avatar, who);
-      card.append(quoteMark, stars, msg, footer);
-      grid.appendChild(card);
-    });
-  } catch (err) {
-    if (background) return;
-    grid.innerHTML = '<p class="rates-loading">Could not load reviews right now.</p>';
-  }
-}
-loadTestimonials();
-
-// Rates and reviews stay current on any page showing them.
-if (document.getElementById('ratesGrid') || document.getElementById('reviewsGrid')) {
-  window.SELive.on('rates', () => loadRates(true));
-  window.SELive.on('reviews', () => loadTestimonials(true));
+if (document.querySelector('[data-live-section]')) {
+  window.SELive.on('rates', refreshLiveSections);
+  window.SELive.on('reviews', refreshLiveSections);
+  window.SELive.on('lots', refreshLiveSections);
   window.SELive.start();
 }
 
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
+/* ---------- Rates page: search box and group tabs ---------- */
+(() => {
+  const live = document.getElementById('ratesLive');
+  if (!live) return;
+  let tab = 'all';
+  let query = '';
+  // "#plastic" in the address opens that tab (shareable links).
+  const fromHash = window.location.hash.slice(1);
+
+  function apply() {
+    const filter = document.getElementById('rateFilter');
+    const grid = document.getElementById('ratesGrid');
+    if (!filter || !grid) return;
+    filter.hidden = false;
+    const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+    const cards = [...grid.querySelectorAll('.rate-card')];
+    let shown = 0;
+    cards.forEach((card) => {
+      const match = (tab === 'all' || card.dataset.category === tab)
+        && words.every((word) => card.dataset.search.includes(word));
+      card.hidden = !match;
+      if (match) shown++;
+    });
+    filter.querySelectorAll('.rate-tab').forEach((button) => {
+      button.setAttribute('aria-pressed', String(button.dataset.tab === tab));
+    });
+    document.getElementById('ratesEmpty').hidden = shown > 0;
+    document.getElementById('rateFilterStatus').textContent = shown === cards.length
+      ? `${cards.length} rates` : `Showing ${shown} of ${cards.length} rates`;
+  }
+
+  live.addEventListener('click', (e) => {
+    const button = e.target.closest('.rate-tab');
+    if (!button) return;
+    tab = button.dataset.tab;
+    history.replaceState(null, '', tab === 'all' ? window.location.pathname : `#${tab}`);
+    apply();
+  });
+  live.addEventListener('input', (e) => {
+    if (e.target.id !== 'rateSearch') return;
+    query = e.target.value;
+    apply();
+  });
+  // A live update redraws the section: put the search text and tab back.
+  live.addEventListener('live-refreshed', () => {
+    const search = document.getElementById('rateSearch');
+    if (search) search.value = query;
+    apply();
+  });
+
+  if (live.querySelector(`.rate-tab[data-tab="${CSS.escape(fromHash)}"]`)) tab = fromHash;
+  apply();
+})();
 
 /* ---------- Pickup form submission ---------- */
 const pickupForm = document.getElementById('pickupForm');
@@ -731,35 +677,36 @@ if (pickupForm && itemQuantitiesBox) {
   renderItemQuantities(); // boxes the browser kept ticked after "back"
 }
 
-if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  formAlert.hidden = true;
+/* ---------- Pickup form: two steps ----------
+   Step 1 (company, phone, scrap, quantity) is saved as a lead the moment the
+   customer presses Continue, so the team can call even if step 2 is never
+   finished. Step 2 (site, photos, contact) completes the request. */
 
-  const formData = new FormData(pickupForm);
-  const payload = Object.fromEntries(formData.entries());
+// Step 1's fields in the shape the API wants, or null after showing what's
+// missing. Used by Continue and again by the final submit.
+function readStepOne(payload, formData) {
   // fromEntries keeps only the last ticked checkbox, so collect them all.
   payload.scrapTypes = formData.getAll('scrapTypes');
-
-  if (!payload.companyName || !payload.businessType || !payload.name || !payload.phone
-    || !payload.building || !payload.street || !payload.pincode || !payload.city || !payload.state || !payload.area) {
-    showAlert(formAlert, 'Please fill in all required fields marked with *.', 'error');
-    return;
+  if (!payload.companyName.trim() || !payload.phone.trim()) {
+    showAlert(formAlert, 'Please fill in your company name and phone number.', 'error');
+    document.getElementById(payload.companyName.trim() ? 'phone' : 'companyName').focus();
+    return null;
   }
-  if (window.SEArea.missingOther(pickupForm)) {
-    showAlert(formAlert, 'Please type the name of your area.', 'error');
-    return;
+  if (!window.SEValidate.checkField(document.getElementById('phone'))) {
+    document.getElementById('phone').focus();
+    return null;
   }
-  if (!window.SEValidate.checkForm(pickupForm)) return;
   if (!payload.scrapTypes.length) {
     showAlert(formAlert, 'Please tick at least one scrap type.', 'error');
-    return;
+    pickupForm.querySelector('input[name="scrapTypes"]').focus();
+    return null;
   }
   if (payload.scrapTypes.includes('Other')) {
     payload.otherScrapType = (payload.otherScrapType || '').trim();
     if (!payload.otherScrapType) {
       showAlert(formAlert, 'Please describe the other scrap type.', 'error');
       document.getElementById('otherScrapType').focus();
-      return;
+      return null;
     }
   } else {
     delete payload.otherScrapType;
@@ -774,12 +721,12 @@ if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
       const name = missing.type === 'Other' ? 'the other scrap' : missing.type;
       showAlert(formAlert, `Please enter the quantity for ${name}.`, 'error');
       itemQuantityList.querySelector(`.item-quantity[data-type="${CSS.escape(missing.type)}"] input`).focus();
-      return;
+      return null;
     }
     if (updateItemTotal() < pickupMinKg) {
       showAlert(formAlert, `We handle bulk pickups of ${pickupMinKg} kg or more in total. Please check the quantities.`, 'error');
       itemQuantityList.querySelector('input').focus();
-      return;
+      return null;
     }
   } else {
     const quantityInput = document.getElementById('quantity');
@@ -787,20 +734,117 @@ if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
     if (!payload.quantity || !(quantityKg > 0)) {
       showAlert(formAlert, 'Please enter the approximate total quantity.', 'error');
       quantityInput.focus();
-      return;
+      return null;
     }
     if (quantityKg < pickupMinKg) {
       showAlert(formAlert, `We handle bulk pickups of ${pickupMinKg} kg or more. Please check the quantity.`, 'error');
       quantityInput.focus();
-      return;
+      return null;
     }
   }
+  return payload;
+}
+
+const LEAD_KEY = 'se-pickup-lead';
+const leadTokenInput = document.getElementById('leadToken');
+const stepNextBtn = document.getElementById('stepNextBtn');
+const stepBackBtn = document.getElementById('stepBackBtn');
+
+function showStep(n, { focus = true } = {}) {
+  pickupForm.dataset.step = n;
+  pickupForm.querySelectorAll('.form-step').forEach((step) => { step.hidden = step.dataset.step !== String(n); });
+  document.querySelectorAll('[data-step-dot]').forEach((dot) => {
+    dot.classList.toggle('is-current', dot.dataset.stepDot === String(n));
+    dot.classList.toggle('is-done', Number(dot.dataset.stepDot) < n);
+  });
+  if (focus) {
+    const legend = pickupForm.querySelector(`.form-step[data-step="${n}"] legend`);
+    pickupForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    legend.focus({ preventScroll: true });
+  }
+}
+
+if (pickupForm && stepNextBtn) {
+  // With JavaScript: one step at a time.
+  document.getElementById('formSteps').hidden = false;
+  stepNextBtn.hidden = false;
+  stepBackBtn.hidden = false;
+  document.getElementById('stepOneNote').hidden = false;
+  try { leadTokenInput.value = sessionStorage.getItem(LEAD_KEY) || ''; } catch (err) { /* private mode */ }
+  showStep(1, { focus: false });
+
+  stepNextBtn.addEventListener('click', async () => {
+    formAlert.hidden = true;
+    const formData = new FormData(pickupForm);
+    const payload = readStepOne(Object.fromEntries(formData.entries()), formData);
+    if (!payload) return;
+    stepNextBtn.disabled = true;
+    stepNextBtn.textContent = 'Saving…';
+    try {
+      const res = await fetch('/api/pickup/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyName: payload.companyName,
+          phone: payload.phone,
+          scrapTypes: payload.scrapTypes,
+          otherScrapType: payload.otherScrapType,
+          quantity: payload.quantity,
+          quantityUnit: payload.quantityUnit,
+          itemQuantities: payload.itemQuantities,
+          leadToken: leadTokenInput.value,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      // A problem the customer can fix stops here; a network hiccup doesn't
+      // (step 2 sends everything anyway).
+      if (res.status === 400) throw new Error(data.error);
+      if (data.leadToken) {
+        if (!leadTokenInput.value) window.SETrack('pickup_lead');
+        leadTokenInput.value = data.leadToken;
+        try { sessionStorage.setItem(LEAD_KEY, data.leadToken); } catch (err) { /* private mode */ }
+      }
+      showStep(2);
+    } catch (err) {
+      if (err.message) showAlert(formAlert, err.message, 'error');
+      else showStep(2);
+    } finally {
+      stepNextBtn.disabled = false;
+      stepNextBtn.innerHTML = 'Continue <span aria-hidden="true">→</span>';
+    }
+  });
+  stepBackBtn.addEventListener('click', () => {
+    formAlert.hidden = true;
+    showStep(1);
+  });
+}
+
+if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  formAlert.hidden = true;
+
+  const formData = new FormData(pickupForm);
+  const payload = readStepOne(Object.fromEntries(formData.entries()), formData);
+  if (!payload) {
+    if (stepNextBtn) showStep(1, { focus: false });
+    return;
+  }
+
+  if (!payload.businessType || !payload.name.trim()
+    || !payload.building || !payload.street || !payload.pincode || !payload.city || !payload.state || !payload.area) {
+    showAlert(formAlert, 'Please fill in all required fields marked with *.', 'error');
+    return;
+  }
+  if (window.SEArea.missingOther(pickupForm)) {
+    showAlert(formAlert, 'Please type the name of your area.', 'error');
+    return;
+  }
+  if (!window.SEValidate.checkForm(pickupForm)) return;
 
   if (pickupMedia && pickupMedia.isPreparing()) {
     showAlert(formAlert, 'Your photos are still being prepared. Please try again in a moment.', 'error');
     return;
   }
-  if (pickupMedia && !pickupMedia.requireOne()) return;
   if (!window.SEValidate.rulesAccepted(pickupForm)) return;
 
   submitBtn.disabled = true;
@@ -812,8 +856,12 @@ if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
       submitBtn.textContent = pct < 100 ? `Uploading… ${pct}%` : 'Submitting…';
     });
     if (!ok) throw new Error(data.error || 'Something went wrong');
-    showAlert(formAlert, data.message || 'Pickup request received! We will call you shortly.', 'success');
     pickupForm.reset();
+    leadTokenInput.value = '';
+    try { sessionStorage.removeItem(LEAD_KEY); } catch (err) { /* private mode */ }
+    if (stepNextBtn) showStep(1, { focus: false });
+    showAlert(formAlert, data.message || 'Pickup request received! We will call you shortly.', 'success');
+    window.SETrack('quote_request');
   } catch (err) {
     showAlert(formAlert, err.message || 'Something went wrong. Please call us directly.', 'error');
   } finally {
@@ -863,6 +911,7 @@ if (demolitionForm) demolitionForm.addEventListener('submit', async (e) => {
     });
     if (!ok) throw new Error(data.error || 'Something went wrong');
     showAlert(demolitionAlert, data.message || 'Request received! We will call you shortly.', 'success');
+    window.SETrack('demolition_request');
     demolitionForm.reset();
   } catch (err) {
     showAlert(demolitionAlert, err.message || 'Something went wrong. Please call us directly.', 'error');

@@ -8,6 +8,7 @@ const { parseSite, outsideServiceArea } = require('../lib/location');
 const media = require('../lib/media');
 const push = require('../lib/push');
 const live = require('../lib/live');
+const analytics = require('../lib/analytics');
 
 // POST /api/demolition - public: request a demolition site visit & quote,
 // optionally with photos/videos of the building.
@@ -52,6 +53,7 @@ router.post('/', media.acceptMedia, async (req, res) => {
     await media.saveForRequest(req, 'demolition', rows[0].id)
       .catch((err) => console.error('saving demolition media failed', err));
     live.requestChanged(customerId);
+    analytics.record('demolition_request', analytics.pageFrom(req));
     push.quietly(push.notifyAdmins({
       title: `New demolition request #${rows[0].id} 🏗️`,
       body: `${name} · ${buildingType} · ${area}`,

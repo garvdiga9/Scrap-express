@@ -8,7 +8,7 @@
       <p>Free updates by email, WhatsApp or app notification, plus news whenever we launch something new.</p>
     </div>
     <div class="subscribe-actions">
-      <form class="subscribe-form" id="subscribeForm" novalidate>
+      <form class="subscribe-form" id="subscribeForm" method="post" action="/api/subscribe" novalidate>
         <label for="subscribeContact" class="sr-only">Email or WhatsApp number</label>
         <input id="subscribeContact" name="contact" type="text" autocomplete="email" placeholder="Email or WhatsApp number" maxlength="200">
         <button class="btn btn-accent" type="submit" id="subscribeBtn">Subscribe</button>

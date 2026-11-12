@@ -1,6 +1,8 @@
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const pool = require('./pool');
+const { ensureSlugs } = require('../lib/rates');
+const { AREA_PAGES } = require('../data/areas');
 
 const defaultRates = [
   // Paper
@@ -70,6 +72,23 @@ async function seed() {
     } else {
       console.log('Scrap categories already exist, skipping.');
     }
+    // Each rate's own page address (/rates/<slug>), for any that lack one.
+    await ensureSlugs(client);
+
+    // Area pages: data/areas.js is the source; this keeps the table in step.
+    for (const [i, area] of AREA_PAGES.entries()) {
+      await client.query(
+        `INSERT INTO service_areas (slug, name, region, intro, industries, nearby, sort_order, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,NOW())
+         ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, region = EXCLUDED.region, intro = EXCLUDED.intro,
+           industries = EXCLUDED.industries, nearby = EXCLUDED.nearby, sort_order = EXCLUDED.sort_order, updated_at = NOW()
+         WHERE (service_areas.name, service_areas.region, service_areas.intro, service_areas.industries, service_areas.nearby, service_areas.sort_order)
+           IS DISTINCT FROM (EXCLUDED.name, EXCLUDED.region, EXCLUDED.intro, EXCLUDED.industries, EXCLUDED.nearby, EXCLUDED.sort_order)`,
+        [area.slug, area.name, area.region, area.intro, area.industries, area.nearby, i + 1]
+      );
+    }
+    await client.query('DELETE FROM service_areas WHERE NOT (slug = ANY($1))', [AREA_PAGES.map((a) => a.slug)]);
+    console.log(`Area pages ready (${AREA_PAGES.length}).`);
   } finally {
     client.release();
     await pool.end();

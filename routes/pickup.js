@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const router = require('express').Router();
 const pool = require('../db/pool');
 const {
@@ -11,9 +12,11 @@ const customers = require('../lib/customers');
 const media = require('../lib/media');
 const push = require('../lib/push');
 const live = require('../lib/live');
+const analytics = require('../lib/analytics');
 
 const OTHER = 'Other';
 const MAX_OTHER_LENGTH = 100;
+const MAX_COMPANY = 200;
 
 // A number plus a unit ("2", "tonnes") → { quantity, unit, kg }, or null.
 function parseQuantity(value, unit) {
@@ -25,48 +28,32 @@ function parseQuantity(value, unit) {
 // 650 → "650 kg", 1250 → "1.25 tonnes"
 const formatTotal = (kg) => (kg >= 1000 ? `${+(kg / 1000).toFixed(2)} tonnes` : `${+kg.toFixed(2)} kg`);
 
-// POST /api/pickup - public: a business submits a bulk scrap pickup request,
-// optionally with photos/videos of the scrap.
-router.post('/', media.acceptMedia, async (req, res) => {
-  const {
-    companyName, businessType, pickupFrequency,
-    name, notes,
-  } = req.body;
-
+// Step 1 of the form: company, phone, scrap types and quantity. Shared by the
+// lead (step 1 on its own) and the full request (both steps).
+// Returns { companyName, phone, scrapType, quantity, itemQuantities } or { error }.
+function parseStepOne(body) {
+  const companyName = String(body.companyName ?? '').trim().slice(0, MAX_COMPANY);
   // A business can tick several scrap types. Also accept the older single
   // `scrapType` field so a page cached before this change still submits.
-  const submitted = req.body.scrapTypes ?? req.body.scrapType;
+  const submitted = body.scrapTypes ?? body.scrapType;
   const scrapTypes = [...new Set((Array.isArray(submitted) ? submitted : [submitted]).filter(Boolean))];
 
-  if (!companyName || !name || !req.body.phone || !scrapTypes.length) {
-    return res.status(400).json({ error: 'Company, contact person, phone and at least one scrap type are required.' });
+  if (!companyName || !body.phone || !scrapTypes.length) {
+    return { error: 'Company, phone and at least one scrap type are required.' };
   }
-  if (!req.body.acceptTerms) {
-    return res.status(400).json({ error: 'Please accept the Pickup Rules. If you don\'t see the tick-box, refresh this page.' });
-  }
-  const site = parseSite(req.body);
-  if (site.error) return res.status(400).json({ error: site.error });
-  const { area, error: areaError } = parseArea(req.body.area, req.body.otherArea);
-  if (areaError) return res.status(400).json({ error: areaError });
-  const phone = cleanPhone(req.body.phone);
-  if (!phone) return res.status(400).json({ error: PHONE_ERROR });
-  // Email is optional, but has to be a real address if given.
-  const typedEmail = String(req.body.email ?? '').trim();
-  const email = typedEmail ? cleanEmail(typedEmail) : null;
-  if (typedEmail && !email) return res.status(400).json({ error: EMAIL_ERROR });
+  const phone = cleanPhone(body.phone);
+  if (!phone) return { error: PHONE_ERROR };
   if (scrapTypes.some((type) => type !== OTHER && !SCRAP_TYPES.includes(type))) {
-    return res.status(400).json({ error: 'Please choose scrap types from the list.' });
+    return { error: 'Please choose scrap types from the list.' };
   }
   // "Other" is only meaningful with a description, which replaces it in the
   // stored list, e.g. "Other: wooden pallets".
   const chosenTypes = [...scrapTypes];
   if (scrapTypes.includes(OTHER)) {
-    const otherText = String(req.body.otherScrapType ?? '').trim();
-    if (!otherText) {
-      return res.status(400).json({ error: 'Please describe the other scrap type.' });
-    }
+    const otherText = String(body.otherScrapType ?? '').trim();
+    if (!otherText) return { error: 'Please describe the other scrap type.' };
     if (otherText.length > MAX_OTHER_LENGTH) {
-      return res.status(400).json({ error: `Please keep the other scrap description under ${MAX_OTHER_LENGTH} characters.` });
+      return { error: `Please keep the other scrap description under ${MAX_OTHER_LENGTH} characters.` };
     }
     scrapTypes[scrapTypes.indexOf(OTHER)] = `${OTHER}: ${otherText}`;
   }
@@ -77,29 +64,112 @@ router.post('/', media.acceptMedia, async (req, res) => {
   let quantity;
   let itemQuantities = null;
   if (chosenTypes.length > 1) {
-    const entries = Array.isArray(req.body.itemQuantities) ? req.body.itemQuantities : [];
+    const entries = Array.isArray(body.itemQuantities) ? body.itemQuantities : [];
     itemQuantities = [];
     for (const [i, type] of chosenTypes.entries()) {
       const entry = entries.find((e) => e && e.type === type);
       const q = entry && parseQuantity(entry.quantity, entry.unit);
-      if (!q) {
-        return res.status(400).json({ error: `Please enter the quantity for ${type === OTHER ? 'the other scrap' : type}.` });
-      }
-      itemQuantities.push({ type: scrapTypes[i], quantity: q.quantity, unit: q.unit, kg: q.kg });
+      if (!q) return { error: `Please enter the quantity for ${type === OTHER ? 'the other scrap' : type}.` };
+      itemQuantities.push({
+        type: scrapTypes[i], quantity: q.quantity, unit: q.unit, kg: q.kg,
+      });
     }
     totalKg = itemQuantities.reduce((sum, item) => sum + item.kg, 0);
     quantity = formatTotal(totalKg);
     itemQuantities = itemQuantities.map(({ kg, ...item }) => item);
   } else {
-    const q = parseQuantity(req.body.quantity, req.body.quantityUnit);
-    if (!q) return res.status(400).json({ error: 'Please enter the approximate total quantity.' });
+    const q = parseQuantity(body.quantity, body.quantityUnit);
+    if (!q) return { error: 'Please enter the approximate total quantity.' };
     totalKg = q.kg;
     quantity = `${q.quantity} ${q.unit}`;
   }
   if (totalKg < MIN_PICKUP_KG) {
-    return res.status(400).json({ error: `We handle bulk pickups of ${MIN_PICKUP_KG} kg or more${itemQuantities ? ' in total' : ''}.` });
+    return { error: `We handle bulk pickups of ${MIN_PICKUP_KG} kg or more${itemQuantities ? ' in total' : ''}.` };
   }
-  if (businessType &&!BUSINESS_TYPES.includes(businessType)) {
+  return {
+    companyName, phone, scrapType: scrapTypes.join(', '), quantity, itemQuantities,
+  };
+}
+
+// Anyone can start a request, so cap new leads per connection.
+const LEADS_PER_HOUR = 20;
+const recentLeads = new Map();
+function tooManyLeads(ip) {
+  const hourAgo = Date.now() - 60 * 60 * 1000;
+  const times = (recentLeads.get(ip) || []).filter((t) => t > hourAgo);
+  if (times.length >= LEADS_PER_HOUR) return true;
+  times.push(Date.now());
+  recentLeads.set(ip, times);
+  if (recentLeads.size > 5000) recentLeads.clear();
+  return false;
+}
+
+const TOKEN_RE = /^[a-f0-9]{48}$/;
+
+// POST /api/pickup/lead - step 1, saved straight away. Sending step 1 again
+// with the same token (the customer went back and changed it) updates it.
+router.post('/lead', async (req, res) => {
+  const step = parseStepOne(req.body);
+  if (step.error) return res.status(400).json({ error: step.error });
+  const customerId = (req.session && req.session.customerId) || null;
+  const values = [step.companyName, step.phone, step.scrapType, step.quantity,
+    step.itemQuantities && JSON.stringify(step.itemQuantities), customerId];
+  try {
+    const token = String(req.body.leadToken || '');
+    if (TOKEN_RE.test(token)) {
+      const { rowCount } = await pool.query(
+        `UPDATE pickup_leads SET company_name = $1, phone = $2, scrap_type = $3, approx_quantity = $4,
+                item_quantities = $5, customer_id = COALESCE($6, customer_id), updated_at = NOW()
+         WHERE token = $7 AND completed_at IS NULL`,
+        [...values, token]
+      );
+      if (rowCount) {
+        live.publish('requests');
+        return res.json({ leadToken: token });
+      }
+    }
+    if (tooManyLeads(req.ip)) {
+      return res.status(429).json({ error: 'Too many requests from your connection. Please call us on +91 98188 26333.' });
+    }
+    const newToken = crypto.randomBytes(24).toString('hex');
+    await pool.query(
+      `INSERT INTO pickup_leads (company_name, phone, scrap_type, approx_quantity, item_quantities, customer_id, token)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [...values, newToken]
+    );
+    live.publish('requests');
+    analytics.record('lead', analytics.pageFrom(req));
+    res.status(201).json({ leadToken: newToken });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Something went wrong. Please try again or call us directly.' });
+  }
+});
+
+// POST /api/pickup - public: a business sends its bulk scrap pickup request
+// (both steps), optionally with photos/videos of the scrap.
+router.post('/', media.acceptMedia, async (req, res) => {
+  const { businessType, pickupFrequency, notes } = req.body;
+  const name = String(req.body.name ?? '').trim().slice(0, 150);
+
+  const step = parseStepOne(req.body);
+  if (step.error) return res.status(400).json({ error: step.error });
+  const {
+    companyName, phone, scrapType, quantity, itemQuantities,
+  } = step;
+  if (!name) return res.status(400).json({ error: 'Please enter the contact person\'s name.' });
+  if (!req.body.acceptTerms) {
+    return res.status(400).json({ error: 'Please accept the Pickup Rules. If you don\'t see the tick-box, refresh this page.' });
+  }
+  const site = parseSite(req.body);
+  if (site.error) return res.status(400).json({ error: site.error });
+  const { area, error: areaError } = parseArea(req.body.area, req.body.otherArea);
+  if (areaError) return res.status(400).json({ error: areaError });
+  // Email is optional, but has to be a real address if given.
+  const typedEmail = String(req.body.email ?? '').trim();
+  const email = typedEmail ? cleanEmail(typedEmail) : null;
+  if (typedEmail && !email) return res.status(400).json({ error: EMAIL_ERROR });
+  if (businessType && !BUSINESS_TYPES.includes(businessType)) {
     return res.status(400).json({ error: 'Please choose a business type from the list.' });
   }
   if (pickupFrequency && !PICKUP_FREQUENCIES.includes(pickupFrequency)) {
@@ -109,8 +179,7 @@ router.post('/', media.acceptMedia, async (req, res) => {
   if (gstin && !GSTIN_RE.test(gstin)) {
     return res.status(400).json({ error: GSTIN_ERROR });
   }
-  const mediaError = media.missingMediaError(req);
-  if (mediaError) return res.status(400).json({ error: mediaError });
+  // Photos and videos are recommended (they speed up the quote) but optional.
   const tooFar = await outsideServiceArea(site.pincode);
   if (tooFar) return res.status(400).json({ error: tooFar });
 
@@ -129,21 +198,30 @@ router.post('/', media.acceptMedia, async (req, res) => {
       [
         companyName, businessType || null, pickupFrequency || null, gstin, customerId,
         name, phone, email, site.address, area || null, site.pincode,
-        scrapTypes.join(', '), quantity, itemQuantities && JSON.stringify(itemQuantities), notes || null,
+        scrapType, quantity, itemQuantities && JSON.stringify(itemQuantities), notes || null,
         site.latitude, site.longitude, RULES_VERSION,
       ]
     );
+    const requestId = rows[0].id;
+    // Step 1's lead is now a full request.
+    if (TOKEN_RE.test(String(req.body.leadToken || ''))) {
+      await pool.query(
+        'UPDATE pickup_leads SET request_id = $1, completed_at = NOW() WHERE token = $2 AND completed_at IS NULL',
+        [requestId, req.body.leadToken]
+      ).catch((err) => console.error('closing pickup lead failed', err));
+    }
     // As with the profile below, the booking is already saved, so a problem
     // recording the attachments is logged rather than reported as a failure.
-    const files = await media.saveForRequest(req, 'pickup', rows[0].id)
+    const files = await media.saveForRequest(req, 'pickup', requestId)
       .catch((err) => { console.error('saving pickup media failed', err); return 0; });
     live.publish('requests');
+    analytics.record('quote_request', analytics.pageFrom(req));
     push.quietly(push.notifyAdmins({
-      title: `New pickup request #${rows[0].id} 📦`,
-      body: [companyName, quantity, area, files && `${files} photo${files === 1 ? '' : 's'}/video${files === 1 ? '' : 's'}`]
+      title: `New pickup request #${requestId} 📦`,
+      body: [companyName, quantity, area, files ? `${files} photo${files === 1 ? '' : 's'}/video${files === 1 ? '' : 's'}` : 'no photos']
         .filter(Boolean).join(' · '),
-      url: `/admin.html#pickup-${rows[0].id}`,
-      tag: `pickup-${rows[0].id}`,
+      url: `/admin.html#pickup-${requestId}`,
+      tag: `pickup-${requestId}`,
     }));
     if (customerId) {
       // The booking is already saved; a profile hiccup must not report failure
@@ -157,7 +235,7 @@ router.post('/', media.acceptMedia, async (req, res) => {
         });
     }
     res.status(201).json({
-      id: rows[0].id,
+      id: requestId,
       message: customerId
         ? 'Request received! Your quote will appear in My Account, and our team may call you to confirm the details.'
         : 'Request received! Our team will call you to confirm the details, and send your quote on WhatsApp or email with a link to accept it. No login needed.',

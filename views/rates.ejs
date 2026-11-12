@@ -2,22 +2,56 @@
 <%- include('partials/sprite') %>
 <%- include('partials/header') %>
 
-<main id="top">
+<main id="top" tabindex="-1">
 
 <%- include('partials/page-hero', {
   eyebrow: 'Indicative Rates',
-  heading: 'Scrap Rates',
+  heading: 'Scrap Rates Today in Delhi NCR',
   text: 'Reference prices per kg (unless noted) for common scrap categories. Business lots are priced on volume, grade and location, so your final rate comes in a bulk quote.',
   links: [{ href: '#subscribe', label: '🔔 Get these rates every morning' }],
 }) %>
 
-  <!-- Live Rates -->
+  <% const rates = locals.rates || []; %>
   <section class="section after-page-hero" id="rates">
     <div class="container">
-      <div class="rates-grid" id="ratesGrid">
-        <!-- populated by JS -->
-        <div class="rates-loading">Loading current rates…</div>
+      <div id="ratesLive" data-live-section>
+        <p class="rates-updated">
+          <svg class="icon" aria-hidden="true"><use href="#icon-clock"/></svg>
+          <% if (locals.ratesUpdated) { %>
+            Last updated: <time datetime="<%= ratesUpdated.toISOString() %>"><%= formatIndiaTime(ratesUpdated) %></time>
+          <% } else { %>
+            Rates are being updated. Please call us for today's prices.
+          <% } %>
+        </p>
+
+        <%# Search and tabs work with JavaScript; without it, every rate is listed. %>
+        <div class="rate-filter" id="rateFilter" hidden>
+          <label class="rate-search">
+            <span class="sr-only">Search scrap rates</span>
+            <input type="search" id="rateSearch" placeholder="Search, e.g. copper, PET, cardboard" autocomplete="off" enterkeyhint="search">
+          </label>
+          <div class="rate-tabs" role="group" aria-label="Show a group of rates">
+            <button type="button" class="rate-tab" data-tab="all" aria-pressed="true">All</button>
+            <% rateCategories.forEach(({ key, label }) => {
+              const count = rates.filter((r) => r.category === key).length;
+              if (!count) return; %>
+              <button type="button" class="rate-tab" data-tab="<%= key %>" aria-pressed="false"><%= label %> <span class="rate-tab-count"><%= count %></span></button>
+            <% }) %>
+          </div>
+          <p class="rate-filter-status" id="rateFilterStatus" role="status" aria-live="polite"></p>
+        </div>
+
+        <% if (rates.length) { %>
+          <div class="rates-grid rates-grid-full" id="ratesGrid">
+            <% rates.forEach((rate) => { %><%- include('partials/rate-card', { rate, showTrend: true }) %><% }) %>
+          </div>
+          <p class="rates-empty" id="ratesEmpty" hidden>No rates match your search. Try another word, or <a href="/book-pickup">ask us for a quote</a> for anything not listed.</p>
+          <p class="rates-trend-note">The line under each rate shows how its price moved over the last <%= trendDays %> days.</p>
+        <% } else { %>
+          <p class="rates-loading">Rates coming soon. Please call us for current pricing.</p>
+        <% } %>
       </div>
+
       <div class="rates-quote-note">
         <div>
           <h3>Selling in bulk?</h3>

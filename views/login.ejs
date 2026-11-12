@@ -2,7 +2,7 @@
 <%- include('partials/sprite') %>
 <%- include('partials/header') %>
 
-<main id="top">
+<main id="top" tabindex="-1">
 
   <section class="section page-top auth-section">
     <div class="container">
@@ -31,7 +31,7 @@
           <% if (phoneLoginEnabled) { %>
           <div class="auth-divider"><span>or log in with your mobile number</span></div>
 
-          <form id="phoneForm" novalidate>
+          <form id="phoneForm" method="post" novalidate>
             <div class="form-group">
               <label for="loginPhone">Mobile Number</label>
               <div class="phone-input">
@@ -42,7 +42,7 @@
             <button type="submit" class="btn btn-accent btn-lg btn-block" id="sendOtpBtn">Send OTP</button>
           </form>
 
-          <form id="otpForm" novalidate hidden>
+          <form id="otpForm" method="post" novalidate hidden>
             <p class="otp-sent">We sent a 6-digit code to <strong id="otpPhoneLabel"></strong>.
               <button type="button" class="link-btn" id="changePhoneBtn">Change number</button></p>
             <div class="form-group">

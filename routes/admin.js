@@ -2,13 +2,21 @@ const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const pool = require('../db/pool');
 const { requireAdmin } = require('../middleware/auth');
-const { PICKUP_STATUSES, QUOTE_UNITS, formatQuoteRate } = require('../data/business');
+const {
+  PICKUP_STATUSES, QUOTE_UNITS, BUSINESS_TYPES, AREAS, RATE_CATEGORIES, formatQuoteRate,
+} = require('../data/business');
+const rates = require('../lib/rates');
 const media = require('../lib/media');
 const push = require('../lib/push');
 const { mountPushRoutes } = require('./push');
 const updates = require('../lib/updates');
 const live = require('../lib/live');
 const quotes = require('../lib/quotes');
+const loginLimit = require('../lib/login-limit');
+const siteStats = require('../lib/site-stats');
+const siteImages = require('../lib/site-images');
+const lots = require('../lib/lots');
+const documents = require('../lib/documents');
 
 const ALLOWED_STATUSES = ['pending', 'confirmed', 'completed', 'cancelled'];
 const MAX_QUOTE_LINES = 20;
@@ -17,17 +25,31 @@ const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30;
 
 // ---- auth ----
 
+// Used for unknown usernames, so a wrong username takes as long as a wrong
+// password and doesn't reveal which usernames exist.
+const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 10);
+
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  if (!username || !password) {
+  if (typeof username !== 'string' || typeof password !== 'string' || !username || !password) {
     return res.status(400).json({ error: 'Username and password required' });
+  }
+  const wait = loginLimit.retryAfter(req.ip, username);
+  if (wait) {
+    const minutes = Math.ceil(wait / 60);
+    res.set('Retry-After', String(wait));
+    return res.status(429).json({ error: `Too many wrong attempts. Please try again in ${minutes} minute${minutes === 1 ? '' : 's'}.` });
   }
   try {
     const { rows } = await pool.query('SELECT * FROM admin_users WHERE username = $1', [username]);
     const user = rows[0];
-    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+    const ok = await bcrypt.compare(password, user ? user.password_hash : DUMMY_HASH);
+    if (!user || !ok) {
+      loginLimit.recordFailure(req.ip, username);
+      console.warn(`admin login failed for "${username.slice(0, 50)}" from ${req.ip}`);
       return res.status(401).json({ error: 'Invalid username or password' });
     }
+    loginLimit.recordSuccess(req.ip);
     // A fresh session ID on login (prevents session fixation).
     await new Promise((resolve, reject) => req.session.regenerate((err) => (err ? reject(err) : resolve())));
     req.session.isAdmin = true;
@@ -90,6 +112,16 @@ function notifyStatusChange(kind, row, oldStatus) {
   if (!notice || !row.customer_id || row.status === oldStatus) return;
   const [title, body] = notice(row.id);
   push.quietly(push.notifyCustomer(row.customer_id, { title, body, url: '/account', tag: `${kind}-${row.id}` }));
+}
+
+// A deleted request's papers (files too) and timeline go with it.
+async function removeRequestExtras(requestType, requestId) {
+  const { rows } = await pool.query(
+    'DELETE FROM request_documents WHERE request_type = $1 AND request_id = $2 RETURNING file_name',
+    [requestType, requestId]
+  );
+  await documents.removeFiles(rows.map((r) => r.file_name));
+  await pool.query('DELETE FROM request_events WHERE request_type = $1 AND request_id = $2', [requestType, requestId]);
 }
 
 // ---- pickup requests ----
@@ -201,6 +233,7 @@ router.delete('/requests/:id', requireAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query('DELETE FROM pickup_requests WHERE id = $1 RETURNING customer_id, quote_token', [req.params.id]);
     await media.removeForRequest('pickup', req.params.id);
+    await removeRequestExtras('pickup', req.params.id);
     res.json({ message: 'Deleted' });
     live.requestChanged(rows[0] && rows[0].customer_id, rows[0] && rows[0].quote_token);
   } catch (err) {
@@ -210,6 +243,33 @@ router.delete('/requests/:id', requireAdmin, async (req, res) => {
 });
 
 // ---- demolition requests ----
+
+// ---- leads: step 1 of the pickup form, never finished ----
+
+router.get('/leads', requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, company_name, phone, scrap_type, approx_quantity, item_quantities, customer_id, created_at, updated_at
+       FROM pickup_leads WHERE completed_at IS NULL
+       ORDER BY updated_at DESC LIMIT 100`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load leads' });
+  }
+});
+
+router.delete('/leads/:id', requireAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM pickup_leads WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Deleted' });
+    live.publish('requests');
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete lead' });
+  }
+});
 
 router.get('/demolition', requireAdmin, async (req, res) => {
   try {
@@ -251,6 +311,7 @@ router.delete('/demolition/:id', requireAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query('DELETE FROM demolition_requests WHERE id = $1 RETURNING customer_id', [req.params.id]);
     await media.removeForRequest('demolition', req.params.id);
+    await removeRequestExtras('demolition', req.params.id);
     res.json({ message: 'Deleted' });
     live.requestChanged(rows[0] && rows[0].customer_id);
   } catch (err) {
@@ -440,7 +501,11 @@ router.post('/subscribers/announce', requireAdmin, async (req, res) => {
 
 router.get('/rates', requireAdmin, async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM scrap_categories ORDER BY sort_order ASC, name ASC');
+    const [{ rows }, lastUpdated] = await Promise.all([
+      pool.query('SELECT * FROM scrap_categories ORDER BY sort_order ASC, name ASC'),
+      rates.lastUpdated(),
+    ]);
+    res.set('X-Rates-Updated', lastUpdated ? lastUpdated.toISOString() : '');
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -448,16 +513,24 @@ router.get('/rates', requireAdmin, async (req, res) => {
   }
 });
 
+const RATE_CATEGORY_KEYS = RATE_CATEGORIES.map((c) => c.key);
+
 router.post('/rates', requireAdmin, async (req, res) => {
   const { name, unit, price, icon } = req.body;
-  if (!name || price == null || Number.isNaN(Number(price))) {
+  const category = req.body.category || 'other';
+  if (!name || price == null || price === '' || Number.isNaN(Number(price)) || Number(price) < 0) {
     return res.status(400).json({ error: 'Name and a valid price are required' });
   }
+  if (!RATE_CATEGORY_KEYS.includes(category)) return res.status(400).json({ error: 'Please choose a group for this rate.' });
   try {
+    // New rates go to the end of the list.
     const { rows } = await pool.query(
-      `INSERT INTO scrap_categories (name, unit, price, icon) VALUES ($1,$2,$3,$4) RETURNING *`,
-      [name, unit || 'kg', price, icon || 'default']
+      `INSERT INTO scrap_categories (name, unit, price, icon, category, sort_order)
+       VALUES ($1,$2,$3,$4,$5, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM scrap_categories))
+       RETURNING *`,
+      [String(name).trim().slice(0, 100), unit || 'kg', price, icon || 'default', category]
     );
+    await rates.ensureSlugs(); // its own page, /rates/<slug>
     res.status(201).json(rows[0]);
     live.publish('rates');
   } catch (err) {
@@ -467,18 +540,28 @@ router.post('/rates', requireAdmin, async (req, res) => {
 });
 
 router.put('/rates/:id', requireAdmin, async (req, res) => {
-  const { name, unit, price, icon } = req.body;
+  const {
+    name, unit, price, icon, category,
+  } = req.body;
+  if (price != null && (price === '' || Number.isNaN(Number(price)) || Number(price) < 0)) {
+    return res.status(400).json({ error: 'Please enter a valid price.' });
+  }
+  if (category != null && !RATE_CATEGORY_KEYS.includes(category)) {
+    return res.status(400).json({ error: 'Please choose a group for this rate.' });
+  }
   try {
+    // The database adds the new price to the rate's history (for the trend).
     const { rows } = await pool.query(
       `UPDATE scrap_categories
        SET name = COALESCE($1, name),
            unit = COALESCE($2, unit),
            price = COALESCE($3, price),
            icon = COALESCE($4, icon),
+           category = COALESCE($5, category),
            updated_at = NOW()
-       WHERE id = $5
+       WHERE id = $6
        RETURNING *`,
-      [name, unit, price, icon, req.params.id]
+      [name, unit, price, icon, category, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     res.json(rows[0]);
@@ -486,6 +569,19 @@ router.put('/rates/:id', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update category' });
+  }
+});
+
+// "Rates checked today": prices unchanged, but the Rates page's
+// "Last updated" should show they're current.
+router.post('/rates/checked', requireAdmin, async (req, res) => {
+  try {
+    await rates.markChecked();
+    res.json({ lastUpdated: await rates.lastUpdated() });
+    live.publish('rates');
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save.' });
   }
 });
 
@@ -502,15 +598,57 @@ router.delete('/rates/:id', requireAdmin, async (req, res) => {
 
 // ---- testimonials ----
 
+// ---- home page numbers (hero stats and "Our Impact") ----
+
+router.get('/stats', requireAdmin, async (req, res) => {
+  res.json({ stats: await siteStats.getStats(), fields: siteStats.FIELDS });
+});
+
+router.put('/stats', requireAdmin, async (req, res) => {
+  try {
+    const { stats, error } = await siteStats.saveStats(req.body || {});
+    if (error) return res.status(400).json({ error });
+    res.json({ stats });
+    live.publish('reviews'); // the home page refreshes its numbers with its reviews
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save the numbers.' });
+  }
+});
+
+// Lists the admin forms choose from (the same ones the public forms use).
+router.get('/options', requireAdmin, (req, res) => {
+  res.json({
+    businessTypes: BUSINESS_TYPES,
+    areas: AREAS,
+    rateCategories: RATE_CATEGORIES,
+    galleryCategories: siteImages.GALLERY_CATEGORIES,
+    lotMaterials: lots.LOT_MATERIALS,
+    lotUnits: lots.LOT_UNITS,
+  });
+});
+
+// Only business clients' reviews: each says what kind of business it is.
 router.post('/testimonials', requireAdmin, async (req, res) => {
-  const { customerName, area, rating, message } = req.body;
+  const text = (value, max) => String(value ?? '').trim().replace(/\s+/g, ' ').slice(0, max);
+  const customerName = text(req.body.customerName, 150);
+  const companyType = text(req.body.companyType, 100);
+  const area = text(req.body.area, 100);
+  const message = String(req.body.message ?? '').trim().slice(0, 1000);
+  const rating = Number(req.body.rating) || 5;
   if (!customerName || !message) {
-    return res.status(400).json({ error: 'Name and message required' });
+    return res.status(400).json({ error: 'Name and review are required.' });
+  }
+  if (!BUSINESS_TYPES.includes(companyType)) {
+    return res.status(400).json({ error: 'Please choose the type of business.' });
+  }
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: 'Rating must be 1 to 5 stars.' });
   }
   try {
     const { rows } = await pool.query(
-      `INSERT INTO testimonials (customer_name, area, rating, message) VALUES ($1,$2,$3,$4) RETURNING *`,
-      [customerName, area || null, rating || 5, message]
+      `INSERT INTO testimonials (customer_name, company_type, area, rating, message) VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [customerName, companyType, area || null, rating, message]
     );
     res.status(201).json(rows[0]);
     live.publish('reviews');

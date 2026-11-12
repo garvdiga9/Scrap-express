@@ -2,7 +2,7 @@
 <%- include('partials/sprite') %>
 <%- include('partials/header') %>
 
-<main id="top">
+<main id="top" tabindex="-1">
 
   <!-- Hero -->
   <section class="hero">
@@ -28,11 +28,14 @@
           <li><svg class="icon"><use href="#icon-scale"/></svg> Weighbridge Slip</li>
           <li><svg class="icon"><use href="#icon-shield"/></svg> Cash or Bank Transfer</li>
         </ul>
-        <div class="hero-stats" id="heroStats">
-          <div class="stat"><span class="stat-num-row"><span class="stat-num" data-count="35">0</span><span class="stat-num-suffix">+</span></span><span class="stat-label">Years in Delhi</span></div>
-          <div class="stat"><span class="stat-num-row"><span class="stat-num" data-count="100">0</span><span class="stat-num-suffix">+</span></span><span class="stat-label">Locations Served</span></div>
-          <div class="stat"><span class="stat-num-row"><span class="stat-num" data-count="500">0</span><span class="stat-num-suffix">+</span></span><span class="stat-label">Tons Recycled / Month</span></div>
-          <div class="stat"><span class="stat-num-row"><span class="stat-num" data-count="10000">0</span><span class="stat-num-suffix">+</span></span><span class="stat-label">Clients Served</span></div>
+        <%# The real numbers are in the page itself (so they show without JavaScript
+            and to search engines); main.js only animates ones scrolled into view. %>
+        <% const stats = locals.stats || {}; const num = (n) => Number(n || 0).toLocaleString('en-IN'); %>
+        <div class="hero-stats" id="heroStats" data-live-section>
+          <div class="stat"><span class="stat-num-row"><span class="stat-num" data-count="<%= stats.yearsInDelhi %>"><%= num(stats.yearsInDelhi) %></span><span class="stat-num-suffix">+</span></span><span class="stat-label">Years in Delhi</span></div>
+          <div class="stat"><span class="stat-num-row"><span class="stat-num" data-count="<%= stats.locationsServed %>"><%= num(stats.locationsServed) %></span><span class="stat-num-suffix">+</span></span><span class="stat-label">Locations Served</span></div>
+          <div class="stat"><span class="stat-num-row"><span class="stat-num" data-count="<%= stats.tonsPerMonth %>"><%= num(stats.tonsPerMonth) %></span><span class="stat-num-suffix">+</span></span><span class="stat-label">Tonnes Recycled / Month</span></div>
+          <div class="stat"><span class="stat-num-row"><span class="stat-num" data-count="<%= stats.clientsServed %>"><%= num(stats.clientsServed) %></span><span class="stat-num-suffix">+</span></span><span class="stat-label">Clients Served</span></div>
         </div>
       </div>
       <div class="hero-visual" aria-hidden="true">
@@ -90,29 +93,29 @@
         <h2>Every Kilogram Counts</h2>
         <p>Estimated environmental impact from scrap responsibly recycled through Scrap Express.</p>
       </div>
-      <div class="impact-grid" id="impactStats">
+      <div class="impact-grid" id="impactStats" data-live-section>
         <div class="impact-card">
           <div class="impact-icon"><svg class="icon icon-lg"><use href="#icon-recycle"/></svg></div>
-          <span class="impact-num" data-count="185000">0</span>
+          <span class="impact-num" data-count="<%= stats.kgRecycled %>"><%= num(stats.kgRecycled) %></span>
           <span class="impact-label">Kg Scrap Recycled</span>
         </div>
         <div class="impact-card">
           <div class="impact-icon"><svg class="icon icon-lg"><use href="#icon-cloud"/></svg></div>
-          <span class="impact-num" data-count="240">0</span>
+          <span class="impact-num" data-count="<%= stats.co2Tonnes %>"><%= num(stats.co2Tonnes) %></span>
           <span class="impact-label">Tonnes CO₂ Avoided</span>
         </div>
         <div class="impact-card">
           <div class="impact-icon"><svg class="icon icon-lg"><use href="#icon-tree"/></svg></div>
-          <span class="impact-num" data-count="3100">0</span>
+          <span class="impact-num" data-count="<%= stats.treesSaved %>"><%= num(stats.treesSaved) %></span>
           <span class="impact-label">Trees Saved (Equivalent)</span>
         </div>
         <div class="impact-card">
           <div class="impact-icon"><svg class="icon icon-lg"><use href="#icon-building"/></svg></div>
-          <span class="impact-num" data-count="10000">0</span>
+          <span class="impact-num" data-count="<%= stats.clientsServed %>"><%= num(stats.clientsServed) %></span>
           <span class="impact-label">Clients Served</span>
         </div>
       </div>
-      <p class="impact-note">Impact figures are estimates based on standard industry recycling benchmarks, updated periodically.</p>
+      <p class="impact-note">CO₂ and trees are estimates worked out from the kilograms recycled, using standard industry recycling benchmarks.<% if (stats.updatedAt) { %> Figures updated <%= new Date(stats.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' }) %>.<% } %></p>
     </div>
   </section>
 
@@ -125,9 +128,10 @@
         <h2>Scrap Rates at a Glance</h2>
         <p>Reference prices per kg for common categories. Business lots are priced on volume, grade and location — request a bulk quote for your exact rate.</p>
       </div>
-      <div class="rates-grid" id="ratesGrid" data-limit="8">
-        <!-- populated by JS -->
-        <div class="rates-loading">Loading current rates…</div>
+      <div class="rates-grid" id="ratesGrid" data-live-section>
+        <% const teaser = (locals.rates || []).slice(0, 8); %>
+        <% teaser.forEach((rate) => { %><%- include('partials/rate-card', { rate }) %><% }) %>
+        <% if (!teaser.length) { %><p class="rates-loading">Rates coming soon. Please call us for current pricing.</p><% } %>
       </div>
       <p class="section-more">
         <a href="/rates" class="btn btn-outline">View All Indicative Rates</a>
@@ -215,15 +219,63 @@
     </div>
   </section>
 
-  <!-- Testimonials -->
-  <section class="section section-alt" id="reviews">
+  <%# Real photos of the yard, weighbridge, trucks and team, added in the admin
+      (Admin → Photos). Shown only once there are some. %>
+  <% const gallery = locals.gallery || []; const logos = locals.logos || []; %>
+  <section class="section" id="gallery"<%= gallery.length ? '' : ' hidden' %> data-live-section>
     <div class="container">
       <div class="section-head">
-        <span class="eyebrow">Client Feedback</span>
-        <h2>What Our Clients Say</h2>
+        <span class="eyebrow">See Us at Work</span>
+        <h2>Our Yard, Weighbridge &amp; Team</h2>
+        <p>Real photos from our yard and pickups across Delhi NCR.</p>
+      </div>
+      <div class="gallery-grid">
+        <% gallery.forEach((photo, i) => { %>
+          <figure class="gallery-item">
+            <img src="<%= photo.url %>" alt="<%= photo.alt_text %>" width="<%= photo.width %>" height="<%= photo.height %>" loading="lazy" decoding="async">
+            <figcaption><span class="gallery-tag"><%= (galleryCategories.find((c) => c.key === photo.category) || {}).label || '' %></span><% if (photo.caption) { %> <%= photo.caption %><% } %></figcaption>
+          </figure>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+
+  <section class="section logos-band" id="clientLogos"<%= logos.length ? '' : ' hidden' %> data-live-section>
+    <div class="container">
+      <p class="logos-title">Businesses that sell their scrap to us</p>
+      <ul class="logos-list">
+        <% logos.forEach((logo) => { %>
+          <li><img src="<%= logo.url %>" alt="<%= logo.alt_text %>" width="<%= logo.width %>" height="<%= logo.height %>" loading="lazy" decoding="async"></li>
+        <% }) %>
+      </ul>
+    </div>
+  </section>
+
+  <%# Reviews from business clients, added in the admin. No reviews yet: no section. %>
+  <% const reviews = locals.reviews || []; %>
+  <section class="section section-alt" id="reviews"<%= reviews.length ? '' : ' hidden' %> data-live-section>
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Business Clients</span>
+        <h2>What Our Business Clients Say</h2>
       </div>
       <div class="reviews-grid" id="reviewsGrid">
-        <div class="rates-loading">Loading reviews…</div>
+        <% reviews.forEach((review) => { %>
+          <figure class="review-card">
+            <svg class="icon quote-mark" aria-hidden="true"><use href="#icon-quote"/></svg>
+            <div class="review-stars" role="img" aria-label="Rated <%= review.rating %> out of 5">
+              <% for (let i = 0; i < 5; i++) { %><svg class="icon<%= i < review.rating ? '' : ' star-off' %>" aria-hidden="true"><use href="#icon-star"/></svg><% } %>
+            </div>
+            <blockquote class="review-msg"><%= review.message %></blockquote>
+            <figcaption class="review-footer">
+              <span class="review-avatar" aria-hidden="true" style="background:<%= reviewHelpers.colorForName(review.customer_name) %>"><%= reviewHelpers.initialsFor(review.customer_name) %></span>
+              <span>
+                <span class="review-author"><%= review.customer_name %></span>
+                <span class="review-area"><%= reviewHelpers.reviewWhere(review) %></span>
+              </span>
+            </figcaption>
+          </figure>
+        <% }) %>
       </div>
     </div>
   </section>
@@ -235,7 +287,7 @@
     ['What scrap do you buy?', 'Paper and cardboard (raddi), plastic, iron and steel, copper, brass and aluminium, e-waste and IT equipment, old ACs and fridges, generators and motors, furniture and fixtures, glass, and mixed industrial or office scrap.'],
     ['What is the minimum quantity for a pickup?', `${minPickupKg} kg per pickup. You can add up several kinds of scrap to reach it. For smaller amounts, we may not be the right fit.`],
     ['Which areas do you cover?', `Delhi and anywhere within ${serviceKm} km of Delhi's boundary, including Gurugram, Manesar, Noida, Greater Noida, Faridabad, Ghaziabad, Sonipat, Bahadurgarh and Meerut.`],
-    ['What are the scrap rates today?', 'Our Scrap Rates page shows indicative rates per kg, updated regularly. Your final rate depends on volume, grade and location, and we send it as a quote after seeing your photos.'],
+    ['What are the scrap rates today?', 'Our Scrap Rates page shows indicative rates per kg, updated regularly. Your final rate depends on volume, grade and location, and we send it as a quote after seeing your details and photos.'],
     ['How and when will I be paid?', 'By cash or bank transfer, whichever you prefer. The amount is worked out from the weighbridge weight at pickup, with a GST invoice.'],
     ['Do I need to create an account?', 'No. We send your quote on WhatsApp or email with a private link where you can accept it. An account is optional, and lets you track all your requests in one place.'],
     ['Do you also do demolition?', `Yes. We demolish commercial and institutional buildings such as schools, hospitals, factories, warehouses and malls within ${serviceKm} km of Delhi, after a site survey and a detailed quote.`],

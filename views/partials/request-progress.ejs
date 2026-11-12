@@ -1,0 +1,29 @@
+<%# A request's progress steps and its papers (weighbridge slip, GST invoice),
+    in My Account and on the private quote link. Locals: timeline (from
+    lib/timeline.js), docs, docBase (download address prefix). %>
+<% const fmtStep = (d) => new Date(d).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }); %>
+<% const docLabels = { weight_slip: 'Weighbridge slip', invoice: 'GST invoice', other: 'Document' }; %>
+<% if (locals.timeline && timeline.length) { %>
+  <ol class="request-timeline" aria-label="Progress">
+    <% timeline.forEach((step) => { %>
+      <li class="step-<%= step.state %>"<%= step.state === 'current' ? ' aria-current="step"' : '' %>>
+        <span class="step-dot" aria-hidden="true"></span>
+        <span class="step-label"><%= step.label %><span class="sr-only"><%= { done: ' (done)', current: ' (current step)', todo: ' (still to come)', stopped: '' }[step.state] %></span></span>
+        <% if (step.at) { %><time class="step-time" datetime="<%= new Date(step.at).toISOString() %>"><%= fmtStep(step.at) %></time><% } %>
+      </li>
+    <% }) %>
+  </ol>
+<% } %>
+<% if (locals.docs && docs.length) { %>
+  <div class="request-docs">
+    <strong>Your papers</strong>
+    <ul>
+      <% docs.forEach((doc) => { %>
+        <li><a href="<%= docBase %><%= doc.id %>" download>
+          <svg class="icon" aria-hidden="true"><use href="#icon-paper"/></svg>
+          <%= docLabels[doc.kind] %> <span class="doc-meta">(<%= doc.mime_type === 'application/pdf' ? 'PDF' : 'image' %>, <%= Math.max(1, Math.round(doc.size_bytes / 1024)) %> KB)</span>
+        </a></li>
+      <% }) %>
+    </ul>
+  </div>
+<% } %>

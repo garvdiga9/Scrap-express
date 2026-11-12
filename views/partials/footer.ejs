@@ -21,6 +21,7 @@
       <a href="/book-pickup">Bulk Pickup</a>
       <a href="/demolition">Demolition</a>
       <a href="/areas">Areas</a>
+      <a href="/buy-from-us">Buy From Us (Recyclers)</a>
       <a href="#" id="footerInstall" hidden>Install the App</a>
       <% if (locals.loginEnabled || locals.customer) { %><a href="<%= locals.customer ? '/account' : '/login' %>"><%= locals.customer ? 'My Account' : 'Customer Login' %></a><% } %>
     </div>
@@ -40,7 +41,6 @@
         <a href="/rules" class="admin-link">Pickup Rules</a>
         <a href="/privacy" class="admin-link">Privacy Policy</a>
         <a href="/delete-account" class="admin-link">Delete Account</a>
-        <a href="/admin.html" class="admin-link">Admin Login</a>
       </div>
     </div>
   </div>

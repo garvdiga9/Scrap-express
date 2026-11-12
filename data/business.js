@@ -75,7 +75,7 @@ const QUOTE_UNITS = ['per kg', 'per tonne', 'per piece', 'lump sum'];
 
 // Change this whenever views/rules.ejs changes in substance, so each request
 // records which version its customer accepted.
-const RULES_VERSION = '2026-11-02d';
+const RULES_VERSION = '2026-11-12';
 const READY_DATE_MAX_DAYS = 30;
 
 // 'YYYY-MM-DD' in India, and the dates a customer can say their scrap is ready.
@@ -91,6 +91,16 @@ function formatQuoteRate({ rate, unit }) {
   const digits = Number.isInteger(n) ? 0 : 2;
   return `₹${n.toLocaleString('en-IN', { minimumFractionDigits: digits, maximumFractionDigits: digits })} ${unit}`;
 }
+
+// The tabs on the Rates page; every rate belongs to one.
+const RATE_CATEGORIES = [
+  { key: 'paper', label: 'Paper' },
+  { key: 'plastic', label: 'Plastic' },
+  { key: 'iron-steel', label: 'Iron & Steel' },
+  { key: 'non-ferrous', label: 'Non-ferrous' },
+  { key: 'wire', label: 'Wire' },
+  { key: 'other', label: 'Other' },
+];
 
 // The Area dropdown: a place from the list, or "my area isn't listed" with
 // the customer's own place name, saved as "Other: Sonipat".
@@ -111,5 +121,5 @@ function parseArea(area, otherArea, { required = true } = {}) {
 
 module.exports = {
   AREAS, OTHER_AREA, SERVICE_KM, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS,
-  PICKUP_STATUSES, QUOTE_UNITS, RULES_VERSION, MAX_OTHER_AREA, formatQuoteRate, readyDateRange, parseArea,
+  PICKUP_STATUSES, QUOTE_UNITS, RULES_VERSION, MAX_OTHER_AREA, RATE_CATEGORIES, formatQuoteRate, readyDateRange, parseArea,
 };

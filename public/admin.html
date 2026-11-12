@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Dashboard - Scrap Express</title>
+<meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/icons/favicon-32.png" sizes="32x32">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#16a34a">
@@ -34,7 +35,7 @@
     <h1>Admin Dashboard</h1>
     <p class="login-sub">Sign in to manage pickup requests, scrap rates &amp; reviews.</p>
     <div id="loginAlert" class="form-alert" hidden></div>
-    <form id="loginForm">
+    <form id="loginForm" method="post">
       <div class="form-group">
         <label for="username">Username</label>
         <input type="text" id="username" name="username" required autocomplete="username">
@@ -75,7 +76,10 @@
     <button class="tab-btn" data-tab="customers">Customers</button>
     <button class="tab-btn" data-tab="rates"><span class="tab-long">Scrap</span> Rates</button>
     <button class="tab-btn" data-tab="testimonials">Reviews</button>
+    <button class="tab-btn" data-tab="photos">Photos</button>
+    <button class="tab-btn" data-tab="lots">Buy From Us <span class="tab-count" id="lotEnquiryCount" hidden></span></button>
     <button class="tab-btn" data-tab="subscribers">Subscribers</button>
+    <button class="tab-btn" data-tab="analytics">Analytics</button>
   </div>
 
   <main class="admin-content container">
@@ -107,6 +111,12 @@
           <option value="cancelled">Cancelled</option>
         </select>
       </div>
+      <div class="leads-card" id="leadsCard" hidden>
+        <h3>Started, not finished <span class="tab-count" id="leadsCount"></span></h3>
+        <p class="admin-card-hint">These businesses filled in step 1 (company, phone, scrap, quantity) but haven't sent the site details yet. Give them a call.</p>
+        <ul class="leads-list" id="leadsList"></ul>
+      </div>
+
       <div class="table-wrap">
         <table class="admin-table" id="requestsTable">
           <thead>
@@ -206,20 +216,26 @@
         <h2>Scrap Rates</h2>
       </div>
 
-      <form id="addRateForm" class="inline-form">
-        <input type="text" id="newRateName" placeholder="Category name" required>
-        <input type="text" id="newRateUnit" placeholder="Unit (kg)" value="kg">
-        <input type="number" id="newRatePrice" placeholder="Price (₹)" min="0" step="0.01" required>
+      <div class="rates-checked">
+        <p class="admin-card-hint" id="ratesUpdatedLabel">The Rates page shows when rates were last updated.</p>
+        <button type="button" class="btn btn-outline" id="ratesCheckedBtn">Rates checked today: no changes</button>
+      </div>
+
+      <form id="addRateForm" method="post" class="inline-form">
+        <input type="text" id="newRateName" placeholder="Category name" aria-label="Category name" maxlength="100" required>
+        <select id="newRateGroup" aria-label="Group (tab on the Rates page)" required></select>
+        <input type="text" id="newRateUnit" placeholder="Unit (kg)" aria-label="Unit" value="kg">
+        <input type="number" id="newRatePrice" placeholder="Price (₹)" aria-label="Price in rupees" min="0" step="0.01" required>
         <button type="submit" class="btn btn-accent">Add Category</button>
       </form>
 
       <div class="table-wrap">
         <table class="admin-table" id="ratesTable">
           <thead>
-            <tr><th>Category</th><th>Unit</th><th>Price (₹)</th><th></th></tr>
+            <tr><th>Category</th><th>Group</th><th>Unit</th><th>Price (₹)</th><th></th></tr>
           </thead>
           <tbody id="ratesBody">
-            <tr><td colspan="4" class="table-empty">Loading rates…</td></tr>
+            <tr><td colspan="5" class="table-empty">Loading rates…</td></tr>
           </tbody>
         </table>
       </div>
@@ -231,22 +247,139 @@
         <h2>Reviews</h2>
       </div>
 
-      <form id="addTestimonialForm" class="inline-form inline-form-wrap">
-        <input type="text" id="newTestName" placeholder="Customer name" required>
-        <input type="text" id="newTestArea" placeholder="Area">
-        <select id="newTestRating">
+      <p class="admin-card-hint">Only add real reviews from business clients. They show on the home page with the type of business and the area; with no reviews, that section is hidden.</p>
+      <form id="addTestimonialForm" method="post" class="inline-form inline-form-wrap">
+        <input type="text" id="newTestName" placeholder="Client or company name" aria-label="Client or company name" maxlength="150" required>
+        <select id="newTestType" aria-label="Type of business" required>
+          <option value="">Type of business</option>
+        </select>
+        <input type="text" id="newTestArea" placeholder="Area" aria-label="Area" maxlength="100" list="areaOptions">
+        <datalist id="areaOptions"></datalist>
+        <select id="newTestRating" aria-label="Rating">
           <option value="5">5 stars</option>
           <option value="4">4 stars</option>
           <option value="3">3 stars</option>
           <option value="2">2 stars</option>
           <option value="1">1 star</option>
         </select>
-        <input type="text" id="newTestMessage" placeholder="Review message" required style="flex: 1 1 260px;">
+        <input type="text" id="newTestMessage" placeholder="Review message" aria-label="Review message" maxlength="1000" required style="flex: 1 1 260px;">
         <button type="submit" class="btn btn-accent">Add Review</button>
       </form>
 
       <div class="testimonial-list" id="testimonialList">
         <p class="table-empty">Loading reviews…</p>
+      </div>
+
+      <form class="admin-card stats-card" id="statsForm" method="post" novalidate>
+        <h3>Home Page Numbers</h3>
+        <p class="admin-card-hint">The figures at the top of the home page and in "Our Impact". Keep them true: CO₂ avoided and trees saved are worked out from the kilograms recycled.</p>
+        <div class="stats-fields" id="statsFields"></div>
+        <div id="statsAlert" class="form-alert" hidden></div>
+        <div class="admin-card-actions">
+          <button type="submit" class="btn btn-accent">Save Numbers</button>
+          <span class="admin-card-hint" id="statsUpdated"></span>
+        </div>
+      </form>
+    </section>
+
+    <!-- Photos tab: real photos for the home page, and client logos -->
+    <section class="tab-panel" id="tab-photos">
+      <div class="panel-head">
+        <h2>Photos</h2>
+      </div>
+      <p class="admin-card-hint">Real photos of your yard, weighbridge, trucks and team build trust. They appear on the home page once you add the first one. Each photo is made smaller and turned into WebP on this device before it's uploaded.</p>
+      <div class="sub-grid">
+        <form class="admin-card" id="galleryForm" method="post" novalidate>
+          <h3>Add a site photo</h3>
+          <label for="galleryFile">Photo</label>
+          <input type="file" id="galleryFile" accept="image/*" required>
+          <label for="galleryCategory">What it shows</label>
+          <select id="galleryCategory" required></select>
+          <label for="galleryAlt">Describe the photo (for people who can't see it, and search engines)</label>
+          <input type="text" id="galleryAlt" maxlength="200" placeholder="e.g. Our truck being loaded at a factory in Okhla" required>
+          <label for="galleryCaption">Caption (optional)</label>
+          <input type="text" id="galleryCaption" maxlength="200" placeholder="e.g. 40-tonne weighbridge at our yard">
+          <div id="galleryAlert" class="form-alert" hidden></div>
+          <div class="admin-card-actions"><button type="submit" class="btn btn-accent">Upload Photo</button></div>
+        </form>
+        <form class="admin-card" id="logoForm" method="post" novalidate>
+          <h3>Add a client logo</h3>
+          <p class="admin-card-hint">Only with the client's written permission to show their logo.</p>
+          <label for="logoFile">Logo</label>
+          <input type="file" id="logoFile" accept="image/*" required>
+          <label for="logoCompany">Company name</label>
+          <input type="text" id="logoCompany" maxlength="150" required>
+          <label class="remember-me"><input type="checkbox" id="logoPermission"> <span>This company has given us permission to show its logo</span></label>
+          <div id="logoAlert" class="form-alert" hidden></div>
+          <div class="admin-card-actions"><button type="submit" class="btn btn-accent">Upload Logo</button></div>
+        </form>
+      </div>
+      <h3 class="admin-subhead">Site photos</h3>
+      <div class="image-list" id="galleryList"><p class="table-empty">Loading…</p></div>
+      <h3 class="admin-subhead">Client logos</h3>
+      <div class="image-list image-list-logos" id="logoList"><p class="table-empty">Loading…</p></div>
+    </section>
+
+    <!-- Buy From Us tab: lots for recyclers, and enquiries about them -->
+    <section class="tab-panel" id="tab-lots">
+      <div class="panel-head">
+        <h2>Buy From Us</h2>
+        <a href="/buy-from-us" target="_blank" rel="noopener" class="btn btn-outline">View page</a>
+      </div>
+      <h3 class="admin-subhead">Enquiries</h3>
+      <div class="table-wrap">
+        <table class="admin-table" id="lotEnquiriesTable">
+          <thead><tr><th>Date</th><th>Lot</th><th>Name</th><th>Phone</th><th>Message</th><th>Status</th><th></th></tr></thead>
+          <tbody id="lotEnquiriesBody"><tr><td colspan="7" class="table-empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <form class="admin-card lot-form" id="lotForm" method="post" novalidate>
+        <h3 id="lotFormTitle">Add a lot for sale</h3>
+        <input type="hidden" id="lotEditId">
+        <div class="lot-form-grid">
+          <label>Material <select id="lotMaterial" required></select></label>
+          <label>Title <input type="text" id="lotTitle" maxlength="150" placeholder="e.g. Kraft paper bales, 90% clean" required></label>
+          <label>Grade (optional) <input type="text" id="lotGrade" maxlength="150" placeholder="e.g. Brown kraft, dry, no plastic"></label>
+          <label>Quantity <input type="number" id="lotQuantity" min="0" step="any" required></label>
+          <label>Unit <select id="lotUnit"></select></label>
+          <label>Location (optional) <input type="text" id="lotLocation" maxlength="150" placeholder="e.g. Our yard, Mundka"></label>
+          <label>Status <select id="lotStatus"><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold (hidden from the page)</option></select></label>
+        </div>
+        <label for="lotDescription">Details (optional)</label>
+        <textarea id="lotDescription" rows="2" maxlength="2000" placeholder="Bale size, moisture, loading, etc."></textarea>
+        <div id="lotFormAlert" class="form-alert" hidden></div>
+        <div class="admin-card-actions">
+          <button type="submit" class="btn btn-accent" id="lotSaveBtn">Add Lot</button>
+          <button type="button" class="btn btn-outline" id="lotCancelEdit" hidden>Cancel</button>
+        </div>
+      </form>
+      <h3 class="admin-subhead">Lots</h3>
+      <div class="admin-lots" id="adminLots"><p class="table-empty">Loading…</p></div>
+    </section>
+
+    <!-- Analytics tab: visits and conversions (lib/analytics.js) -->
+    <section class="tab-panel" id="tab-analytics">
+      <div class="panel-head">
+        <h2>Analytics</h2>
+        <select id="analyticsRange" aria-label="Period">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+      </div>
+      <p class="admin-card-hint">Counted by the website itself: totals only, no cookies and nothing about who. Robots and your own admin pages are left out. For more detail, add Google Analytics by setting GA_MEASUREMENT_ID on Render.</p>
+      <div class="stat-tiles" id="analyticsTiles"></div>
+      <h3 class="admin-subhead">Visits and conversions per day</h3>
+      <div class="analytics-chart" id="analyticsChart" role="img" aria-label="Visits and conversions per day"></div>
+      <div class="sub-grid analytics-tables">
+        <div class="admin-card">
+          <h3>Most visited pages</h3>
+          <table class="mini-table" id="analyticsPages"></table>
+        </div>
+        <div class="admin-card">
+          <h3>Pages that bring requests and calls</h3>
+          <table class="mini-table" id="analyticsConverting"></table>
+        </div>
       </div>
     </section>
 
@@ -259,7 +392,7 @@
       <ul class="sub-channels" id="subChannels"></ul>
 
       <div class="sub-grid">
-        <form class="admin-card" id="subSettingsForm" novalidate>
+        <form class="admin-card" id="subSettingsForm" method="post" novalidate>
           <h3>Daily rates</h3>
           <label class="remember-me">
             <input type="checkbox" id="dailyEnabled">
@@ -276,7 +409,7 @@
           </div>
         </form>
 
-        <form class="admin-card" id="announceForm" novalidate>
+        <form class="admin-card" id="announceForm" method="post" novalidate>
           <h3>Send an announcement</h3>
           <p class="admin-card-hint">For anything new: a new service, area or offer. Goes to every subscriber.</p>
           <label for="announceTitle">Title</label>
@@ -306,6 +439,14 @@
 </div>
 
 <!-- Pickup request details + quote -->
+<dialog class="request-dialog docs-dialog" id="docsDialog" aria-labelledby="docsDialogTitle">
+  <div class="dialog-head">
+    <h2 id="docsDialogTitle">Papers</h2>
+    <button type="button" class="dialog-close" id="docsDialogClose" aria-label="Close">&times;</button>
+  </div>
+  <section class="docs-panel" id="docsDialogBody"></section>
+</dialog>
+
 <dialog class="request-dialog" id="requestDialog" aria-labelledby="dialogTitle">
   <div class="dialog-head">
     <h2 id="dialogTitle">Pickup Request</h2>
@@ -313,8 +454,9 @@
   </div>
   <dl class="detail-list" id="requestDetails"></dl>
   <section class="media-gallery" id="requestMedia" hidden></section>
+  <section class="docs-panel" id="requestDocs"></section>
 
-  <form class="quote-form" id="quoteForm" novalidate>
+  <form class="quote-form" id="quoteForm" method="post" novalidate>
     <h3>Quote</h3>
     <p class="quote-hint" id="quoteHint"></p>
     <div class="quote-lines" id="quoteLines"></div>
@@ -342,5 +484,6 @@
 <script src="js/push.js"></script>
 <script src="js/live.js"></script>
 <script src="js/admin.js"></script>
+<script src="js/admin-content.js"></script>
 </body>
 </html>

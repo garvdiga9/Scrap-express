@@ -1,0 +1,128 @@
+<%- include('partials/head') %>
+<%- include('partials/sprite') %>
+<%- include('partials/header') %>
+
+<%# One area's own page (/areas/<slug>): local details, what we buy there,
+    today's rates, questions and the quote form. Locals: area, faqs, rates. %>
+<main id="top" tabindex="-1">
+
+<%- include('partials/page-hero', {
+  eyebrow: `${area.region} · Bulk Scrap Pickup`,
+  heading: `Scrap Buyer in ${area.name}`,
+  text: `Sell bulk scrap from your factory, office or site in ${area.name}. Weighbridge weight, GST invoice, and payment by cash or bank transfer.`,
+  links: [{ href: '#quote', label: 'Request a Bulk Quote' }, { href: '#area-rates', label: "Today's rates" }],
+}) %>
+
+  <section class="section after-page-hero area-page">
+    <div class="container area-layout">
+      <div class="area-main">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="/">Home</a> <span aria-hidden="true">›</span> <a href="/areas">Areas</a> <span aria-hidden="true">›</span> <span aria-current="page"><%= area.name %></span>
+        </nav>
+        <h2>Bulk scrap pickup in <%= area.name %></h2>
+        <p><%= area.intro %></p>
+        <p>We collect from businesses here on a one-time or regular basis: you share what you have, we send a quote with a private link to accept it, then our team collects, weighs the load on a weighbridge and pays you by cash or bank transfer with a GST invoice.</p>
+
+        <h3>Businesses we work with in <%= area.name %></h3>
+        <ul class="area-industries">
+          <% area.industries.forEach((industry) => { %><li><svg class="icon" aria-hidden="true"><use href="#icon-check"/></svg> <%= industry %></li><% }) %>
+        </ul>
+
+        <h3>Scrap we buy here</h3>
+        <ul class="area-buy-list">
+          <% scrapTypes.forEach((type) => { %><li><%= type %></li><% }) %>
+        </ul>
+        <p class="area-min">Minimum <%= minPickupKg %> kg per pickup. <a href="/what-we-buy">See everything we buy</a>.</p>
+      </div>
+
+      <aside class="area-side" aria-label="Nearby areas">
+        <div class="area-side-card">
+          <h3>Nearby areas</h3>
+          <ul>
+            <% area.nearbyAreas.forEach((near) => { %><li><a href="/areas/<%= near.slug %>"><%= near.name %></a></li><% }) %>
+            <li><a href="/areas">All areas we cover</a></li>
+          </ul>
+        </div>
+        <div class="area-side-card">
+          <h3>Talk to us</h3>
+          <p><a href="tel:+919818826333" class="area-phone">+91 98188 26333</a></p>
+          <p class="area-hours">Mon 9 AM – 2 PM, Tue – Sun 9 AM – 8 PM</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <% if (rates.length) { %>
+  <section class="section section-alt" id="area-rates">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Indicative Rates</span>
+        <h2>Scrap rates today for <%= area.name %></h2>
+        <p>Reference prices per kg. Business lots are priced on volume, grade and location.</p>
+      </div>
+      <div class="rates-grid">
+        <% rates.slice(0, 8).forEach((rate) => { %><%- include('partials/rate-card', { rate }) %><% }) %>
+      </div>
+      <p class="section-more"><a href="/rates" class="btn btn-outline">All scrap rates</a></p>
+    </div>
+  </section>
+  <% } %>
+
+  <section class="section" id="quote">
+    <div class="container book-inner">
+      <div class="section-head book-head">
+        <span class="eyebrow">Free Quote</span>
+        <h2>Request a bulk quote in <%= area.name %></h2>
+        <p>Tell us what scrap you have. We'll call to confirm the details and send your quote.</p>
+      </div>
+      <%- include('partials/pickup-form', { prefill: { area: area.name }, loginNext: `/areas/${area.slug}` }) %>
+    </div>
+  </section>
+
+  <section class="section section-alt" id="faq">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Questions</span>
+        <h2>Selling scrap in <%= area.name %></h2>
+      </div>
+      <div class="faq-list">
+        <% faqs.forEach(([question, answer]) => { %>
+          <details class="faq-item">
+            <summary><%= question %></summary>
+            <p><%= answer %></p>
+          </details>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+
+<% const jsonLd = (data) => JSON.stringify(data).replace(/</g, '\\u003c'); %>
+<script type="application/ld+json"><%- jsonLd({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map(([question, answer]) => ({ '@type': 'Question', name: question, acceptedAnswer: { '@type': 'Answer', text: answer } })),
+}) %></script>
+<script type="application/ld+json"><%- jsonLd({
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  serviceType: 'Bulk scrap buying and pickup',
+  name: `Scrap buyer in ${area.name}`,
+  provider: { '@type': 'RecyclingCenter', name: 'Scrap Express', url: `${siteUrl}/`, telephone: '+91-98188-26333' },
+  areaServed: { '@type': 'Place', name: `${area.name}, ${area.region}` },
+  url: canonicalUrl,
+}) %></script>
+<script type="application/ld+json"><%- jsonLd({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: `${siteUrl}/` },
+    { '@type': 'ListItem', position: 2, name: 'Areas', item: `${siteUrl}/areas` },
+    { '@type': 'ListItem', position: 3, name: area.name, item: canonicalUrl },
+  ],
+}) %></script>
+
+<%- include('partials/cta') %>
+
+</main>
+
+<%- include('partials/footer') %>

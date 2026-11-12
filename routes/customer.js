@@ -9,6 +9,9 @@ const {
 } = require('../lib/validation');
 const { mountPushRoutes } = require('./push');
 const live = require('../lib/live');
+const documents = require('../lib/documents');
+const schedules = require('../lib/schedules');
+const pool = require('../db/pool');
 
 const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30;
 
@@ -190,6 +193,66 @@ router.post('/requests/:id/ready', requireCustomer, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not save that. Please try again.' });
+  }
+});
+
+// GET /api/customer/documents/:id — a weighbridge slip or invoice on one of
+// this customer's own requests.
+router.get('/documents/:id', requireCustomer, async (req, res) => {
+  try {
+    const doc = await documents.find(Number(req.params.id));
+    if (!doc) return res.status(404).json({ error: 'Not found' });
+    const table = doc.request_type === 'pickup' ? 'pickup_requests' : 'demolition_requests';
+    const { rows } = await pool.query(`SELECT 1 FROM ${table} WHERE id = $1 AND customer_id = $2`, [doc.request_id, req.session.customerId]);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    documents.send(res, doc);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not download the file.' });
+  }
+});
+
+// ---- repeat pickups ----
+
+router.post('/schedules', requireCustomer, async (req, res) => {
+  try {
+    const { schedule, error } = await schedules.createSchedule(req.session.customerId, {
+      sourceRequestId: Number(req.body.sourceRequestId),
+      frequency: req.body.frequency,
+      startDate: req.body.startDate,
+      acceptTerms: Boolean(req.body.acceptTerms),
+    });
+    if (error) return res.status(400).json({ error });
+    res.status(201).json(schedule);
+    live.publishToCustomer(req.session.customerId);
+    // A pickup due within two days is created straight away.
+    schedules.runDue().catch((err) => console.error(err));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not set up the repeat pickup.' });
+  }
+});
+
+router.patch('/schedules/:id', requireCustomer, async (req, res) => {
+  try {
+    const schedule = await schedules.setActive(req.session.customerId, Number(req.params.id), Boolean(req.body.active));
+    if (!schedule) return res.status(404).json({ error: 'Not found' });
+    res.json(schedule);
+    live.publishToCustomer(req.session.customerId);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not change the repeat pickup.' });
+  }
+});
+
+router.delete('/schedules/:id', requireCustomer, async (req, res) => {
+  try {
+    if (!(await schedules.remove(req.session.customerId, Number(req.params.id)))) return res.status(404).json({ error: 'Not found' });
+    res.json({ ok: true });
+    live.publishToCustomer(req.session.customerId);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not delete the repeat pickup.' });
   }
 });
 

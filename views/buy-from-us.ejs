@@ -1,0 +1,112 @@
+<%- include('partials/head') %>
+<%- include('partials/sprite') %>
+<%- include('partials/header') %>
+
+<%# "Buy from us": sorted, baled lots for recyclers and mills, added in the
+    admin (Admin → Buy From Us). Each lot has an enquiry button. %>
+<main id="top" tabindex="-1">
+
+<%- include('partials/page-hero', {
+  eyebrow: 'For Recyclers & Mills',
+  heading: 'Buy Sorted, Baled Scrap From Us',
+  text: 'We collect from hundreds of businesses across Delhi NCR and sort it by material and grade. Lots below are ready to load; send an enquiry and we\'ll call with the price.',
+}) %>
+
+  <% const list = locals.lots || []; %>
+  <section class="section after-page-hero" id="lots">
+    <div class="container">
+      <div id="lotsLive" data-live-section>
+        <% if (list.length) { %>
+          <div class="lots-grid">
+            <% list.forEach((lot) => { %>
+              <article class="lot-card" id="lot-<%= lot.id %>">
+                <div class="lot-media">
+                  <% if (lot.images.length) { %>
+                    <img src="<%= lot.images[0].url %>" alt="<%= lot.images[0].alt_text %>" width="<%= lot.images[0].width %>" height="<%= lot.images[0].height %>" loading="lazy" decoding="async">
+                    <% if (lot.images.length > 1) { %><span class="lot-photo-count"><%= lot.images.length %> photos</span><% } %>
+                  <% } else { %>
+                    <div class="lot-media-empty" aria-hidden="true"><svg class="icon"><use href="#icon-box"/></svg></div>
+                  <% } %>
+                  <span class="lot-status lot-status-<%= lot.status %>"><%= lot.status === 'reserved' ? 'Reserved' : 'Available' %></span>
+                </div>
+                <div class="lot-body">
+                  <span class="lot-material"><%= lot.material %></span>
+                  <h2><%= lot.title %></h2>
+                  <dl class="lot-facts">
+                    <% if (lot.grade) { %><div><dt>Grade</dt><dd><%= lot.grade %></dd></div><% } %>
+                    <div><dt>Quantity</dt><dd><%= formatLotQuantity(lot) %></dd></div>
+                    <% if (lot.location) { %><div><dt>Location</dt><dd><%= lot.location %></dd></div><% } %>
+                  </dl>
+                  <% if (lot.description) { %><p class="lot-desc"><%= lot.description %></p><% } %>
+                  <% if (lot.images.length > 1) { %>
+                    <ul class="lot-thumbs">
+                      <% lot.images.slice(1, 5).forEach((img) => { %><li><a href="<%= img.url %>" target="_blank" rel="noopener"><img src="<%= img.url %>" alt="<%= img.alt_text %>" width="<%= img.width %>" height="<%= img.height %>" loading="lazy" decoding="async"></a></li><% }) %>
+                    </ul>
+                  <% } %>
+                  <button type="button" class="btn btn-accent btn-block" data-lot-enquiry="<%= lot.id %>" data-lot-title="<%= lot.title %>">Enquire About This Lot</button>
+                </div>
+              </article>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <div class="lots-empty">
+            <svg class="icon" aria-hidden="true"><use href="#icon-box"/></svg>
+            <h2>No lots listed right now</h2>
+            <p>New stock comes in every week. Tell us what you buy and we'll call you when a matching lot is ready.</p>
+            <button type="button" class="btn btn-accent" data-callback>Request a Call Back</button>
+          </div>
+        <% } %>
+      </div>
+
+      <div class="rates-quote-note">
+        <div>
+          <h3>Looking for a regular supply?</h3>
+          <p>We can set aside a material and grade for you every month. Call us on <a href="tel:+919818826333">+91 98188 26333</a>.</p>
+        </div>
+        <a href="tel:+919818826333" class="btn btn-accent btn-lg">Call Us</a>
+      </div>
+    </div>
+  </section>
+
+  <%# One enquiry form for every lot (public/js/lots.js fills in which lot). %>
+  <dialog class="callback-dialog" id="lotDialog" aria-labelledby="lotDialogTitle">
+    <button type="button" class="callback-close" id="lotDialogClose" aria-label="Close">&times;</button>
+    <h2 id="lotDialogTitle">Enquire About a Lot</h2>
+    <p class="callback-intro" id="lotDialogLot"></p>
+    <div id="lotAlert" class="form-alert" hidden></div>
+    <form id="lotForm" method="post" action="/api/lots/enquiry" novalidate>
+      <input type="hidden" name="lotId" id="lotId">
+      <div class="form-group">
+        <label for="lotName">Your Name *</label>
+        <input type="text" id="lotName" name="name" required maxlength="150" autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label for="lotCompany">Company (optional)</label>
+        <input type="text" id="lotCompany" name="company" maxlength="200" autocomplete="organization">
+      </div>
+      <div class="form-group">
+        <label for="lotPhone">Phone Number *</label>
+        <input type="tel" id="lotPhone" name="phone" required maxlength="20" autocomplete="tel" placeholder="98765 43210">
+      </div>
+      <div class="form-group">
+        <label for="lotEmail">Email (optional)</label>
+        <input type="email" id="lotEmail" name="email" maxlength="200" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="lotMessage">Message (optional)</label>
+        <textarea id="lotMessage" name="message" rows="3" maxlength="1000" placeholder="Quantity you need, delivery location, etc."></textarea>
+      </div>
+      <div class="callback-website" aria-hidden="true">
+        <label for="lotWebsite">Website</label>
+        <input type="text" id="lotWebsite" name="website" tabindex="-1" autocomplete="off">
+      </div>
+      <button type="submit" class="btn btn-accent btn-lg btn-block" id="lotSubmit">Send Enquiry</button>
+    </form>
+  </dialog>
+
+<%- include('partials/cta') %>
+
+</main>
+
+<script src="/js/lots.js" defer></script>
+<%- include('partials/footer') %>

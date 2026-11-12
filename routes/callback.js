@@ -4,6 +4,8 @@ const pool = require('../db/pool');
 const { PHONE_ERROR, cleanPhone } = require('../lib/validation');
 const push = require('../lib/push');
 const live = require('../lib/live');
+const analytics = require('../lib/analytics');
+const { reply } = require('../lib/reply');
 
 const MAX_NAME = 150;
 const MAX_QUERY = 1000;
@@ -24,20 +26,21 @@ function tooMany(ip) {
 const SUCCESS = "Thanks! We'll call you back soon, during our working hours.";
 
 router.post('/', async (req, res) => {
+  const fail = (status, error) => reply(req, res, status, { error });
   // A hidden field people never see: only bots fill it in, and they're told it worked.
-  if (req.body.website) return res.status(201).json({ message: SUCCESS });
+  if (req.body.website) return reply(req, res, 201, { message: SUCCESS });
 
   const name = String(req.body.name ?? '').trim();
   const query = String(req.body.query ?? '').trim();
   if (!name || !req.body.phone || !query) {
-    return res.status(400).json({ error: 'Please fill in your name, phone number and query.' });
+    return fail(400, 'Please fill in your name, phone number and query.');
   }
-  if (name.length > MAX_NAME) return res.status(400).json({ error: 'Please shorten your name.' });
-  if (query.length > MAX_QUERY) return res.status(400).json({ error: `Please keep your query under ${MAX_QUERY} characters.` });
+  if (name.length > MAX_NAME) return fail(400, 'Please shorten your name.');
+  if (query.length > MAX_QUERY) return fail(400, `Please keep your query under ${MAX_QUERY} characters.`);
   const phone = cleanPhone(req.body.phone);
-  if (!phone) return res.status(400).json({ error: PHONE_ERROR });
+  if (!phone) return fail(400, PHONE_ERROR);
   if (tooMany(req.ip)) {
-    return res.status(429).json({ error: 'Too many requests from your connection. Please call us on +91 98188 26333.' });
+    return fail(429, 'Too many requests from your connection. Please call us on +91 98188 26333.');
   }
 
   try {
@@ -45,8 +48,9 @@ router.post('/', async (req, res) => {
       'INSERT INTO callback_requests (name, phone, query, customer_id) VALUES ($1, $2, $3, $4) RETURNING id',
       [name, phone, query, (req.session && req.session.customerId) || null]
     );
-    res.status(201).json({ message: SUCCESS });
+    reply(req, res, 201, { message: SUCCESS });
     live.publish('callbacks');
+    analytics.record('callback_request', analytics.pageFrom(req));
     push.quietly(push.notifyAdmins({
       title: `Call back request 📞 ${name}`,
       body: `${phone}: ${query.slice(0, 100)}`,
@@ -55,7 +59,7 @@ router.post('/', async (req, res) => {
     }));
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Something went wrong. Please call us on +91 98188 26333.' });
+    fail(500, 'Something went wrong. Please call us on +91 98188 26333.');
   }
 });
 

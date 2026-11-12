@@ -4,6 +4,8 @@ const router = require('express').Router();
 const updates = require('../lib/updates');
 const { mountPushRoutes } = require('./push');
 const live = require('../lib/live');
+const analytics = require('../lib/analytics');
+const { reply } = require('../lib/reply');
 
 // Anyone can sign up, so cap sign-ups per connection to stop a script from
 // filling the list (or making us email strangers).
@@ -31,18 +33,19 @@ const MESSAGES = {
 router.post('/', async (req, res) => {
   const contact = updates.parseContact(req.body.contact);
   if (!contact) {
-    return res.status(400).json({ error: 'Please enter a valid email address or a 10-digit mobile number.' });
+    return reply(req, res, 400, { error: 'Please enter a valid email address or a 10-digit mobile number.' });
   }
   if (tooMany(req.ip)) {
-    return res.status(429).json({ error: 'Too many sign-ups from your connection. Please try again later.' });
+    return reply(req, res, 429, { error: 'Too many sign-ups from your connection. Please try again later.' });
   }
   try {
     const { kind, status } = await updates.subscribe(contact);
-    res.json({ message: MESSAGES[`${kind}:${status}`] });
+    reply(req, res, 200, { message: MESSAGES[`${kind}:${status}`] });
     live.publish('subscribers');
+    if (status !== 'already') analytics.record('subscribe', analytics.pageFrom(req));
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Could not subscribe you right now. Please try again.' });
+    reply(req, res, 500, { error: 'Could not subscribe you right now. Please try again.' });
   }
 });
 

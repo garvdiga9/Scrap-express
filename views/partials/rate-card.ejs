@@ -1,0 +1,17 @@
+<%# One scrap rate, drawn on the server (lib/rates.js gives the fields).
+    Locals: rate, showTrend (the 30-day line and change). %>
+<article class="rate-card" data-category="<%= rate.category %>" data-search="<%= `${rate.name} ${rate.categoryLabel}`.toLowerCase() %>">
+  <% if (rate.image) { %>
+    <img class="rate-media rate-photo" src="<%= rate.image %>" alt="<%= rate.name %> scrap" loading="lazy" decoding="async" width="320" height="200">
+  <% } else { %>
+    <div class="rate-media rate-media-icon" style="background:<%= rate.colors.bg %>;color:<%= rate.colors.fg %>" aria-hidden="true"><svg class="icon"><use href="#<%= rate.iconId %>"/></svg></div>
+  <% } %>
+  <h3><% if (rate.url) { %><a href="<%= rate.url %>" class="rate-link"><%= rate.name %></a><% } else { %><%= rate.name %><% } %></h3>
+  <div class="rate-price">₹<span class="price-val"><%= rate.priceText %></span> <span>/ <%= rate.unit %></span></div>
+  <% if (locals.showTrend) { %>
+    <div class="rate-trend trend-<%= rate.trend.direction %>">
+      <svg class="sparkline" viewBox="0 0 120 32" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="<%= rate.trend.path %>"/></svg>
+      <span><%= rate.trend.label %></span>
+    </div>
+  <% } %>
+</article>

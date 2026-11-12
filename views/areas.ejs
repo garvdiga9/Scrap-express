@@ -2,7 +2,7 @@
 <%- include('partials/sprite') %>
 <%- include('partials/header') %>
 
-<main id="top">
+<main id="top" tabindex="-1">
 
 <%- include('partials/page-hero', {
   eyebrow: 'Coverage',
@@ -14,8 +14,14 @@
   <section class="section after-page-hero" id="areas">
     <div class="container">
       <div class="areas-grid">
-        <% areas.forEach((area) => { %><span class="area-badge"><%= area %></span>
-        <% }) %>
+        <% const pages = locals.areaPages || []; %>
+        <% if (pages.length) { %>
+          <% pages.forEach((area) => { %><a class="area-badge" href="/areas/<%= area.slug %>"><%= area.name %></a>
+          <% }) %>
+        <% } else { %>
+          <% areas.forEach((area) => { %><span class="area-badge"><%= area %></span>
+          <% }) %>
+        <% } %>
       </div>
     </div>
   </section>

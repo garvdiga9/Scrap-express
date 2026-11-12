@@ -6,7 +6,7 @@
   <h2 id="callbackTitle">Request a Call Back</h2>
   <p class="callback-intro">Have a question? Leave your details and we'll call you.</p>
   <div id="callbackAlert" class="form-alert" hidden></div>
-  <form id="callbackForm" novalidate>
+  <form id="callbackForm" method="post" action="/api/callback" novalidate>
     <div class="form-group">
       <label for="callbackName">Your Name *</label>
       <input type="text" id="callbackName" name="name" required maxlength="150" autocomplete="name" placeholder="Full name" value="<%= caller.name || '' %>">

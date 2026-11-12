@@ -24,7 +24,7 @@
   <% } else if (r.quote_response === 'accepted') { %>
     <p class="quote-response accepted">You accepted this quote on <%= fmtQuoteDate(r.quote_responded_at) %>.</p>
     <% if (r.status === 'accepted') { %>
-      <form class="ready-form">
+      <form class="ready-form" method="post">
         <label for="readyDate<%= r.id %>">When will the scrap be ready for us to collect? Please tell us only when it's really there, so our truck doesn't make a wasted trip.</label>
         <div class="ready-form-row">
           <input type="date" id="readyDate<%= r.id %>" name="readyDate" required min="<%= readyDates.min %>" max="<%= readyDates.max %>" value="<%= readyDates.min %>">

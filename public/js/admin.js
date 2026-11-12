@@ -33,6 +33,7 @@ function enterDashboard(username) {
   dashboard.hidden = false;
   welcomeUser.textContent = `Signed in as ${username}`;
   Promise.all([loadRequests(), loadDemolitionRequests(), loadCallbacks()]).then(openFromLink);
+  loadLeads();
   loadCustomers();
   loadRates();
   loadTestimonials();
@@ -53,6 +54,12 @@ function showTab(name) {
 
 // Notifications link to /admin.html#pickup-12, #demolition-4 or #callback-7: open that one.
 function openFromLink() {
+  // Enquiries about lots for sale (Buy From Us tab, public/js/admin-content.js).
+  if (/^#lots-\d+$/.test(window.location.hash)) {
+    showTab('lots');
+    history.replaceState(null, '', window.location.pathname);
+    return;
+  }
   const match = /^#(pickup|demolition|callback)-(\d+)$/.exec(window.location.hash);
   if (!match) return;
   const id = Number(match[2]);
@@ -605,6 +612,7 @@ function openRequestDialog(r) {
   document.getElementById('dialogTitle').textContent = `Pickup Request #${r.id}`;
   renderRequestSummary(r);
   renderMediaGallery(document.getElementById('requestMedia'), r.media || []);
+  window.SEDocs.mount(document.getElementById('requestDocs'), 'pickup', r.id);
 
   quoteLines.innerHTML = '';
   const items = r.quote_items && r.quote_items.length
@@ -776,6 +784,12 @@ function renderDemolitionRequests() {
       allDemolitionRequests = allDemolitionRequests.filter((x) => x.id !== r.id);
       renderDemolitionRequests();
     });
+    const docsBtn = document.createElement('button');
+    docsBtn.className = 'view-btn';
+    docsBtn.textContent = 'Papers';
+    docsBtn.title = 'Weighbridge slip, GST invoice';
+    docsBtn.addEventListener('click', () => window.SEDocs.openDialog('demolition', r.id, `Demolition Request #${r.id} · ${r.name}`));
+    actionTd.append(docsBtn, ' ');
     actionTd.appendChild(delBtn);
     tr.appendChild(actionTd);
 
@@ -997,22 +1011,44 @@ document.querySelectorAll('.customer-switch-btn').forEach((btn) => {
 /* ---------- Scrap rates ---------- */
 const ratesBody = document.getElementById('ratesBody');
 const addRateForm = document.getElementById('addRateForm');
+const ratesUpdatedLabel = document.getElementById('ratesUpdatedLabel');
+let rateGroups = [];
+
+// The groups (tabs on the public Rates page), loaded once.
+async function loadRateGroups() {
+  if (rateGroups.length) return;
+  const res = await fetch('/api/admin/options');
+  if (!res.ok) return;
+  rateGroups = (await res.json()).rateCategories;
+  const select = document.getElementById('newRateGroup');
+  select.innerHTML = '';
+  select.append(new Option('Group', ''));
+  rateGroups.forEach(({ key, label }) => select.append(new Option(label, key)));
+}
+
+function showRatesUpdated(iso) {
+  ratesUpdatedLabel.textContent = iso
+    ? `Rates page shows "Last updated: ${formatDateTime(iso)}". Saving any price updates it, or press the button if nothing changed today.`
+    : 'No rates saved yet.';
+}
 
 async function loadRates(background = false) {
-  if (!background) ratesBody.innerHTML = '<tr><td colspan="4" class="table-empty">Loading rates…</td></tr>';
+  if (!background) ratesBody.innerHTML = '<tr><td colspan="5" class="table-empty">Loading rates…</td></tr>';
   try {
+    await loadRateGroups().catch(() => {});
     const res = await fetch('/api/admin/rates');
     if (background && sessionEnded(res)) return;
     if (!res.ok) throw new Error();
+    showRatesUpdated(res.headers.get('X-Rates-Updated'));
     const rates = await res.json();
     if (!rates.length) {
-      ratesBody.innerHTML = '<tr><td colspan="4" class="table-empty">No categories yet.</td></tr>';
+      ratesBody.innerHTML = '<tr><td colspan="5" class="table-empty">No categories yet.</td></tr>';
       return;
     }
     renderRates(rates);
   } catch (err) {
     if (background) return;
-    ratesBody.innerHTML = '<tr><td colspan="4" class="table-empty">Failed to load rates.</td></tr>';
+    ratesBody.innerHTML = '<tr><td colspan="5" class="table-empty">Failed to load rates.</td></tr>';
   }
 }
 
@@ -1025,8 +1061,10 @@ function renderRates(rates) {
   rates.forEach((rate, i) => {
     const tr = rows.get(String(rate.id)) || buildRateRow(rate);
     rows.delete(String(rate.id));
-    tr.children[0].textContent = rate.name;
-    tr.children[1].textContent = rate.unit;
+    tr.querySelector('.rate-name').textContent = rate.name;
+    tr.querySelector('.rate-unit').textContent = rate.unit;
+    const group = tr.querySelector('select');
+    if (document.activeElement !== group) group.value = rate.category || 'other';
     const input = tr.querySelector('input');
     if (input.value === input.dataset.saved) input.value = rate.price;
     input.dataset.saved = rate.price;
@@ -1035,16 +1073,42 @@ function renderRates(rates) {
   rows.forEach((tr) => tr.remove());
 }
 
+async function saveRate(id, changes) {
+  const res = await fetch(`/api/admin/rates/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(changes),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Failed to save.');
+  return data;
+}
+
 function buildRateRow(rate) {
   const tr = document.createElement('tr');
   tr.dataset.id = rate.id;
 
   const nameTd = document.createElement('td');
-  nameTd.textContent = rate.name;
+  nameTd.className = 'rate-name';
   tr.appendChild(nameTd);
 
+  const groupTd = document.createElement('td');
+  const group = document.createElement('select');
+  group.className = 'rate-group-select';
+  group.setAttribute('aria-label', `Group for ${rate.name}`);
+  rateGroups.forEach(({ key, label }) => group.append(new Option(label, key)));
+  group.addEventListener('change', async () => {
+    try {
+      await saveRate(rate.id, { category: group.value });
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+  groupTd.appendChild(group);
+  tr.appendChild(groupTd);
+
   const unitTd = document.createElement('td');
-  unitTd.textContent = rate.unit;
+  unitTd.className = 'rate-unit';
   tr.appendChild(unitTd);
 
   const priceTd = document.createElement('td');
@@ -1056,22 +1120,18 @@ function buildRateRow(rate) {
   input.min = '0';
   input.value = rate.price;
   input.dataset.saved = input.value;
+  input.setAttribute('aria-label', `Price for ${rate.name}`);
   const saveBtn = document.createElement('button');
   saveBtn.className = 'save-price-btn';
   saveBtn.textContent = 'Save';
   saveBtn.addEventListener('click', async () => {
     try {
-      const res = await fetch(`/api/admin/rates/${rate.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ price: input.value }),
-      });
-      if (!res.ok) throw new Error();
+      await saveRate(rate.id, { price: input.value });
       input.dataset.saved = input.value;
       saveBtn.textContent = 'Saved';
       setTimeout(() => (saveBtn.textContent = 'Save'), 1200);
     } catch (err) {
-      alert('Failed to update price.');
+      alert(err.message || 'Failed to update price.');
     }
   });
   wrap.append('₹', input, saveBtn);
@@ -1082,9 +1142,10 @@ function buildRateRow(rate) {
   const delBtn = document.createElement('button');
   delBtn.className = 'icon-btn';
   delBtn.title = 'Delete category';
+  delBtn.setAttribute('aria-label', `Delete ${rate.name}`);
   delBtn.innerHTML = '<svg class="icon"><use href="#icon-trash"/></svg>';
   delBtn.addEventListener('click', async () => {
-    if (!confirm(`Delete "${rate.name}"?`)) return;
+    if (!confirm(`Delete "${rate.name}"? Its page and price history go too.`)) return;
     await fetch(`/api/admin/rates/${rate.id}`, { method: 'DELETE' });
     tr.remove();
   });
@@ -1097,15 +1158,21 @@ function buildRateRow(rate) {
 addRateForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = document.getElementById('newRateName').value.trim();
+  const category = document.getElementById('newRateGroup').value;
   const unit = document.getElementById('newRateUnit').value.trim() || 'kg';
   const price = document.getElementById('newRatePrice').value;
-  if (!name || price === '') return;
+  if (!name || price === '' || !category) {
+    alert('Please fill in the name, group and price.');
+    return;
+  }
 
   try {
     const res = await fetch('/api/admin/rates', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, unit, price }),
+      body: JSON.stringify({
+        name, category, unit, price,
+      }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to add category');
@@ -1114,6 +1181,23 @@ addRateForm.addEventListener('submit', async (e) => {
     document.getElementById('newRateUnit').value = 'kg';
   } catch (err) {
     alert(err.message);
+  }
+});
+
+document.getElementById('ratesCheckedBtn').addEventListener('click', async (e) => {
+  const button = e.currentTarget;
+  button.disabled = true;
+  try {
+    const res = await fetch('/api/admin/rates/checked', { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Could not save.');
+    showRatesUpdated(data.lastUpdated);
+    button.textContent = 'Saved ✓';
+    setTimeout(() => { button.textContent = 'Rates checked today: no changes'; }, 1500);
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    button.disabled = false;
   }
 });
 
@@ -1130,7 +1214,27 @@ function starRow(rating) {
   return wrap;
 }
 
+// Fill the review form's "type of business" list and area suggestions once.
+let reviewOptionsLoaded = false;
+async function loadReviewOptions() {
+  if (reviewOptionsLoaded) return;
+  try {
+    const res = await fetch('/api/admin/options');
+    if (!res.ok) return;
+    const { businessTypes, areas } = await res.json();
+    const typeSelect = document.getElementById('newTestType');
+    businessTypes.forEach((type) => typeSelect.append(new Option(type, type)));
+    const areaList = document.getElementById('areaOptions');
+    areas.forEach((area) => areaList.append(new Option(area)));
+    reviewOptionsLoaded = true;
+  } catch (err) {
+    // Tried again the next time reviews load.
+  }
+}
+
 async function loadTestimonials(background = false) {
+  loadReviewOptions();
+  loadStats();
   if (!background) testimonialList.innerHTML = '<p class="table-empty">Loading reviews…</p>';
   try {
     const res = await fetch('/api/testimonials');
@@ -1166,7 +1270,7 @@ function buildTestimonialCard(t) {
 
   const area = document.createElement('p');
   area.className = 'review-area';
-  area.textContent = t.area || '';
+  area.textContent = [t.company_type || 'Type of business not set', t.area].filter(Boolean).join(' · ');
   card.appendChild(area);
 
   const delBtn = document.createElement('button');
@@ -1186,16 +1290,22 @@ function buildTestimonialCard(t) {
 addTestimonialForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const customerName = document.getElementById('newTestName').value.trim();
+  const companyType = document.getElementById('newTestType').value;
   const area = document.getElementById('newTestArea').value.trim();
   const rating = document.getElementById('newTestRating').value;
   const message = document.getElementById('newTestMessage').value.trim();
-  if (!customerName || !message) return;
+  if (!customerName || !companyType || !message) {
+    alert('Please fill in the name, type of business and review.');
+    return;
+  }
 
   try {
     const res = await fetch('/api/admin/testimonials', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ customerName, area, rating, message }),
+      body: JSON.stringify({
+        customerName, companyType, area, rating, message,
+      }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to add review');
@@ -1203,6 +1313,68 @@ addTestimonialForm.addEventListener('submit', async (e) => {
     addTestimonialForm.reset();
   } catch (err) {
     alert(err.message);
+  }
+});
+
+/* ---------- Home page numbers ---------- */
+const statsForm = document.getElementById('statsForm');
+const statsAlert = document.getElementById('statsAlert');
+
+function showStatsUpdated(stats) {
+  document.getElementById('statsUpdated').textContent = stats.updatedAt
+    ? `Last saved ${formatDate(stats.updatedAt)}` : 'Not saved yet: the site shows the starting figures.';
+}
+
+async function loadStats() {
+  try {
+    const res = await fetch('/api/admin/stats');
+    if (!res.ok) return;
+    const { stats, fields } = await res.json();
+    const box = document.getElementById('statsFields');
+    // Don't overwrite something being typed.
+    if (box.contains(document.activeElement)) return;
+    box.innerHTML = '';
+    Object.entries(fields).forEach(([key, { label }]) => {
+      const group = document.createElement('label');
+      group.className = 'stats-field';
+      const text = document.createElement('span');
+      text.textContent = label;
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.min = '0';
+      input.step = '1';
+      input.name = key;
+      input.required = true;
+      input.value = stats[key];
+      group.append(text, input);
+      box.appendChild(group);
+    });
+    showStatsUpdated(stats);
+  } catch (err) {
+    // Shown again on the next refresh.
+  }
+}
+
+statsForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  statsAlert.hidden = true;
+  const body = Object.fromEntries([...new FormData(statsForm).entries()].map(([k, v]) => [k, Number(v)]));
+  try {
+    const res = await fetch('/api/admin/stats', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Could not save the numbers.');
+    showStatsUpdated(data.stats);
+    statsAlert.textContent = `Saved. The home page now shows ${data.stats.co2Tonnes.toLocaleString('en-IN')} tonnes CO₂ avoided and ${data.stats.treesSaved.toLocaleString('en-IN')} trees saved.`;
+    statsAlert.className = 'form-alert success';
+    statsAlert.hidden = false;
+  } catch (err) {
+    statsAlert.textContent = err.message;
+    statsAlert.className = 'form-alert error';
+    statsAlert.hidden = false;
   }
 });
 
@@ -1387,9 +1559,59 @@ function setTabCount(el, list) {
 
 // Everything updates by itself while the dashboard is open (see live.js). A
 // notification arriving is one more reason to check the request lists.
+/* ---------- Leads: step 1 of the pickup form, not finished ---------- */
+async function loadLeads() {
+  try {
+    const res = await fetch('/api/admin/leads');
+    if (!res.ok) return;
+    const leads = await res.json();
+    const card = document.getElementById('leadsCard');
+    const list = document.getElementById('leadsList');
+    card.hidden = !leads.length;
+    document.getElementById('leadsCount').textContent = leads.length || '';
+    list.innerHTML = '';
+    leads.forEach((lead) => {
+      const li = document.createElement('li');
+      li.className = 'lead-item';
+      const main = document.createElement('div');
+      const title = document.createElement('strong');
+      title.textContent = lead.company_name;
+      const meta = document.createElement('span');
+      meta.className = 'lead-meta';
+      meta.textContent = `${lead.scrap_type} · ${lead.approx_quantity} · ${formatDateTime(lead.created_at)}`;
+      main.append(title, meta);
+      const actions = document.createElement('div');
+      actions.className = 'lead-actions';
+      const digits = String(lead.phone).replace(/D/g, '').slice(-10);
+      const wa = document.createElement('a');
+      wa.className = 'btn btn-outline btn-sm';
+      wa.href = `https://wa.me/91${digits}?text=${encodeURIComponent(`Hello from Scrap Express. You started a pickup request for ${lead.scrap_type} (${lead.approx_quantity}). Can we help you finish it?`)}`;
+      wa.target = '_blank';
+      wa.rel = 'noopener';
+      wa.textContent = 'WhatsApp';
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'icon-btn';
+      remove.title = 'Remove this lead';
+      remove.setAttribute('aria-label', `Remove the lead from ${lead.company_name}`);
+      remove.innerHTML = '<svg class="icon"><use href="#icon-trash"/></svg>';
+      remove.addEventListener('click', async () => {
+        if (!confirm(`Remove the unfinished request from ${lead.company_name}?`)) return;
+        await fetch(`/api/admin/leads/${lead.id}`, { method: 'DELETE' });
+        loadLeads();
+      });
+      actions.append(telLink(lead.phone), wa, remove);
+      li.append(main, actions);
+      list.appendChild(li);
+    });
+  } catch (err) {
+    // Shown again on the next refresh.
+  }
+}
+
 function refreshRequests() {
   if (dashboard.hidden) return Promise.resolve();
-  return Promise.all([loadRequests(true), loadDemolitionRequests(true), loadCallbacks(true), loadCustomers(true)]);
+  return Promise.all([loadRequests(true), loadLeads(), loadDemolitionRequests(true), loadCallbacks(true), loadCustomers(true)]);
 }
 window.SELive.on('requests', refreshRequests);
 window.SELive.on('callbacks', () => loadCallbacks(true));

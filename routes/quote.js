@@ -2,6 +2,7 @@
 const router = require('express').Router();
 const quotes = require('../lib/quotes');
 const live = require('../lib/live');
+const documents = require('../lib/documents');
 
 // POST /api/quote/:token/quote { response } — accept or decline.
 router.post('/:token/quote', async (req, res) => {
@@ -32,6 +33,20 @@ router.post('/:token/ready', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not save that. Please try again.' });
+  }
+});
+
+// GET /api/quote/:token/documents/:id — a weighbridge slip or invoice on
+// the request this private link belongs to.
+router.get('/:token/documents/:id', async (req, res) => {
+  try {
+    const request = await quotes.findByToken(req.params.token);
+    const doc = request && await documents.find(Number(req.params.id));
+    if (!doc || doc.request_type !== 'pickup' || doc.request_id !== request.id) return res.status(404).json({ error: 'Not found' });
+    documents.send(res, doc);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not download the file.' });
   }
 });
 

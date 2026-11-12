@@ -25,12 +25,27 @@ const callbackRouter = require('./routes/callback');
 const quotes = require('./lib/quotes');
 const customers = require('./lib/customers');
 const live = require('./lib/live');
+const reviews = require('./lib/reviews');
+const siteImages = require('./lib/site-images');
+const lots = require('./lib/lots');
+const lotsRouter = require('./routes/lots');
+const adminContentRouter = require('./routes/admin-content');
+const areas = require('./lib/areas');
+const timeline = require('./lib/timeline');
+const documents = require('./lib/documents');
+const schedules = require('./lib/schedules');
+const siteStats = require('./lib/site-stats');
+const rates = require('./lib/rates');
+const analytics = require('./lib/analytics');
+const { SITE_URL, SITE_HOST, redirectToSiteUrl } = require('./lib/site-url');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 
 app.set('trust proxy', 1);
+// Once SITE_URL is a custom domain, the old address forwards to it (lib/site-url.js).
+app.use(redirectToSiteUrl);
 app.use(express.json());
 
 // One line per API call, so a request that stalls or gets dropped shows up in
@@ -77,7 +92,6 @@ app.get('/.well-known/assetlinks.json', (req, res) => {
 });
 
 // ---- for search engines ----
-const SITE_URL = (process.env.SITE_URL || 'https://scrap-express.onrender.com').replace(/\/$/, '');
 
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain').send([
@@ -93,12 +107,23 @@ app.get('/robots.txt', (req, res) => {
   ].join('\n'));
 });
 
-// The public pages, so search engines find them all (PAGES is defined below).
-app.get('/sitemap.xml', (req, res) => {
-  const urls = PAGES.map(({ path: pagePath, priority }) => `  <url>
-    <loc>${SITE_URL}${pagePath}</loc>
-    <changefreq>${pagePath === '/rates' ? 'daily' : 'weekly'}</changefreq>
-    <priority>${priority}</priority>
+// The public pages, so search engines find them all (PAGES is defined below),
+// plus a page for every area and every scrap rate.
+app.get('/sitemap.xml', async (req, res) => {
+  const entries = PAGES.map(({ path: pagePath, priority }) => ({
+    path: pagePath, priority, changefreq: pagePath === '/rates' ? 'daily' : 'weekly',
+  }));
+  try {
+    const [areaList, rateList] = await Promise.all([areas.listAreas(), rates.listRates()]);
+    areaList.forEach((area) => entries.push({ path: `/areas/${area.slug}`, priority: '0.7', changefreq: 'monthly' }));
+    rateList.filter((rate) => rate.url).forEach((rate) => entries.push({ path: rate.url, priority: '0.7', changefreq: 'daily' }));
+  } catch (err) {
+    console.error('sitemap: area/rate pages left out', err);
+  }
+  const urls = entries.map((e) => `  <url>
+    <loc>${SITE_URL}${e.path}</loc>
+    <changefreq>${e.changefreq}</changefreq>
+    <priority>${e.priority}</priority>
   </url>`).join('\n');
   res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -118,18 +143,43 @@ app.get('/api/push/key', async (req, res) => {
 
 app.get('/api/live', live.connect);
 
+// Taps on the phone number and WhatsApp links (public/js/main.js). Only these
+// two can be sent from a page; forms are counted where they're received.
+const recentTracks = new Map();
+app.post('/api/track', (req, res) => {
+  const event = String((req.body && req.body.event) || '');
+  if (!analytics.CLIENT_EVENTS.has(event)) return res.status(400).end();
+  const now = Date.now();
+  const times = (recentTracks.get(req.ip) || []).filter((t) => t > now - 60 * 60 * 1000);
+  if (times.length < 60) {
+    times.push(now);
+    recentTracks.set(req.ip, times);
+    if (recentTracks.size > 5000) recentTracks.clear();
+    analytics.record(event, analytics.pageFrom(req) || String((req.body && req.body.page) || ''));
+  }
+  res.status(204).end();
+});
+
 app.use('/api/subscribe', express.urlencoded({ extended: false }), subscribeRouter);
 app.use('/api/location', locationRouter);
 app.use('/api/quote', quoteRouter);
-app.use('/api/callback', callbackRouter);
+app.use('/api/callback', express.urlencoded({ extended: false }), callbackRouter);
 app.use('/api/rates', ratesRouter);
 app.use('/api/pickup', pickupRouter);
 app.use('/api/demolition', demolitionRouter);
 app.use('/api/testimonials', testimonialsRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/admin', adminContentRouter); // photos, lots for sale, enquiries
+app.use('/api/lots', express.urlencoded({ extended: false }), lotsRouter);
 app.use('/api/customer', customerRouter);
 
 app.use(express.static(path.join(__dirname, 'public')));
+// Photos the owner adds for the site (lib/site-images.js). Every file has a
+// unique name, so browsers can keep it for a year.
+app.use('/site-images', express.static(siteImages.SITE_DIR, { maxAge: '365d', immutable: true, index: false }));
+
+// Page views for Admin → Analytics (totals only; no cookies).
+app.use(analytics.countPageView);
 
 // Pages (not static files or the API) know who's logged in, so the header can
 // show "My Account" and the booking form can auto-fill.
@@ -169,7 +219,16 @@ app.locals.statusLabels = {
   ready: 'Ready for Pickup', confirmed: 'Confirmed', completed: 'Completed', no_scrap: 'No Scrap at Site', cancelled: 'Cancelled',
 };
 app.locals.formatQuoteRate = formatQuoteRate;
+app.locals.reviewHelpers = reviews;
+app.locals.rateCategories = rates.RATE_CATEGORIES;
+app.locals.trendDays = rates.TREND_DAYS;
+app.locals.formatIndiaTime = rates.formatIndiaTime;
+app.locals.galleryCategories = siteImages.GALLERY_CATEGORIES;
+app.locals.formatLotQuantity = lots.formatQuantity;
 app.locals.siteUrl = SITE_URL;
+app.locals.siteHost = SITE_HOST;
+// Google Analytics 4 (optional): set GA_MEASUREMENT_ID ("G-XXXXXXX") on Render.
+app.locals.gaMeasurementId = /^G-[A-Z0-9]{4,20}$/.test(process.env.GA_MEASUREMENT_ID || '') ? process.env.GA_MEASUREMENT_ID : '';
 // Search Console / Bing Webmaster ownership codes, set on Render once the
 // owner adds the site there.
 app.locals.googleVerification = process.env.GOOGLE_SITE_VERIFICATION || '';
@@ -212,6 +271,11 @@ const PAGES = [
     description: 'Scrap dealer for businesses in Okhla, Naraina, Mayapuri, Wazirpur, Bawana, Noida, Gurugram, Manesar, Faridabad and Ghaziabad, and anywhere within 50 km of Delhi.',
   },
   {
+    path: '/buy-from-us', view: 'buy-from-us', page: 'buy-from-us', priority: '0.7',
+    title: 'Buy Baled Scrap: Kraft Paper, PET, Steel, Aluminium | Scrap Express',
+    description: 'Recyclers and mills: buy sorted, baled scrap lots from Scrap Express in Delhi NCR. Kraft paper, PET bottles, GI sheet, steel and aluminium, with grade, quantity and photos.',
+  },
+  {
     path: '/rules', view: 'rules', page: 'rules', priority: '0.3',
     title: 'Pickup & Demolition Rules - Scrap Express',
     description: 'The rules for bulk scrap pickups and demolition requests with Scrap Express: accurate details, weighbridge weight, scrap quality and being ready for the truck.',
@@ -228,8 +292,84 @@ const PAGES = [
   },
 ];
 
+// Data some pages draw on the server (so it shows without JavaScript and
+// search engines see it). If loading fails, the page still renders without it.
+const PAGE_DATA = {
+  '/': async () => {
+    const [list, stats, rateList, gallery, logos] = await Promise.all([
+      reviews.listReviews(), siteStats.getStats(), rates.listRates(), siteImages.list('gallery'), siteImages.list('logo'),
+    ]);
+    return {
+      reviews: list, stats, rates: rateList, gallery, logos,
+    };
+  },
+  '/buy-from-us': async () => ({ lots: await lots.listLots() }),
+  '/areas': async () => ({ areaPages: await areas.listAreas() }),
+  '/rates': async () => {
+    const [rateList, ratesUpdated] = await Promise.all([rates.listRates(), rates.lastUpdated()]);
+    return { rates: rateList, ratesUpdated };
+  },
+};
+
 PAGES.forEach(({ path: routePath, view, page, title, description }) => {
-  app.get(routePath, (req, res) => res.render(view, { page, title, description }));
+  app.get(routePath, async (req, res, next) => {
+    let data = {};
+    try {
+      if (PAGE_DATA[routePath]) data = await PAGE_DATA[routePath](req);
+    } catch (err) {
+      console.error(`loading data for ${routePath} failed`, err);
+    }
+    res.render(view, { page, title, description, ...data }, (err, html) => (err ? next(err) : res.send(html)));
+  });
+});
+
+// ---- one page per area and per scrap rate (for local and material searches) ----
+
+// Search results show about 60 characters of a title: use the shorter one when needed.
+const fitTitle = (full, short) => (full.length <= 65 ? full : short);
+
+const notFound = (req, res) => res.status(404).render('notice', {
+  page: 'notice', noindex: true, title: 'Page not found - Scrap Express', description: 'Page not found.',
+  icon: 'icon-close', heading: 'Page not found', message: "We couldn't find that page. It may have moved.",
+});
+
+app.get('/areas/:slug', async (req, res, next) => {
+  try {
+    const area = await areas.getArea(req.params.slug);
+    if (!area) return notFound(req, res);
+    const rateList = await rates.listRates().catch(() => []);
+    res.render('area', {
+      page: 'areas',
+      title: fitTitle(`Scrap Buyer in ${area.name} | Bulk Scrap Pickup | Scrap Express`, `Scrap Buyer in ${area.name} | Scrap Express`),
+      description: `Sell bulk scrap in ${area.name}: we buy paper, plastic, metal and e-waste from businesses. Weighbridge weight, GST invoice, cash or bank payment.`,
+      area,
+      faqs: areas.areaFaqs(area, { minPickupKg: MIN_PICKUP_KG, serviceKm: SERVICE_KM }),
+      rates: rateList,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get('/rates/:slug', async (req, res, next) => {
+  try {
+    const rate = await rates.getRateBySlug(req.params.slug);
+    if (!rate) return notFound(req, res);
+    const [rateList, ratesUpdated] = await Promise.all([rates.listRates(), rates.lastUpdated()]);
+    const shortName = rates.shortName(rate.name);
+    const per = rate.unit === 'kg' ? '/kg' : ` per ${rate.unit}`;
+    res.render('rate', {
+      page: 'rates',
+      title: fitTitle(`${shortName} Scrap Rate Today in Delhi (₹${rate.priceText}${per}) | Scrap Express`, `${shortName} Scrap Rate Today (₹${rate.priceText}${per}) | Scrap Express`),
+      description: `Today's ${shortName.toLowerCase()} scrap rate in Delhi NCR: ₹${rate.priceText}${per}. ${rate.trend.label}. Bulk lots: weighbridge weight and GST invoice.`,
+      rate,
+      shortName,
+      ratesUpdated,
+      related: rateList.filter((r) => r.category === rate.category && r.id !== rate.id).slice(0, 4),
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Only same-site paths, so ?next= can't send people to another website.
@@ -291,7 +431,13 @@ app.get('/quote/:token', async (req, res) => {
         message: 'This link may be incomplete, or the request may have been removed. Please call us on +91 98188 26333 and we will help.',
       });
     }
+    const [events, docs] = await Promise.all([
+      timeline.eventsFor('pickup', [request.id]),
+      documents.listFor('pickup', [request.id]),
+    ]);
     res.render('quote', {
+      timeline: timeline.buildTimeline('pickup', request, events.get(request.id) || []),
+      docs,
       page: 'quote',
       title: `Your Quote #${request.id} - Scrap Express`,
       description: 'Your Scrap Express quote.',
@@ -309,8 +455,25 @@ app.get('/quote/:token', async (req, res) => {
 app.get('/account', async (req, res) => {
   if (!res.locals.customer) return res.redirect('/login?next=/account');
   try {
-    const requests = await customers.listRequests(res.locals.customer.id);
+    const customerId = res.locals.customer.id;
+    const requests = await customers.listRequests(customerId);
+    const idsOf = (kind) => requests.filter((r) => r.kind === kind).map((r) => r.id);
+    const [pickupEvents, demolitionEvents, pickupDocs, demolitionDocs, repeatPickups] = await Promise.all([
+      timeline.eventsFor('pickup', idsOf('pickup')),
+      timeline.eventsFor('demolition', idsOf('demolition')),
+      documents.listFor('pickup', idsOf('pickup')),
+      documents.listFor('demolition', idsOf('demolition')),
+      schedules.listForCustomer(customerId),
+    ]);
+    requests.forEach((r) => {
+      const events = (r.kind === 'pickup' ? pickupEvents : demolitionEvents).get(r.id) || [];
+      r.timeline = timeline.buildTimeline(r.kind, r, events);
+      r.docs = (r.kind === 'pickup' ? pickupDocs : demolitionDocs).filter((d) => d.request_id === r.id);
+    });
     res.render('account', {
+      repeatPickups,
+      repeatFrequencies: schedules.FREQUENCIES,
+      repeatDates: schedules.dateRange(),
       page: 'account',
       title: 'My Account - Scrap Express',
       description: 'Your Scrap Express requests and business details.',
@@ -339,5 +502,6 @@ app.listen(PORT, () => {
   console.log(`Scrap Express server running at http://localhost:${PORT}`);
   push.init().catch(() => {}); // prepare notification keys early; logged inside if it fails
   updates.startSchedule(); // daily rates to subscribers
+  schedules.start(); // repeat pickups customers have set up
   quotes.addMissingTokens().catch((err) => console.error('adding quote links failed:', err.message));
 });

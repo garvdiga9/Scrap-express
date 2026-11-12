@@ -1,0 +1,92 @@
+<%- include('partials/head') %>
+<%- include('partials/sprite') %>
+<%- include('partials/header') %>
+
+<%# One scrap rate's own page (/rates/<slug>): today's price, its 30-day
+    trend and a quote button. Locals: rate, shortName, ratesUpdated, related. %>
+<main id="top" tabindex="-1">
+
+<%- include('partials/page-hero', {
+  eyebrow: `${rate.categoryLabel} · Scrap Rate`,
+  heading: `${shortName} Scrap Rate Today in Delhi NCR`,
+  text: `What we pay for ${shortName.toLowerCase()} scrap from businesses in Delhi NCR. Bulk lots are priced on volume, grade and location in a quote.`,
+}) %>
+
+  <section class="section after-page-hero rate-page">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a> <span aria-hidden="true">›</span> <a href="/rates">Scrap Rates</a> <span aria-hidden="true">›</span> <span aria-current="page"><%= shortName %></span>
+      </nav>
+
+      <div class="rate-detail">
+        <div class="rate-detail-main">
+          <% if (rate.image) { %>
+            <img class="rate-detail-media" src="<%= rate.image %>" alt="<%= rate.name %> scrap" width="480" height="300" decoding="async">
+          <% } else { %>
+            <div class="rate-detail-media rate-media-icon" style="background:<%= rate.colors.bg %>;color:<%= rate.colors.fg %>" aria-hidden="true"><svg class="icon"><use href="#<%= rate.iconId %>"/></svg></div>
+          <% } %>
+          <div>
+            <h2 class="rate-detail-name"><%= rate.name %></h2>
+            <p class="rate-detail-price">₹<%= rate.priceText %> <span>/ <%= rate.unit %></span></p>
+            <p class="rate-detail-updated">
+              <% if (ratesUpdated) { %>Last updated: <time datetime="<%= ratesUpdated.toISOString() %>"><%= formatIndiaTime(ratesUpdated) %></time><% } %>
+            </p>
+            <div class="rate-detail-actions">
+              <a href="/book-pickup" class="btn btn-accent btn-lg">Get a Bulk Quote</a>
+              <a href="tel:+919818826333" class="btn btn-outline btn-lg">Call +91 98188 26333</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="rate-chart-card trend-<%= rate.trend.direction %>">
+          <h3>Last <%= trendDays %> days</h3>
+          <p class="rate-chart-change"><%= rate.trend.label %></p>
+          <% const values = rate.trend.values; const min = Math.min(...values); const max = Math.max(...values); %>
+          <svg class="rate-chart" viewBox="0 0 120 32" preserveAspectRatio="none" role="img"
+               aria-label="Price over the last <%= trendDays %> days: from ₹<%= rate.trend.start.toLocaleString('en-IN') %> to ₹<%= rate.priceText %>">
+            <path d="<%= rate.trend.path %>"/>
+          </svg>
+          <div class="rate-chart-scale" aria-hidden="true">
+            <span><%= trendDays %> days ago</span>
+            <span>Low ₹<%= min.toLocaleString('en-IN') %> · High ₹<%= max.toLocaleString('en-IN') %></span>
+            <span>Today</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="rate-info">
+        <h2>Selling <%= shortName.toLowerCase() %> scrap in bulk</h2>
+        <p>This is our indicative rate for <%= rate.name.toLowerCase() %> today. For business lots of <%= minPickupKg %> kg or more, we send a quote for your exact material, grade and location, with a private link to accept it. Our team then collects from your site within <%= serviceKm %> km of Delhi, weighs the load on a weighbridge and pays you by cash or bank transfer, with a GST invoice.</p>
+        <ul class="rate-info-points">
+          <li><svg class="icon" aria-hidden="true"><use href="#icon-scale"/></svg> Paid on the weighbridge weight</li>
+          <li><svg class="icon" aria-hidden="true"><use href="#icon-paper"/></svg> GST invoice for your accounts</li>
+          <li><svg class="icon" aria-hidden="true"><use href="#icon-truck"/></svg> Pickup from your site</li>
+        </ul>
+      </div>
+
+      <% if (related.length) { %>
+        <h2 class="rate-related-title">Other <%= rate.categoryLabel.toLowerCase() %> rates</h2>
+        <div class="rates-grid">
+          <% related.forEach((other) => { %><%- include('partials/rate-card', { rate: other }) %><% }) %>
+        </div>
+      <% } %>
+      <p class="section-more"><a href="/rates" class="btn btn-outline">All scrap rates</a></p>
+    </div>
+  </section>
+
+<% const jsonLd = (data) => JSON.stringify(data).replace(/</g, '\\u003c'); %>
+<script type="application/ld+json"><%- jsonLd({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: `${siteUrl}/` },
+    { '@type': 'ListItem', position: 2, name: 'Scrap Rates', item: `${siteUrl}/rates` },
+    { '@type': 'ListItem', position: 3, name: `${shortName} scrap rate`, item: canonicalUrl },
+  ],
+}) %></script>
+
+<%- include('partials/cta') %>
+
+</main>
+
+<%- include('partials/footer') %>
