@@ -37,6 +37,7 @@ const schedules = require('./lib/schedules');
 const siteStats = require('./lib/site-stats');
 const rates = require('./lib/rates');
 const analytics = require('./lib/analytics');
+const i18n = require('./lib/i18n');
 const { SITE_URL, SITE_HOST, redirectToSiteUrl } = require('./lib/site-url');
 
 const app = express();
@@ -181,10 +182,19 @@ app.use('/site-images', express.static(siteImages.SITE_DIR, { maxAge: '365d', im
 // Page views for Admin → Analytics (totals only; no cookies).
 app.use(analytics.countPageView);
 
+// Hindi / English for the pages (lib/i18n.js), and the dictionary for the browser.
+app.get('/js/i18n-hi.js', (req, res) => {
+  res.type('application/javascript').set('Cache-Control', 'public, max-age=3600').send(i18n.clientScript());
+});
+app.use(i18n.middleware);
+
 // Pages (not static files or the API) know who's logged in, so the header can
 // show "My Account" and the booking form can auto-fill.
 app.use(async (req, res, next) => {
-  res.locals.canonicalUrl = `${SITE_URL}${req.path}`;
+  // Each language has its own address for search engines: the Hindi page is ?lang=hi.
+  res.locals.englishUrl = `${SITE_URL}${req.path}`;
+  res.locals.hindiUrl = `${SITE_URL}${req.path}?lang=hi`;
+  res.locals.canonicalUrl = res.locals.lang === 'hi' ? res.locals.hindiUrl : res.locals.englishUrl;
   res.locals.customer = null;
   res.locals.loginEnabled = firebase.enabled;
   // For the "daily rates" sign-up box in the footer (cached, see lib/settings).

@@ -12,6 +12,13 @@
   }());
 </script>
 <meta name="color-scheme" content="light dark">
+<% if (locals.lang === 'hi') { %>
+<%# Hindi: a Devanagari font, and translation of text scripts add later. %>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="/js/i18n-hi.js"></script>
+<script src="/js/i18n.js" defer></script>
+<% } %>
 <% if (locals.gaMeasurementId && !locals.noindex) { %>
 <%# Google Analytics 4, only when GA_MEASUREMENT_ID is set on Render. %>
 <script async src="https://www.googletagmanager.com/gtag/js?id=<%= gaMeasurementId %>"></script>
@@ -27,12 +34,18 @@
 <% if (locals.noindex) { %><meta name="robots" content="noindex"><% } else { %>
 <%# The one address search engines should list for this page, whichever way it was reached. %>
 <link rel="canonical" href="<%= canonicalUrl %>">
+<%# The same page in English and Hindi, so search engines show the right one. %>
+<% if (locals.englishUrl) { %>
+<link rel="alternate" hreflang="en-IN" href="<%= englishUrl %>">
+<link rel="alternate" hreflang="hi-IN" href="<%= hindiUrl %>">
+<link rel="alternate" hreflang="x-default" href="<%= englishUrl %>">
+<% } %>
 <meta name="keywords" content="<%= locals.keywords || siteKeywords %>">
 <% } %>
 <%# How the page looks when shared on WhatsApp, Facebook, LinkedIn or X. %>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Scrap Express">
-<meta property="og:locale" content="en_IN">
+<meta property="og:locale" content="<%= locals.lang === 'hi' ? 'hi_IN' : 'en_IN' %>">
 <meta property="og:title" content="<%= title %>">
 <meta property="og:description" content="<%= description %>">
 <meta property="og:url" content="<%= canonicalUrl %>">

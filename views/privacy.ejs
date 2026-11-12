@@ -8,6 +8,7 @@
     <div class="container legal-page">
       <span class="eyebrow">Legal</span>
       <h1>Privacy Policy</h1>
+<% if (locals.lang === 'hi') { %><p class="translation-note">This Hindi translation is for your convenience. If it differs from the English version, the English version applies.</p><% } %>
       <p class="legal-updated">Last updated: 2 November 2026</p>
 
       <p>This policy explains what information Scrap Express ("we", "us") collects through our website <strong><%= siteHost %></strong> and the Scrap Express app, why we collect it, and the choices you have. We are a scrap buying and demolition business serving companies across Delhi NCR.</p>
@@ -38,6 +39,7 @@
         <li>Visit counts: how many times each page was opened, and how many requests, calls and WhatsApp messages started from it, as daily totals only. These counts use no cookies and record nothing that identifies you.</li>
         <% if (locals.gaMeasurementId) { %><li>Google Analytics, which uses cookies to measure how the site is used (pages visited, rough location, device type). Google processes this data under its own <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">privacy policy</a>. You can block it with your browser's privacy settings or Google's opt-out add-on.</li><% } %>
         <li>Your choice of light or dark theme, saved on your device only.</li>
+        <li>Your choice of language, saved in a cookie on your device.</li>
         <li>Basic technical logs (such as IP address, device/browser type and pages requested), kept by our hosting provider for security and troubleshooting.</li>
         <li>The app saves some of our own files (styles, images) on your device so it loads faster and works on a weak connection.</li>
       </ul>

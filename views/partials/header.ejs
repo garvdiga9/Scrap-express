@@ -13,6 +13,7 @@
       <a href="/demolition" class="nav-link<%= page === 'demolition' ? ' active' : '' %>">Demolition</a>
       <a href="/areas" class="nav-link<%= page === 'areas' ? ' active' : '' %>">Areas</a>
       <a href="tel:+919818826333" class="nav-link nav-account" data-callback>Request a Call Back</a>
+      <a href="<%= locals.langUrl ? langUrl(locals.lang === 'hi' ? 'en' : 'hi') : '?lang=hi' %>" class="nav-link nav-lang" lang="<%= locals.lang === 'hi' ? 'en' : 'hi' %>"><%= locals.lang === 'hi' ? 'English' : 'हिंदी में पढ़ें' %></a>
       <button type="button" class="nav-link nav-theme" data-theme-toggle><span class="theme-label-light">Dark theme</span><span class="theme-label-dark">Light theme</span></button>
       <% if (locals.loginEnabled || locals.customer) { %>
       <a href="<%= locals.customer ? '/account' : '/login' %>" class="nav-link nav-account<%= ['login', 'account'].includes(page) ? ' active' : '' %>"><%= locals.customer ? 'My Account' : 'Customer Login' %></a>
@@ -26,6 +27,8 @@
         <span><%= locals.customer ? 'My Account' : 'Login' %></span>
       </a>
       <% } %>
+      <% const toHindi = locals.lang !== 'hi'; %>
+      <a href="<%= locals.langUrl ? langUrl(toHindi ? 'hi' : 'en') : (toHindi ? '?lang=hi' : '?lang=en') %>" class="lang-toggle" lang="<%= toHindi ? 'hi' : 'en' %>" hreflang="<%= toHindi ? 'hi' : 'en' %>" title="<%= toHindi ? 'Read this page in Hindi' : 'Read this page in English' %>"><%= toHindi ? 'हिंदी' : 'English' %></a>
       <button type="button" class="theme-toggle" id="themeToggle" data-theme-toggle aria-label="Switch to dark theme" title="Light / dark theme">
         <svg class="icon icon-when-light" aria-hidden="true"><use href="#icon-moon"/></svg>
         <svg class="icon icon-when-dark" aria-hidden="true"><use href="#icon-sun"/></svg>

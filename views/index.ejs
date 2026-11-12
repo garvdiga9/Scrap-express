@@ -14,8 +14,11 @@
         <h1>Scrap Ka Dher? <span class="text-accent">Hum Hai Na!</span><span class="sr-only"> Bulk scrap buyers for businesses across Delhi NCR.</span></h1>
         <p class="hero-rotator">
           <span aria-hidden="true">Bulk scrap pickup from your</span>
-          <span class="rotator-word" id="heroRotator" aria-hidden="true"
-                data-words='["factory","office","hospital","restaurant","warehouse","school","mall","hotel"]'>factory</span><span class="rotator-caret" aria-hidden="true"></span>
+          <% const rotatorWords = locals.lang === 'hi'
+            ? ['फैक्ट्री', 'ऑफिस', 'अस्पताल', 'रेस्टोरेंट', 'गोदाम', 'स्कूल', 'मॉल', 'होटल']
+            : ['factory', 'office', 'hospital', 'restaurant', 'warehouse', 'school', 'mall', 'hotel']; %>
+          <span class="rotator-word" id="heroRotator" aria-hidden="true" data-no-translate
+                data-words='<%= JSON.stringify(rotatorWords) %>'><%= rotatorWords[0] %></span><span class="rotator-caret" aria-hidden="true"></span>
           <span class="sr-only">Bulk scrap pickup from factories, offices, hospitals, restaurants, warehouses, schools, malls and hotels.</span>
         </p>
         <p class="hero-sub">One-time clearances or scheduled pickups of <%= minPickupKg %> kg and above, within <%= serviceKm %> km of Delhi — weighed on a weighbridge, billed with a GST invoice and paid by cash or bank transfer, whichever you prefer.</p>

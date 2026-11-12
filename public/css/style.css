@@ -1939,3 +1939,25 @@ main[tabindex="-1"]:focus { outline: none; }
   .theme-toggle { display: none; }
   .main-nav.open .nav-theme { display: block; }
 }
+
+/* ---------- Hindi ---------- */
+:root[lang="hi-IN"] {
+  --font-heading: 'Noto Sans Devanagari', 'Poppins', 'Nirmala UI', sans-serif;
+  --font-body: 'Noto Sans Devanagari', 'Inter', 'Nirmala UI', sans-serif;
+}
+/* Devanagari needs a little more room above and below. */
+:root[lang="hi-IN"] h1, :root[lang="hi-IN"] h2, :root[lang="hi-IN"] h3 { line-height: 1.35; letter-spacing: 0; }
+:root[lang="hi-IN"] body { line-height: 1.75; }
+.lang-toggle {
+  display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 12px;
+  border-radius: 999px; border: 1.5px solid var(--color-border); background: var(--color-white);
+  color: var(--color-dark); font-weight: 700; font-size: 14px; white-space: nowrap; flex-shrink: 0;
+}
+.lang-toggle:hover { border-color: var(--color-primary); }
+.lang-toggle[lang="hi"] { font-family: 'Noto Sans Devanagari', 'Nirmala UI', sans-serif; }
+.nav-lang { display: none; }
+@media (max-width: 520px) {
+  .lang-toggle { display: none; }
+  .main-nav.open .nav-lang { display: block; }
+}
+.translation-note { background: var(--color-subtle); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; color: var(--color-text); }
