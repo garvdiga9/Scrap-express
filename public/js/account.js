@@ -12,6 +12,10 @@ profileForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   profileAlert.hidden = true;
   if (!window.SEValidate.checkForm(profileForm)) return;
+  if (window.SEArea.missingOther(profileForm)) {
+    showProfileAlert('Please type the name of your area.', 'error');
+    return;
+  }
   saveBtn.disabled = true;
   saveBtn.textContent = 'Saving…';
   try {
@@ -63,8 +67,11 @@ async function refreshAccount() {
   [...profileForm.elements].forEach((field) => {
     const fresh = field.name && freshForm.elements[field.name];
     if (!fresh || field === document.activeElement || field.value !== field.dataset.saved) return;
+    if (field.value === fresh.value) return;
     field.value = fresh.value;
     field.dataset.saved = fresh.value;
+    // Lets the Area list show or hide its "type your area" box.
+    if (field.tagName === 'SELECT') field.dispatchEvent(new Event('input'));
   });
 }
 

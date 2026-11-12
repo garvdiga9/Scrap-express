@@ -745,6 +745,10 @@ if (pickupForm) pickupForm.addEventListener('submit', async (e) => {
     showAlert(formAlert, 'Please fill in all required fields marked with *.', 'error');
     return;
   }
+  if (window.SEArea.missingOther(pickupForm)) {
+    showAlert(formAlert, 'Please type the name of your area.', 'error');
+    return;
+  }
   if (!window.SEValidate.checkForm(pickupForm)) return;
   if (!payload.scrapTypes.length) {
     showAlert(formAlert, 'Please tick at least one scrap type.', 'error');
@@ -832,8 +836,12 @@ if (demolitionForm) demolitionForm.addEventListener('submit', async (e) => {
   const payload = Object.fromEntries(formData.entries());
 
   if (!payload.name || !payload.phone || !payload.buildingType
-    || !payload.building || !payload.street || !payload.pincode || !payload.city || !payload.state) {
+    || !payload.building || !payload.street || !payload.pincode || !payload.city || !payload.state || !payload.area) {
     showAlert(demolitionAlert, 'Please fill in all required fields marked with *.', 'error');
+    return;
+  }
+  if (window.SEArea.missingOther(demolitionForm)) {
+    showAlert(demolitionAlert, 'Please type the name of your area.', 'error');
     return;
   }
   if (!window.SEValidate.checkForm(demolitionForm)) return;

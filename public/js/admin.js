@@ -708,7 +708,7 @@ function renderDemolitionRequests() {
       r.name,
       r.phone,
       r.building_type,
-      r.location,
+      [r.area, r.location].filter(Boolean).join(' · '),
       r.approx_area || '-',
     ];
     cells.forEach((text) => {

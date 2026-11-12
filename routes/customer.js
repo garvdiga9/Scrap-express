@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const firebase = require('../lib/firebase');
 const customers = require('../lib/customers');
-const { AREAS, OTHER_AREA, BUSINESS_TYPES } = require('../data/business');
+const { BUSINESS_TYPES, parseArea } = require('../data/business');
 const quotes = require('../lib/quotes');
 const { parseSite } = require('../lib/location');
 const {
@@ -84,8 +84,10 @@ router.put('/me', requireCustomer, async (req, res) => {
     companyName: clean(req.body.companyName, 200),
     businessType: clean(req.body.businessType, 100),
     gstin: clean(req.body.gstin, 15)?.toUpperCase() ?? null,
-    area: clean(req.body.area, 100),
   };
+  const chosenArea = parseArea(req.body.area, req.body.otherArea, { required: false });
+  if (chosenArea.error) return res.status(400).json({ error: chosenArea.error });
+  p.area = chosenArea.area;
   const site = parseSite(req.body, { required: false });
   if (site.error) return res.status(400).json({ error: site.error });
   ['address', 'building', 'street', 'landmark', 'city', 'state', 'pincode'].forEach((field) => {
@@ -102,7 +104,6 @@ router.put('/me', requireCustomer, async (req, res) => {
   }
   if (p.gstin && !GSTIN_RE.test(p.gstin)) return res.status(400).json({ error: GSTIN_ERROR });
   if (p.businessType && !BUSINESS_TYPES.includes(p.businessType)) return res.status(400).json({ error: 'Please choose a business type from the list.' });
-  if (p.area && p.area !== OTHER_AREA && !AREAS.includes(p.area)) return res.status(400).json({ error: 'Please choose an area from the list.' });
 
   try {
     const customer = await customers.updateProfile(req.session.customerId, p);

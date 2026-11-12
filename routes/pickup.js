@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const pool = require('../db/pool');
 const {
-  BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS, RULES_VERSION,
+  BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS, RULES_VERSION, parseArea,
 } = require('../data/business');
 const { parseSite, outsideServiceArea } = require('../lib/location');
 const {
@@ -30,7 +30,7 @@ const formatTotal = (kg) => (kg >= 1000 ? `${+(kg / 1000).toFixed(2)} tonnes` : 
 router.post('/', media.acceptMedia, async (req, res) => {
   const {
     companyName, businessType, pickupFrequency,
-    name, area, notes,
+    name, notes,
   } = req.body;
 
   // A business can tick several scrap types. Also accept the older single
@@ -46,6 +46,8 @@ router.post('/', media.acceptMedia, async (req, res) => {
   }
   const site = parseSite(req.body);
   if (site.error) return res.status(400).json({ error: site.error });
+  const { area, error: areaError } = parseArea(req.body.area, req.body.otherArea);
+  if (areaError) return res.status(400).json({ error: areaError });
   const phone = cleanPhone(req.body.phone);
   if (!phone) return res.status(400).json({ error: PHONE_ERROR });
   // Email is optional, but has to be a real address if given.

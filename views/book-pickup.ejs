@@ -67,14 +67,7 @@
         </div>
         <h2 class="form-section-title">Where is the scrap?</h2>
         <%- include('partials/location-fields', { prefix: 'site', c, site: true }) %>
-        <div class="form-group">
-          <label for="area">Area *</label>
-          <select id="area" name="area" required>
-            <option value="" disabled<%= c.area ? '' : ' selected' %>>Select your area</option>
-            <% [...areas, otherArea].forEach((area) => { %><option<%= c.area === area || (area === otherArea && /^Other/.test(c.area || '')) ? ' selected' : '' %>><%= area %></option>
-            <% }) %>
-          </select>
-        </div>
+        <%- include('partials/area-field', { prefix: 'site', c, required: true }) %>
         <fieldset class="form-group checkbox-group" id="scrapTypesGroup">
           <legend>Scrap Types * <span class="field-hint">Select all that apply</span></legend>
           <div class="checkbox-grid">

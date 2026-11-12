@@ -1,0 +1,22 @@
+<%# The Area dropdown. Its last choice, "My area isn't listed", opens a box to
+    type the place in (saved as "Other: <place>"). Handled by public/js/location.js.
+    Locals: prefix (for unique ids), c (saved details), required. %>
+<%
+  const current = c.area || '';
+  const isOther = /^Other/.test(current);
+  const typed = current.startsWith('Other: ') ? current.slice('Other: '.length) : '';
+%>
+<div class="form-group" data-area>
+  <label for="<%= prefix %>Area">Area<%= locals.required ? ' *' : '' %></label>
+  <select id="<%= prefix %>Area" name="area"<%= locals.required ? ' required' : '' %> data-area-select data-other-value="<%= otherArea %>">
+    <option value=""<%= locals.required ? ' disabled' : '' %><%= current ? '' : ' selected' %>>Select your area</option>
+    <% areas.forEach((area) => { %><option<%= current === area ? ' selected' : '' %>><%= area %></option>
+    <% }) %>
+    <option value="<%= otherArea %>"<%= isOther ? ' selected' : '' %>>My area isn't listed (type it in)</option>
+  </select>
+  <div class="other-area" data-area-other<%= isOther ? '' : ' hidden' %>>
+    <label for="<%= prefix %>OtherArea">Your area / town *</label>
+    <input type="text" id="<%= prefix %>OtherArea" name="otherArea" maxlength="80" autocomplete="address-level3" placeholder="e.g. Kundli, Sonipat" value="<%= typed %>">
+    <small class="field-hint">We cover sites within <%= serviceKm %> km of Delhi.</small>
+  </div>
+</div>

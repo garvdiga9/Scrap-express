@@ -284,7 +284,7 @@ router.get('/customers', requireAdmin, async (req, res) => {
            FROM pickup_requests WHERE customer_id IS NULL
            UNION ALL
            SELECT right(regexp_replace(phone, '[^0-9]', '', 'g'), 10), 'demolition', name, phone, email,
-                  NULL, NULL, NULL, location, NULL, status, created_at
+                  NULL, NULL, NULL, location, area, status, created_at
            FROM demolition_requests WHERE customer_id IS NULL
          ),
          latest AS (

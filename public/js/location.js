@@ -147,3 +147,33 @@ document.querySelectorAll('[data-location]').forEach((box) => {
     }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
   });
 });
+
+// Area list: "My area isn't listed" opens a box to type the place in.
+document.querySelectorAll('[data-area]').forEach((group) => {
+  const select = group.querySelector('[data-area-select]');
+  const other = group.querySelector('[data-area-other]');
+  const input = other.querySelector('input');
+  const sync = (focus) => {
+    const isOther = select.value === select.dataset.otherValue;
+    other.hidden = !isOther;
+    input.required = isOther;
+    if (isOther && focus) input.focus();
+  };
+  // A customer's own pick moves them to the box; a refreshed value doesn't.
+  select.addEventListener('change', () => sync(true));
+  select.addEventListener('input', () => sync(false));
+  if (select.form) select.form.addEventListener('reset', () => setTimeout(() => sync(false)));
+  sync(false); // the browser may have kept the choice after "back"
+});
+
+// For the form scripts: true (with the box focused) if "My area isn't
+// listed" is chosen but nothing is typed in yet.
+window.SEArea = {
+  missingOther(form) {
+    const select = form.querySelector('[data-area-select]');
+    const input = form.querySelector('[name="otherArea"]');
+    if (!select || select.value !== select.dataset.otherValue || input.value.trim()) return false;
+    input.focus();
+    return true;
+  },
+};

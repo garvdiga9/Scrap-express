@@ -92,7 +92,24 @@ function formatQuoteRate({ rate, unit }) {
   return `₹${n.toLocaleString('en-IN', { minimumFractionDigits: digits, maximumFractionDigits: digits })} ${unit}`;
 }
 
+// The Area dropdown: a place from the list, or "my area isn't listed" with
+// the customer's own place name, saved as "Other: Sonipat".
+// Returns { area } or { error }.
+const MAX_OTHER_AREA = 80;
+function parseArea(area, otherArea, { required = true } = {}) {
+  const chosen = String(area ?? '').trim();
+  if (!chosen) {
+    return required ? { error: 'Please choose your area from the list. If you don\'t see it, refresh this page.' } : { area: null };
+  }
+  if (AREAS.includes(chosen)) return { area: chosen };
+  if (chosen !== OTHER_AREA) return { error: 'Please choose an area from the list.' };
+  const typed = String(otherArea ?? '').trim().replace(/\s+/g, ' ');
+  if (!typed) return { error: 'Please type the name of your area. If you don\'t see a box for it, refresh this page.' };
+  if (typed.length > MAX_OTHER_AREA) return { error: `Please keep the area name under ${MAX_OTHER_AREA} characters.` };
+  return { area: `Other: ${typed}` };
+}
+
 module.exports = {
   AREAS, OTHER_AREA, SERVICE_KM, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS,
-  PICKUP_STATUSES, QUOTE_UNITS, RULES_VERSION, formatQuoteRate, readyDateRange,
+  PICKUP_STATUSES, QUOTE_UNITS, RULES_VERSION, MAX_OTHER_AREA, formatQuoteRate, readyDateRange, parseArea,
 };

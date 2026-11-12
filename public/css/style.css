@@ -929,7 +929,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .check-chip:hover { border-color: var(--color-primary); }
 .check-chip:has(input:checked) { border-color: var(--color-primary); background: var(--color-primary-light); }
-.other-scrap { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.other-scrap, .other-area { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.other-area[hidden] { display: none; }
 
 /* Undo the full-width text-input styling .form-group applies to every input. */
 .check-chip input[type="checkbox"] {

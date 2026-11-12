@@ -177,6 +177,9 @@ ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS terms_version VARCHAR(20);
 ALTER TABLE demolition_requests ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMP;
 ALTER TABLE demolition_requests ADD COLUMN IF NOT EXISTS terms_version VARCHAR(20);
 
+-- Area from the same list as pickups, or "Other: <what the customer typed>".
+ALTER TABLE demolition_requests ADD COLUMN IF NOT EXISTS area VARCHAR(100);
+
 -- Before a truck leaves: the customer (or the admin, after a call) says the
 -- scrap is ready, and the admin confirms by phone.
 ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS ready_at TIMESTAMP;

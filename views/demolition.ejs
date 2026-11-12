@@ -52,6 +52,7 @@
         </div>
         <h2 class="form-section-title">Where is the building?</h2>
         <%- include('partials/location-fields', { prefix: 'demo', c: {}, site: true }) %>
+        <%- include('partials/area-field', { prefix: 'demo', c: {}, required: true }) %>
         <div class="form-group">
           <label for="approxArea">Approx. Built-up Area</label>
           <input type="text" id="approxArea" name="approxArea" placeholder="e.g. 20,000 sq. ft. / 3 floors">

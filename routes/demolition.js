@@ -3,7 +3,7 @@ const pool = require('../db/pool');
 const {
   PHONE_ERROR, EMAIL_ERROR, cleanPhone, cleanEmail,
 } = require('../lib/validation');
-const { RULES_VERSION } = require('../data/business');
+const { RULES_VERSION, parseArea } = require('../data/business');
 const { parseSite, outsideServiceArea } = require('../lib/location');
 const media = require('../lib/media');
 const push = require('../lib/push');
@@ -22,6 +22,8 @@ router.post('/', media.acceptMedia, async (req, res) => {
   }
   const site = parseSite(req.body);
   if (site.error) return res.status(400).json({ error: site.error });
+  const { area, error: areaError } = parseArea(req.body.area, req.body.otherArea);
+  if (areaError) return res.status(400).json({ error: areaError });
   const phone = cleanPhone(req.body.phone);
   if (!phone) return res.status(400).json({ error: PHONE_ERROR });
   // Email is optional, but has to be a real address if given.
@@ -39,12 +41,12 @@ router.post('/', media.acceptMedia, async (req, res) => {
     const { rows } = await pool.query(
       `INSERT INTO demolition_requests
         (name, phone, email, building_type, location, approx_area, notes, customer_id,
-         pincode, latitude, longitude, terms_accepted_at, terms_version)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW(),$12)
+         pincode, latitude, longitude, terms_accepted_at, terms_version, area)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW(),$12,$13)
        RETURNING id`,
       [
         name, phone, email, buildingType, site.address, approxArea || null, notes || null, customerId,
-        site.pincode, site.latitude, site.longitude, RULES_VERSION,
+        site.pincode, site.latitude, site.longitude, RULES_VERSION, area,
       ]
     );
     await media.saveForRequest(req, 'demolition', rows[0].id)
@@ -52,7 +54,7 @@ router.post('/', media.acceptMedia, async (req, res) => {
     live.requestChanged(customerId);
     push.quietly(push.notifyAdmins({
       title: `New demolition request #${rows[0].id} 🏗️`,
-      body: `${name} · ${buildingType} · ${site.address.slice(0, 60)}`,
+      body: `${name} · ${buildingType} · ${area}`,
       url: `/admin.html#demolition-${rows[0].id}`,
       tag: `demolition-${rows[0].id}`,
     }));

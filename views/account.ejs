@@ -97,14 +97,7 @@
               </div>
             </div>
             <%- include('partials/location-fields', { prefix: 'p', c }) %>
-            <div class="form-group">
-              <label for="pArea">Area</label>
-              <select id="pArea" name="area">
-                <option value="">Select area</option>
-                <% [...areas, otherArea].forEach((area) => { %><option<%= c.area === area || (area === otherArea && /^Other/.test(c.area || '')) ? ' selected' : '' %>><%= area %></option>
-                <% }) %>
-              </select>
-            </div>
+            <%- include('partials/area-field', { prefix: 'p', c, required: false }) %>
             <button type="submit" class="btn btn-accent btn-block" id="saveProfileBtn">Save Details</button>
           </form>
         </section>
