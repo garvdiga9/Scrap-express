@@ -39,6 +39,24 @@ window.SEQuote = (() => {
       }
     });
 
+    // Choosing one of the offered pickup slots.
+    container.addEventListener('submit', async (e) => {
+      const form = e.target.closest('.slot-form');
+      if (!form) return;
+      e.preventDefault();
+      const button = form.querySelector('button[type="submit"]');
+      const alertBox = form.querySelector('.form-alert');
+      alertBox.hidden = true;
+      button.disabled = true;
+      try {
+        if (await post(`${form.closest('[data-quote-api]').dataset.quoteApi}/slot`, { slotId: form.elements.slotId.value })) await refreshOrReload();
+      } catch (err) {
+        alertBox.textContent = err.message;
+        alertBox.hidden = false;
+        button.disabled = false;
+      }
+    });
+
     container.addEventListener('submit', async (e) => {
       const form = e.target.closest('.ready-form');
       if (!form) return;

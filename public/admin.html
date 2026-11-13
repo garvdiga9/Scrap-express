@@ -77,6 +77,7 @@
     <button class="tab-btn active" data-tab="requests">Pickup <span class="tab-long">Requests</span> <span class="tab-count" id="pickupCount" hidden></span></button>
     <button class="tab-btn" data-tab="demolition">Demolition <span class="tab-long">Requests</span> <span class="tab-count" id="demolitionCount" hidden></span></button>
     <button class="tab-btn" data-tab="callbacks">Call Backs <span class="tab-count" id="callbackCount" hidden></span></button>
+    <button class="tab-btn" data-tab="staff">Staff</button>
     <button class="tab-btn" data-tab="customers">Customers</button>
     <button class="tab-btn" data-tab="rates"><span class="tab-long">Scrap</span> Rates</button>
     <button class="tab-btn" data-tab="testimonials">Reviews</button>
@@ -108,8 +109,13 @@
           <option value="quoted">Quote sent</option>
           <option value="accepted">Quote accepted</option>
           <option value="declined">Quote declined</option>
-          <option value="ready">Ready for pickup</option>
-          <option value="confirmed">Confirmed</option>
+          <option value="slots_sent">Slots sent</option>
+          <option value="scheduled">Slot chosen</option>
+          <option value="on_way">On the way</option>
+          <option value="arrived">At the site</option>
+          <option value="weighed">Weighed</option>
+          <option value="ready">Ready for pickup (old)</option>
+          <option value="confirmed">Confirmed (old)</option>
           <option value="completed">Completed</option>
           <option value="no_scrap">No scrap at site</option>
           <option value="cancelled">Cancelled</option>
@@ -286,6 +292,36 @@
       </form>
     </section>
 
+    <!-- Staff tab: the people who do pickups, and their Staff app logins -->
+    <section class="tab-panel" id="tab-staff">
+      <div class="panel-head">
+        <h2>Staff</h2>
+        <a href="/staff.html" target="_blank" rel="noopener" class="btn btn-outline">Open Staff app</a>
+      </div>
+      <p class="admin-card-hint">Each staff member signs in to the Staff app with the username and password you set here. They open <strong id="staffAppAddress"></strong> on their phone, sign in, and tap "Install Staff App". They only see pickups: no rates, customers or quotes. When a customer chooses a pickup slot, every staff member is alerted and the first one free takes it.</p>
+      <form class="admin-card staff-form" id="staffForm" method="post" novalidate>
+        <h3 id="staffFormTitle">Add a staff member</h3>
+        <input type="hidden" id="staffEditId">
+        <div class="lot-form-grid">
+          <label>Name <input type="text" id="staffName" maxlength="150" required></label>
+          <label>Phone (optional) <input type="tel" id="staffPhone" maxlength="20"></label>
+          <label>Username <input type="text" id="staffUser" maxlength="50" autocapitalize="none" autocomplete="off" placeholder="e.g. ravi" required></label>
+          <label><span id="staffPassLabel">Password (6+ characters)</span> <input type="text" id="staffPass" maxlength="100" autocomplete="off"></label>
+        </div>
+        <div id="staffFormAlert" class="form-alert" hidden></div>
+        <div class="admin-card-actions">
+          <button type="submit" class="btn btn-accent" id="staffSaveBtn">Add Staff Member</button>
+          <button type="button" class="btn btn-outline" id="staffCancelEdit" hidden>Cancel</button>
+        </div>
+      </form>
+      <div class="table-wrap">
+        <table class="admin-table" id="staffTable">
+          <thead><tr><th>Name</th><th>Username</th><th>Phone</th><th>Open pickups</th><th>Done</th><th>Last signed in</th><th>Status</th><th></th></tr></thead>
+          <tbody id="staffBody"><tr><td colspan="8" class="table-empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- Photos tab: real photos for the home page, and client logos -->
     <section class="tab-panel" id="tab-photos">
       <div class="panel-head">
@@ -458,6 +494,7 @@
   </div>
   <dl class="detail-list" id="requestDetails"></dl>
   <section class="media-gallery" id="requestMedia" hidden></section>
+  <section class="docs-panel schedule-panel" id="requestSchedule"></section>
   <section class="docs-panel" id="requestDocs"></section>
 
   <form class="quote-form" id="quoteForm" method="post" novalidate>

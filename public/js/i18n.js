@@ -107,6 +107,13 @@
     subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTRS,
   });
 
+  // Pages the server didn't translate (the staff app) ask for the whole page.
+  if (document.documentElement.hasAttribute('data-translate-all')) {
+    const all = () => translateTree(document.body);
+    if (document.body) all();
+    else document.addEventListener('DOMContentLoaded', all);
+  }
+
   // Browser alerts and confirmations.
   const nativeAlert = window.alert.bind(window);
   const nativeConfirm = window.confirm.bind(window);

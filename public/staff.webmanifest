@@ -1,0 +1,19 @@
+{
+  "id": "/staff",
+  "name": "Scrap Express Staff",
+  "short_name": "SE Staff",
+  "description": "For Scrap Express pickup staff: see pickups, take one, and mark each step.",
+  "start_url": "/staff.html",
+  "scope": "/staff",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "en-IN",
+  "icons": [
+    { "src": "/icons/staff-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/staff-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/staff-icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/staff-icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

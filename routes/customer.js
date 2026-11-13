@@ -11,6 +11,7 @@ const { mountPushRoutes } = require('./push');
 const live = require('../lib/live');
 const documents = require('../lib/documents');
 const schedules = require('../lib/schedules');
+const dispatch = require('../lib/dispatch');
 const pool = require('../db/pool');
 
 const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30;
@@ -205,10 +206,23 @@ router.get('/documents/:id', requireCustomer, async (req, res) => {
     const table = doc.request_type === 'pickup' ? 'pickup_requests' : 'demolition_requests';
     const { rows } = await pool.query(`SELECT 1 FROM ${table} WHERE id = $1 AND customer_id = $2`, [doc.request_id, req.session.customerId]);
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
-    documents.send(res, doc);
+    documents.send(res, doc, { inline: req.query.view === '1' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not download the file.' });
+  }
+});
+
+// POST /api/customer/requests/:id/slot { slotId } — pick one of the offered pickup slots.
+router.post('/requests/:id/slot', requireCustomer, async (req, res) => {
+  try {
+    const row = await dispatch.chooseSlot(Number(req.params.id), { customerId: req.session.customerId }, Number(req.body.slotId));
+    if (row.error) return res.status(409).json({ error: row.error });
+    res.json({ ok: true });
+    dispatch.announceChosen(row);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save that. Please try again.' });
   }
 });
 

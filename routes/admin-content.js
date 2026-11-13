@@ -8,12 +8,88 @@ const siteImages = require('../lib/site-images');
 const lots = require('../lib/lots');
 const live = require('../lib/live');
 const analytics = require('../lib/analytics');
+const dispatch = require('../lib/dispatch');
+const { cleanPhone } = require('../lib/validation');
 const documents = require('../lib/documents');
 const push = require('../lib/push');
 
 router.use(requireAdmin);
 
 const text = (value, max) => String(value ?? '').trim().replace(/\s+/g, ' ').slice(0, max);
+
+// ---- staff accounts ----
+
+router.get('/staff', async (req, res) => {
+  try {
+    res.json(await dispatch.listStaff());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load staff' });
+  }
+});
+
+const saveStaff = (getId) => async (req, res) => {
+  try {
+    const { staff, error } = await dispatch.saveStaff(getId(req), req.body || {}, { cleanPhone });
+    if (error) return res.status(400).json({ error });
+    res.status(getId(req) ? 200 : 201).json(staff);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save the staff member.' });
+  }
+};
+router.post('/staff', saveStaff(() => null));
+router.put('/staff/:id', saveStaff((req) => Number(req.params.id)));
+
+router.delete('/staff/:id', async (req, res) => {
+  try {
+    await dispatch.removeStaff(Number(req.params.id));
+    res.json({ message: 'Deleted' });
+    live.publish('requests');
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not delete the staff member.' });
+  }
+});
+
+// ---- pickup slots and who does the pickup ----
+
+// POST /requests/:id/slots { slots: [{ date, from, to }], deadlineHours }
+router.post('/requests/:id/slots', async (req, res) => {
+  const { slots, hours, error } = dispatch.parseSlots(req.body || {});
+  if (error) return res.status(400).json({ error });
+  try {
+    const result = await dispatch.offerSlots(Number(req.params.id), slots, hours);
+    if (result.error) return res.status(409).json({ error: result.error });
+    res.json({ slots: result.slots, deadline: result.request.slots_deadline });
+    dispatch.announceSlots(result.request, result.slots);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not send the slots.' });
+  }
+});
+
+// PUT /requests/:id/staff { staffId | null }
+router.put('/requests/:id/staff', async (req, res) => {
+  const staffId = req.body.staffId ? Number(req.body.staffId) : null;
+  try {
+    const row = await dispatch.assign(Number(req.params.id), staffId);
+    if (!row) return res.status(409).json({ error: 'This pickup can only be assigned after a slot is chosen and before it is weighed.' });
+    res.json({ ok: true });
+    dispatch.requestChanged(row);
+    if (staffId) {
+      push.quietly(push.notifyStaff({
+        title: 'A pickup was assigned to you 🚚',
+        body: [dispatch.slotLabel(row), row.company_name, row.area].filter(Boolean).join(' · '),
+        url: '/staff.html',
+        tag: `staff-pickup-${row.id}`,
+      }, { onlyId: staffId }));
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not assign the pickup.' });
+  }
+});
 
 // ---- analytics ----
 
@@ -136,7 +212,7 @@ router.post('/documents', documents.acceptDocument, async (req, res) => {
 router.get('/documents/:id/file', async (req, res) => {
   const doc = await documents.find(Number(req.params.id)).catch(() => null);
   if (!doc) return res.status(404).json({ error: 'Not found' });
-  documents.send(res, doc);
+  documents.send(res, doc, { inline: req.query.view === '1' });
 });
 
 router.delete('/documents/:id', async (req, res) => {

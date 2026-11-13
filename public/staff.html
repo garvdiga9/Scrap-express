@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff - Scrap Express</title>
+<meta name="robots" content="noindex, nofollow">
+<!-- Installs as its own app ("SE Staff"), for pickup staff only. -->
+<link rel="manifest" href="/staff.webmanifest">
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" href="/icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="/icons/staff-apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="SE Staff">
+<meta name="mobile-web-app-capable" content="yes">
+<script>
+  // Hindi or English, remembered on this phone. Hindi turns on the
+  // translator (js/i18n.js) for everything on the page.
+  (function () {
+    var lang = 'en';
+    try { lang = localStorage.getItem('se-staff-lang') || 'en'; } catch (e) {}
+    if (lang === 'hi') {
+      document.documentElement.lang = 'hi-IN';
+      document.documentElement.setAttribute('data-translate-all', '');
+    }
+  }());
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/staff.css">
+<script src="/js/i18n-hi.js"></script>
+<script src="/js/i18n.js" defer></script>
+</head>
+<body class="staff-body">
+
+<svg style="display:none">
+  <symbol id="icon-recycle" viewBox="0 0 24 24"><path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L4.9 13.5m3.867-6.5L10.4 4l1.633 3M15 19h3.185a1.83 1.83 0 0 0 1.57-.881 1.785 1.785 0 0 0 .004-1.784L18 13.5m-4.6-6.5H12m-4.6 0L6 10m14-3.5-1.6 3M7 19l-2-3.5M15 19l2-3.5M12 4l-2.5 4.5M12 4l2.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="icon-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+</svg>
+
+<!-- Sign in -->
+<section class="staff-login" id="staffLogin" hidden>
+  <div class="login-card">
+    <div class="login-brand">
+      <svg class="icon brand-icon"><use href="#icon-recycle"/></svg>
+      <span data-no-translate>Scrap <strong>Express</strong></span>
+    </div>
+    <h1>Staff Sign In</h1>
+    <p class="login-sub">Use the username and password the owner gave you.</p>
+    <div id="staffLoginAlert" class="form-alert error" hidden></div>
+    <form id="staffLoginForm" method="post" novalidate>
+      <div class="form-group">
+        <label for="staffUsername">Username</label>
+        <input type="text" id="staffUsername" name="username" required autocomplete="username" autocapitalize="none">
+      </div>
+      <div class="form-group">
+        <label for="staffPassword">Password</label>
+        <input type="password" id="staffPassword" name="password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-accent btn-lg btn-block" id="staffLoginBtn">Sign In</button>
+    </form>
+    <button type="button" class="staff-lang" data-staff-lang></button>
+  </div>
+</section>
+
+<!-- Pickups -->
+<div class="staff-app" id="staffApp" hidden>
+  <header class="staff-top">
+    <div>
+      <strong data-no-translate>Scrap Express</strong>
+      <span id="staffHello"></span>
+    </div>
+    <div class="staff-top-actions">
+      <button type="button" class="staff-lang" data-staff-lang></button>
+      <button type="button" class="btn btn-outline btn-sm" id="staffLogout">Log Out</button>
+    </div>
+  </header>
+
+  <main class="staff-main">
+    <div class="push-card" id="staffPushCard" hidden>
+      <svg class="icon push-icon"><use href="#icon-bell"/></svg>
+      <div class="push-copy">
+        <strong>Alerts for new pickups</strong>
+        <span data-push-status></span>
+      </div>
+      <button type="button" class="btn btn-accent" data-push-toggle hidden>Turn On Notifications</button>
+    </div>
+    <button type="button" class="btn btn-accent btn-block" id="staffInstall" hidden>Install Staff App</button>
+    <div id="staffAlert" class="form-alert error" hidden></div>
+
+    <section>
+      <h2>My pickups <span class="staff-count" id="mineCount"></span></h2>
+      <div class="staff-list" id="mineList"></div>
+    </section>
+    <section>
+      <h2>Available pickups <span class="staff-count" id="availableCount"></span></h2>
+      <div class="staff-list" id="availableList"></div>
+    </section>
+    <section>
+      <h2>Done in the last 7 days</h2>
+      <div class="staff-list" id="doneList"></div>
+    </section>
+  </main>
+</div>
+
+<script src="/js/push.js"></script>
+<script src="/js/live.js"></script>
+<script src="/js/staff.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 <%# A request's progress steps and its papers (weighbridge slip, GST invoice),
     in My Account and on the private quote link. Locals: timeline (from
-    lib/timeline.js), docs, docBase (download address prefix). %>
+    lib/timeline.js), docs, docBase (download address prefix), pickup (weight
+    and schedule, from lib/dispatch.js customerView). %>
 <% const fmtStep = (d) => new Date(d).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }); %>
 <% const docLabels = { weight_slip: 'Weighbridge slip', invoice: 'GST invoice', other: 'Document' }; %>
 <% if (locals.timeline && timeline.length) { %>
@@ -14,11 +15,27 @@
     <% }) %>
   </ol>
 <% } %>
-<% if (locals.docs && docs.length) { %>
+<% const weighPhoto = (locals.docs || []).find((d) => d.kind === 'weigh_photo'); %>
+<% const papers = (locals.docs || []).filter((d) => d.kind !== 'weigh_photo'); %>
+<% if (locals.pickup && pickup.weighedKg != null) { %>
+  <div class="request-weight">
+    <% if (weighPhoto) { %>
+      <a href="<%= docBase %><%= weighPhoto.id %>?view=1" target="_blank" rel="noopener" class="weigh-photo">
+        <img src="<%= docBase %><%= weighPhoto.id %>?view=1" alt="Photo of the weighing machine showing the weight" loading="lazy" decoding="async" width="160" height="120">
+      </a>
+    <% } %>
+    <div>
+      <span class="weigh-label">Weighed</span>
+      <strong class="weigh-kg"><%= pickup.weighedKg.toLocaleString('en-IN', { maximumFractionDigits: 2 }) %> kg</strong>
+      <% if (pickup.payment) { %><span class="weigh-paid">Paid by <%= pickup.payment.toLowerCase() %></span><% } %>
+    </div>
+  </div>
+<% } %>
+<% if (papers.length) { %>
   <div class="request-docs">
     <strong>Your papers</strong>
     <ul>
-      <% docs.forEach((doc) => { %>
+      <% papers.forEach((doc) => { %>
         <li><a href="<%= docBase %><%= doc.id %>" download>
           <svg class="icon" aria-hidden="true"><use href="#icon-paper"/></svg>
           <%= docLabels[doc.kind] %> <span class="doc-meta">(<%= doc.mime_type === 'application/pdf' ? 'PDF' : 'image' %>, <%= Math.max(1, Math.round(doc.size_bytes / 1024)) %> KB)</span>

@@ -1961,3 +1961,27 @@ main[tabindex="-1"]:focus { outline: none; }
   .main-nav.open .nav-lang { display: block; }
 }
 .translation-note { background: var(--color-subtle); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; color: var(--color-text); }
+
+/* ---------- Pickup slots, tracking and the weighing photo ---------- */
+.slot-form { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.slot-form fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.slot-form legend { font-weight: 700; color: var(--color-dark); padding: 0; margin-bottom: 4px; }
+.slot-deadline { margin: 0 0 4px; font-size: 13.5px; color: var(--color-text); }
+.slot-option { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1.5px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-white); cursor: pointer; font-weight: 600; color: var(--color-dark); }
+.slot-option:has(input:checked) { border-color: var(--color-primary); background: var(--color-primary-light); }
+.slot-option:focus-within { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+.slot-option input { width: 18px; height: 18px; accent-color: var(--color-primary); margin: 0; }
+.slot-form .btn { align-self: flex-start; }
+.slot-help { margin: 0; font-size: 13px; color: var(--color-text-light); }
+.slot-help a { color: var(--color-primary-dark); font-weight: 600; }
+.request-weight { grid-column: 1 / -1; width: 100%; display: flex; align-items: center; gap: 14px; margin-top: 10px; padding: 12px; background: var(--color-subtle); border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.request-weight > div { display: flex; flex-direction: column; gap: 2px; }
+.weigh-photo img { display: block; width: 120px; height: 90px; object-fit: cover; border-radius: 6px; background: var(--color-border); }
+.weigh-label { font-size: 12.5px; color: var(--color-text-light); }
+.weigh-kg { font-family: var(--font-heading); font-size: 24px; color: var(--color-primary-dark); font-variant-numeric: tabular-nums; }
+.weigh-paid { font-size: 13px; color: var(--color-text); }
+.status-badge.status-slots_sent { background: #fef3c7; color: #92400e; }
+.status-badge.status-scheduled { background: #dbeafe; color: #1e40af; }
+.status-badge.status-on_way { background: #e0e7ff; color: #3730a3; }
+.status-badge.status-arrived { background: #cffafe; color: #155e75; }
+.status-badge.status-weighed { background: #ccfbf1; color: #115e59; }

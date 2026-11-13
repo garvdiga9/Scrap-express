@@ -81,9 +81,10 @@ self.addEventListener('notificationclick', (event) => {
   const target = new URL(event.notification.data?.url || '/', self.location.origin).href;
   event.waitUntil((async () => {
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const isAdmin = (href) => new URL(href).pathname.startsWith('/admin');
+    // Which of our three apps a page belongs to: admin, staff or customer.
+    const appOf = (href) => (new URL(href).pathname.match(/^\/(admin|staff)/) || [])[1] || 'customer';
     const ours = windows.filter((w) => new URL(w.url).origin === self.location.origin);
-    const open = ours.find((w) => isAdmin(w.url) === isAdmin(target));
+    const open = ours.find((w) => appOf(w.url) === appOf(target));
     if (open) {
       await open.focus();
       return open.navigate(target);

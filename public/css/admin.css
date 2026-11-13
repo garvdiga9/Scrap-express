@@ -461,3 +461,21 @@
 .mini-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .mini-table td { padding: 6px 4px; border-bottom: 1px solid var(--color-border); word-break: break-all; }
 .mini-table td.num { text-align: right; font-weight: 700; white-space: nowrap; }
+
+/* Pickup slots, staff and weighing in the request details; the Staff tab */
+.schedule-panel .quote-hint { margin: 4px 0 8px; }
+.schedule-chosen { font-weight: 700; color: #0d5c2c; margin: 4px 0 8px; }
+.schedule-chosen a { font-weight: 600; margin-left: 6px; }
+.schedule-expired { font-weight: 600; color: #b91c1c; margin: 4px 0 8px; }
+.schedule-staff { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; font-weight: 600; margin: 8px 0; }
+.schedule-staff select, .slot-row input { padding: 8px 10px; border-radius: var(--radius-sm); border: 1.5px solid var(--color-border); font: inherit; font-size: 14px; }
+.slot-offer { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; margin-top: 10px; padding: 12px; background: var(--color-bg); border-radius: var(--radius-sm); }
+.slot-rows { display: flex; flex-direction: column; gap: 6px; }
+.slot-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; }
+.staff-form { margin-bottom: 18px; }
+.row-muted td { opacity: 0.55; }
+.status-slots_sent { color: #b45309; }
+.status-scheduled { color: #1d4ed8; }
+.status-on_way { color: #4338ca; }
+.status-arrived { color: #0e7490; }
+.status-weighed { color: #0f766e; }

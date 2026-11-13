@@ -23,16 +23,35 @@
     <div class="form-alert error quote-alert" hidden></div>
   <% } else if (r.quote_response === 'accepted') { %>
     <p class="quote-response accepted">You accepted this quote on <%= fmtQuoteDate(r.quote_responded_at) %>.</p>
-    <% if (r.status === 'accepted') { %>
-      <form class="ready-form" method="post">
-        <label for="readyDate<%= r.id %>">When will the scrap be ready for us to collect? Please tell us only when it's really there, so our truck doesn't make a wasted trip.</label>
-        <div class="ready-form-row">
-          <input type="date" id="readyDate<%= r.id %>" name="readyDate" required min="<%= readyDates.min %>" max="<%= readyDates.max %>" value="<%= readyDates.min %>">
-          <button type="submit" class="btn btn-accent">My Scrap Is Ready</button>
-        </div>
+    <% const pk = r.pickup || {}; %>
+    <% if (r.status === 'slots_sent' && pk.slots && pk.slots.length && !pk.expired) { %>
+      <form class="slot-form" method="post">
+        <fieldset>
+          <legend>Choose your pickup slot</legend>
+          <p class="slot-deadline">Please choose by <strong><%= new Date(pk.deadline).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }) %></strong>. After that we'll offer the slots to others.</p>
+          <% pk.slots.forEach((slot, i) => { %>
+            <label class="slot-option"><input type="radio" name="slotId" value="<%= slot.id %>"<%= i === 0 ? ' checked' : '' %>> <span><%= slot.label %></span></label>
+          <% }) %>
+        </fieldset>
         <div class="form-alert error" hidden></div>
+        <button type="submit" class="btn btn-accent">Confirm This Slot</button>
+        <p class="slot-help">None of these work? <a href="tel:+919818826333">Call us</a> and we'll find another time.</p>
       </form>
-    <% } else if (r.status === 'ready') { %>
+    <% } else if (r.status === 'slots_sent') { %>
+      <p class="quote-response declined">The time to choose a slot has passed. Please <a href="tel:+919818826333">call us</a> and we'll send new slots.</p>
+    <% } else if (pk.chosen && ['scheduled', 'on_way', 'arrived', 'weighed'].includes(r.status)) { %>
+      <p class="quote-response accepted">
+        <strong>Pickup: <%= pk.chosen.label %></strong><br>
+        <% if (r.status === 'scheduled') { %><%= pk.staffName ? `${pk.staffName} from our team will come.` : 'Our team will come in this slot.' %> We'll alert you when they set off.
+        <% } else if (r.status === 'on_way') { %><%= pk.staffName || 'Our team' %> is on the way to your site.
+        <% } else if (r.status === 'arrived') { %><%= pk.staffName || 'Our team' %> has arrived at your site.
+        <% } else { %>Your scrap has been weighed. Payment is next.<% } %>
+      </p>
+    <% } else if (r.status === 'accepted') { %>
+      <p class="quote-response accepted">Thank you. We'll send you 2–3 pickup slots to choose from shortly.</p>
+    <% } %>
+    <%# From before slots existed: requests where the customer said the scrap is ready. %>
+    <% if (r.status === 'ready') { %>
       <p class="quote-response accepted">You told us the scrap is ready<%= r.ready_date ? ` from ${fmtQuoteDate(r.ready_date)}` : '' %>. We'll call you to confirm before sending a truck.</p>
     <% } %>
   <% } else if (r.quote_response === 'declined') { %>

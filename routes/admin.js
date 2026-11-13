@@ -17,6 +17,7 @@ const siteStats = require('../lib/site-stats');
 const siteImages = require('../lib/site-images');
 const lots = require('../lib/lots');
 const documents = require('../lib/documents');
+const dispatch = require('../lib/dispatch');
 
 const ALLOWED_STATUSES = ['pending', 'confirmed', 'completed', 'cancelled'];
 const MAX_QUOTE_LINES = 20;
@@ -135,8 +136,20 @@ router.get('/requests', requireAdmin, async (req, res) => {
                  AND (other.customer_id = p.customer_id
                       OR right(regexp_replace(other.phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(p.phone, '[^0-9]', '', 'g'), 10))
               ) AS past_no_scrap
-       FROM pickup_requests p ORDER BY p.created_at DESC`
+              ,
+              u.name AS staff_name,
+              (SELECT d.id FROM request_documents d WHERE d.request_type = 'pickup' AND d.request_id = p.id AND d.kind = 'weigh_photo'
+               ORDER BY d.id DESC LIMIT 1) AS weigh_photo_id,
+              p.slots_deadline < NOW() AS slots_expired
+       FROM pickup_requests p LEFT JOIN staff_users u ON u.id = p.staff_id
+       ORDER BY p.created_at DESC`
     );
+    // The pickup slots offered for each request, and which one was chosen.
+    const slots = await dispatch.slotsFor(rows.filter((r) => r.slots_deadline).map((r) => r.id));
+    rows.forEach((r) => {
+      r.slots = slots.get(r.id) || [];
+      r.chosen_slot = r.slots.find((s) => s.id === r.slot_id) || null;
+    });
     res.json(rows);
   } catch (err) {
     console.error(err);

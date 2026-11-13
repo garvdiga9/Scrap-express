@@ -268,6 +268,44 @@ CREATE TABLE IF NOT EXISTS pickup_schedules (
 CREATE INDEX IF NOT EXISTS idx_pickup_schedules_due ON pickup_schedules(next_date) WHERE active;
 ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS schedule_id INT REFERENCES pickup_schedules(id) ON DELETE SET NULL;
 
+-- Pickup scheduling and the staff who do the pickups (lib/dispatch.js).
+-- After a quote is accepted the owner offers 2–3 slots with a deadline; the
+-- customer picks one; a staff member claims the pickup and marks each step.
+CREATE TABLE IF NOT EXISTS staff_users (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  phone VARCHAR(20),
+  username VARCHAR(50) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  last_login_at TIMESTAMP
+);
+ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS staff_id INT REFERENCES staff_users(id) ON DELETE CASCADE;
+CREATE TABLE IF NOT EXISTS pickup_slots (
+  id SERIAL PRIMARY KEY,
+  request_id INT NOT NULL REFERENCES pickup_requests(id) ON DELETE CASCADE,
+  slot_date DATE NOT NULL,
+  time_from TIME NOT NULL,
+  time_to TIME NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_pickup_slots_request ON pickup_slots(request_id);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS slots_deadline TIMESTAMP;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS slots_expiry_notified BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS slot_id INT REFERENCES pickup_slots(id) ON DELETE SET NULL;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS slot_chosen_at TIMESTAMP;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS staff_id INT REFERENCES staff_users(id) ON DELETE SET NULL;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS staff_claimed_at TIMESTAMP;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS weighed_kg NUMERIC(12,2);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS weighed_at TIMESTAMP;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS payment_method VARCHAR(20);
+CREATE INDEX IF NOT EXISTS idx_pickup_requests_staff ON pickup_requests(staff_id);
+-- The weighing machine photo staff upload is kept with the request's papers.
+ALTER TABLE request_documents DROP CONSTRAINT IF EXISTS request_documents_kind_check;
+ALTER TABLE request_documents ADD CONSTRAINT request_documents_kind_check
+  CHECK (kind IN ('weight_slip', 'invoice', 'other', 'weigh_photo'));
+
 -- Visits and conversions, counted per day (lib/analytics.js). Totals only:
 -- no names, numbers, addresses or cookies.
 CREATE TABLE IF NOT EXISTS analytics_daily (

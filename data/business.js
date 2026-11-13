@@ -70,12 +70,16 @@ const QUANTITY_UNITS = { kg: 1, tonnes: 1000 };
 // declines → scrap ready → pickup confirmed by phone → completed. It can also
 // end as cancelled, or as no scrap at site if the truck had a wasted trip.
 // public/js/admin.js keeps the same lists for the dashboard.
-const PICKUP_STATUSES = ['pending', 'quoted', 'accepted', 'declined', 'ready', 'confirmed', 'completed', 'no_scrap', 'cancelled'];
+// A pickup's life: received → quote sent → accepted → slots offered → slot
+// chosen (scheduled) → staff on the way → arrived → weighed → paid. 'ready'
+// and 'confirmed' are from before slots existed and still work.
+const PICKUP_STATUSES = ['pending', 'quoted', 'accepted', 'declined', 'slots_sent', 'scheduled', 'on_way', 'arrived', 'weighed',
+  'ready', 'confirmed', 'completed', 'no_scrap', 'cancelled'];
 const QUOTE_UNITS = ['per kg', 'per tonne', 'per piece', 'lump sum'];
 
 // Change this whenever views/rules.ejs changes in substance, so each request
 // records which version its customer accepted.
-const RULES_VERSION = '2026-11-12';
+const RULES_VERSION = '2026-11-13';
 const READY_DATE_MAX_DAYS = 30;
 
 // 'YYYY-MM-DD' in India, and the dates a customer can say their scrap is ready.

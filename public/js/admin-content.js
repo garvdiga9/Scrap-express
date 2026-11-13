@@ -576,3 +576,285 @@ document.getElementById('analyticsRange').addEventListener('change', loadAnalyti
     }
   });
 })();
+
+/* ---------- Staff tab ---------- */
+const staffForm = document.getElementById('staffForm');
+let staffList = [];
+document.getElementById('staffAppAddress').textContent = `${window.location.origin}/staff.html`;
+
+function resetStaffForm() {
+  staffForm.reset();
+  document.getElementById('staffEditId').value = '';
+  document.getElementById('staffFormTitle').textContent = 'Add a staff member';
+  document.getElementById('staffSaveBtn').textContent = 'Add Staff Member';
+  document.getElementById('staffPassLabel').textContent = 'Password (6+ characters)';
+  document.getElementById('staffCancelEdit').hidden = true;
+}
+
+async function saveStaffMember(id, body) {
+  const res = await fetch(id ? `/api/admin/staff/${id}` : '/api/admin/staff', {
+    method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Could not save the staff member.');
+  return data;
+}
+
+function staffRow(s) {
+  const tr = document.createElement('tr');
+  tr.className = s.active ? '' : 'row-muted';
+  [s.name, s.username, '', s.open_pickups, s.done_pickups, s.last_login_at ? formatDateTime(s.last_login_at) : 'Never'].forEach((value) => {
+    const td = document.createElement('td');
+    td.textContent = value;
+    tr.appendChild(td);
+  });
+  if (s.phone) tr.children[2].appendChild(telLink(s.phone));
+  else tr.children[2].textContent = '-';
+
+  const statusTd = document.createElement('td');
+  const toggle = document.createElement('button');
+  toggle.className = 'view-btn';
+  toggle.textContent = s.active ? 'Active: switch off' : 'Off: switch on';
+  toggle.title = s.active ? 'Stops this person signing in' : 'Lets this person sign in again';
+  toggle.addEventListener('click', async () => {
+    try {
+      await saveStaffMember(s.id, { name: s.name, username: s.username, phone: s.phone, active: !s.active });
+      loadStaff();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+  statusTd.appendChild(toggle);
+
+  const actionTd = document.createElement('td');
+  const edit = document.createElement('button');
+  edit.className = 'view-btn';
+  edit.textContent = 'Edit / new password';
+  edit.addEventListener('click', () => {
+    document.getElementById('staffEditId').value = s.id;
+    document.getElementById('staffName').value = s.name;
+    document.getElementById('staffPhone').value = s.phone || '';
+    document.getElementById('staffUser').value = s.username;
+    document.getElementById('staffPass').value = '';
+    document.getElementById('staffFormTitle').textContent = `Edit: ${s.name}`;
+    document.getElementById('staffSaveBtn').textContent = 'Save Changes';
+    document.getElementById('staffPassLabel').textContent = 'New password (leave empty to keep)';
+    document.getElementById('staffCancelEdit').hidden = false;
+    staffForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  const remove = document.createElement('button');
+  remove.className = 'icon-btn';
+  remove.title = 'Delete staff member';
+  remove.setAttribute('aria-label', `Delete ${s.name}`);
+  remove.innerHTML = '<svg class="icon"><use href="#icon-trash"/></svg>';
+  remove.addEventListener('click', async () => {
+    if (!confirm(`Delete ${s.name}? Their pickups stay, without a name. To only stop them signing in, switch them off instead.`)) return;
+    await fetch(`/api/admin/staff/${s.id}`, { method: 'DELETE' });
+    loadStaff();
+  });
+  actionTd.append(edit, ' ', remove);
+  tr.append(statusTd, actionTd);
+  return tr;
+}
+
+async function loadStaff() {
+  try {
+    const res = await fetch('/api/admin/staff');
+    if (!res.ok) return;
+    staffList = await res.json();
+    const body = document.getElementById('staffBody');
+    body.innerHTML = staffList.length ? '' : '<tr><td colspan="8" class="table-empty">No staff yet. Add the first one above.</td></tr>';
+    staffList.forEach((s) => body.appendChild(staffRow(s)));
+  } catch (err) {
+    // Tried again when the tab is opened.
+  }
+}
+
+staffForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  showBoxAlert('staffFormAlert', '', 'error');
+  const id = document.getElementById('staffEditId').value;
+  try {
+    await saveStaffMember(id, {
+      name: document.getElementById('staffName').value,
+      phone: document.getElementById('staffPhone').value.trim(),
+      username: document.getElementById('staffUser').value,
+      password: document.getElementById('staffPass').value,
+    });
+    resetStaffForm();
+    showBoxAlert('staffFormAlert', id ? 'Saved.' : 'Added. Give them the username and password, and the Staff app address above.', 'success');
+    loadStaff();
+  } catch (err) {
+    showBoxAlert('staffFormAlert', err.message, 'error');
+  }
+});
+document.getElementById('staffCancelEdit').addEventListener('click', resetStaffForm);
+document.querySelector('.tab-btn[data-tab="staff"]').addEventListener('click', loadStaff);
+window.SELive.on('requests', () => { if (!dashboard.hidden) loadStaff(); });
+new MutationObserver(() => { if (!dashboard.hidden) loadStaff(); }).observe(dashboard, { attributes: true, attributeFilter: ['hidden'] });
+
+/* ---------- A pickup's slots, staff member and weighing (request details) ---------- */
+window.SESchedule = (() => {
+  const CAN_OFFER = ['accepted', 'ready', 'confirmed', 'slots_sent', 'scheduled'];
+  const ASSIGNABLE = ['scheduled', 'on_way', 'arrived'];
+  const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  const plusDays = (n) => new Date(Date.now() + n * 86400000).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+
+  function slotRow(date, from, to) {
+    const row = document.createElement('div');
+    row.className = 'slot-row';
+    const d = document.createElement('input');
+    d.type = 'date';
+    d.min = today();
+    d.value = date;
+    d.setAttribute('aria-label', 'Slot date');
+    const f = document.createElement('input');
+    f.type = 'time';
+    f.value = from;
+    f.setAttribute('aria-label', 'From');
+    const t = document.createElement('input');
+    t.type = 'time';
+    t.value = to;
+    t.setAttribute('aria-label', 'To');
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'icon-btn';
+    remove.setAttribute('aria-label', 'Remove this slot');
+    remove.innerHTML = '&times;';
+    remove.addEventListener('click', () => row.remove());
+    row.append(d, f, document.createTextNode('to'), t, remove);
+    return row;
+  }
+
+  function mount(box, r) {
+    box.innerHTML = '';
+    const title = document.createElement('h3');
+    title.textContent = 'Pickup slot and staff';
+    box.appendChild(title);
+    const note = (text, className = 'quote-hint') => {
+      const p = document.createElement('p');
+      p.className = className;
+      p.textContent = text;
+      box.appendChild(p);
+      return p;
+    };
+
+    if (!r.quote_response && !CAN_OFFER.includes(r.status)) {
+      note('After the customer accepts your quote, you send 2–3 free pickup slots here and they choose one.');
+      return;
+    }
+
+    // What's been offered or chosen so far.
+    if (r.chosen_slot) {
+      note(`Slot chosen: ${r.chosen_slot.label}`, 'schedule-chosen');
+    } else if (r.slots && r.slots.length) {
+      const deadline = formatDateTime(r.slots_deadline);
+      note(r.slots_expired
+        ? `The customer did not choose by ${deadline}. Call them, or send new slots below.`
+        : `Waiting for the customer to choose by ${deadline}: ${r.slots.map((s) => s.label).join('  |  ')}`,
+      r.slots_expired ? 'schedule-expired' : 'quote-hint');
+      if (r.quote_token) {
+        const share = document.createElement('a');
+        share.className = 'btn btn-outline btn-sm';
+        share.target = '_blank';
+        share.rel = 'noopener';
+        const digits = String(r.phone).replace(/\D/g, '').slice(-10);
+        const text = `Hello ${r.name}, Scrap Express here. Please choose your pickup slot for request #${r.id}: ${window.location.origin}/quote/${r.quote_token}`;
+        share.href = `https://wa.me/91${digits}?text=${encodeURIComponent(text)}`;
+        share.textContent = 'Send the link on WhatsApp';
+        box.appendChild(share);
+      }
+    }
+
+    // Who is doing it.
+    if (ASSIGNABLE.includes(r.status)) {
+      const label = document.createElement('label');
+      label.className = 'schedule-staff';
+      label.textContent = 'Staff member ';
+      const select = document.createElement('select');
+      select.append(new Option('Anyone (not taken yet)', ''));
+      staffList.filter((s) => s.active || s.id === r.staff_id).forEach((s) => select.append(new Option(s.name, s.id, false, s.id === r.staff_id)));
+      select.addEventListener('change', async () => {
+        const res = await fetch(`/api/admin/requests/${r.id}/staff`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ staffId: select.value || null }),
+        });
+        if (!res.ok) alert((await res.json().catch(() => ({}))).error || 'Could not assign the pickup.');
+      });
+      label.appendChild(select);
+      box.appendChild(label);
+      if (!staffList.length) note('No staff yet. Add them in the Staff tab.');
+    } else if (r.staff_name) {
+      note(`Staff member: ${r.staff_name}`);
+    }
+
+    // The weighing.
+    if (r.weighed_kg != null) {
+      const weighed = document.createElement('p');
+      weighed.className = 'schedule-chosen';
+      weighed.textContent = `Weighed: ${Number(r.weighed_kg).toLocaleString('en-IN')} kg `;
+      if (r.weigh_photo_id) {
+        const photo = document.createElement('a');
+        photo.href = `/api/admin/documents/${r.weigh_photo_id}/file?view=1`;
+        photo.target = '_blank';
+        photo.rel = 'noopener';
+        photo.textContent = 'See the weighing machine photo';
+        weighed.appendChild(photo);
+      }
+      box.appendChild(weighed);
+    }
+
+    // Send (or re-send) slots.
+    if (!CAN_OFFER.includes(r.status)) return;
+    const form = document.createElement('form');
+    form.className = 'slot-offer';
+    form.noValidate = true;
+    const heading = document.createElement('strong');
+    heading.textContent = r.slots && r.slots.length ? 'Send new slots (replaces the ones above)' : 'Send 2–3 free pickup slots';
+    const rows = document.createElement('div');
+    rows.className = 'slot-rows';
+    rows.append(slotRow(plusDays(1), '10:00', '13:00'), slotRow(plusDays(1), '14:00', '17:00'), slotRow(plusDays(2), '10:00', '13:00'));
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'add-line-btn';
+    add.textContent = '+ Add a slot';
+    add.addEventListener('click', () => { if (rows.children.length < 4) rows.appendChild(slotRow(plusDays(2), '14:00', '17:00')); });
+    const deadlineLabel = document.createElement('label');
+    deadlineLabel.className = 'schedule-staff';
+    deadlineLabel.textContent = 'Customer must choose within ';
+    const hours = document.createElement('select');
+    [[6, '6 hours'], [12, '12 hours'], [24, '24 hours'], [48, '2 days'], [72, '3 days']].forEach(([value, text]) => hours.append(new Option(text, value, false, value === 24)));
+    deadlineLabel.appendChild(hours);
+    const alertBox = document.createElement('p');
+    alertBox.className = 'form-alert error';
+    alertBox.hidden = true;
+    const send = document.createElement('button');
+    send.type = 'submit';
+    send.className = 'btn btn-accent';
+    send.textContent = 'Send Slots to Customer';
+    form.append(heading, rows, add, deadlineLabel, alertBox, send);
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertBox.hidden = true;
+      const slots = [...rows.children].map((row) => {
+        const [d, f, t] = row.querySelectorAll('input');
+        return { date: d.value, from: f.value, to: t.value };
+      });
+      send.disabled = true;
+      try {
+        const res = await fetch(`/api/admin/requests/${r.id}/slots`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slots, deadlineHours: Number(hours.value) }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Could not send the slots.');
+        send.textContent = 'Sent ✓';
+      } catch (err) {
+        alertBox.textContent = err.message;
+        alertBox.hidden = false;
+        send.disabled = false;
+      }
+    });
+    box.appendChild(form);
+  }
+
+  return { mount };
+})();

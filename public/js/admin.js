@@ -171,8 +171,13 @@ const PICKUP_STATUS_LABELS = {
   quoted: 'Quote sent',
   accepted: 'Quote accepted',
   declined: 'Quote declined',
-  ready: 'Ready for pickup',
-  confirmed: 'Confirmed',
+  slots_sent: 'Slots sent',
+  scheduled: 'Slot chosen',
+  on_way: 'On the way',
+  arrived: 'At the site',
+  weighed: 'Weighed',
+  ready: 'Ready for pickup (old)',
+  confirmed: 'Confirmed (old)',
   completed: 'Completed',
   no_scrap: 'No scrap at site',
   cancelled: 'Cancelled',
@@ -570,6 +575,9 @@ function renderRequestSummary(r) {
   if (r.status === 'ready') addDetail('Before dispatch', 'Call the customer to confirm the scrap is ready, then set the status to Confirmed.');
   if (r.ready_date) addDetail('Scrap ready from', formatDate(r.ready_date));
   if (r.dispatch_checked_at) addDetail('Confirmed by call', formatDate(r.dispatch_checked_at));
+  if (r.chosen_slot) addDetail('Pickup slot', r.chosen_slot.label);
+  if (r.staff_name) addDetail('Staff', r.staff_name);
+  if (r.weighed_kg != null) addDetail('Weighed', `${Number(r.weighed_kg).toLocaleString('en-IN')} kg${r.payment_method ? ` · paid by ${r.payment_method === 'cash' ? 'cash' : 'bank transfer'}` : ''}`);
   addDetail('Company', r.company_name);
   addDetail('Business type', r.business_type);
   addDetail('GSTIN', r.gstin);
@@ -605,6 +613,9 @@ function updateOpenDialog() {
   if (!fresh) return;
   dialogRequest = fresh;
   renderRequestSummary(fresh);
+  // The slots panel too, unless slots are being typed in it.
+  const schedule = document.getElementById('requestSchedule');
+  if (!schedule.contains(document.activeElement)) window.SESchedule.mount(schedule, fresh);
 }
 
 function openRequestDialog(r) {
@@ -612,6 +623,7 @@ function openRequestDialog(r) {
   document.getElementById('dialogTitle').textContent = `Pickup Request #${r.id}`;
   renderRequestSummary(r);
   renderMediaGallery(document.getElementById('requestMedia'), r.media || []);
+  window.SESchedule.mount(document.getElementById('requestSchedule'), r);
   window.SEDocs.mount(document.getElementById('requestDocs'), 'pickup', r.id);
 
   quoteLines.innerHTML = '';

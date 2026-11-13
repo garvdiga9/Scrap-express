@@ -50,11 +50,11 @@
                     <% } %>
                   </div>
                   <span class="status-badge status-<%= r.status %>"><%= statusLabels[r.status] || r.status %></span>
-                  <%- include('partials/request-progress', { timeline: r.timeline, docs: r.docs, docBase: '/api/customer/documents/' }) %>
+                  <%- include('partials/request-progress', { timeline: r.timeline, docs: r.docs, docBase: '/api/customer/documents/', pickup: r.pickup }) %>
                   <% if (r.quote_items && r.quote_items.length) { %>
                     <%- include('partials/quote-box', { r, api: `/api/customer/requests/${r.id}` }) %>
                   <% } %>
-                  <% if (r.kind === 'pickup' && ['completed', 'confirmed', 'ready', 'accepted'].includes(r.status)) { %>
+                  <% if (r.kind === 'pickup' && ['completed', 'confirmed', 'ready', 'accepted', 'scheduled'].includes(r.status)) { %>
                     <details class="repeat-pickup">
                       <summary>Repeat this pickup</summary>
                       <form class="repeat-form" method="post" data-source="<%= r.id %>" novalidate>

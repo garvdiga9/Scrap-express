@@ -34,6 +34,7 @@ const areas = require('./lib/areas');
 const timeline = require('./lib/timeline');
 const documents = require('./lib/documents');
 const schedules = require('./lib/schedules');
+const dispatch = require('./lib/dispatch');
 const siteStats = require('./lib/site-stats');
 const rates = require('./lib/rates');
 const analytics = require('./lib/analytics');
@@ -99,6 +100,7 @@ app.get('/robots.txt', (req, res) => {
     'User-agent: *',
     'Disallow: /api/',
     'Disallow: /admin.html',
+    'Disallow: /staff.html',
     'Disallow: /account',
     'Disallow: /login',
     'Disallow: /quote/',
@@ -171,6 +173,7 @@ app.use('/api/demolition', demolitionRouter);
 app.use('/api/testimonials', testimonialsRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/admin', adminContentRouter); // photos, lots for sale, enquiries
+app.use('/api/staff', require('./routes/staff'));
 app.use('/api/lots', express.urlencoded({ extended: false }), lotsRouter);
 app.use('/api/customer', customerRouter);
 
@@ -226,6 +229,7 @@ app.locals.minPickupKg = MIN_PICKUP_KG;
 app.locals.mediaLimits = media.LIMITS;
 app.locals.statusLabels = {
   pending: 'Received', quoted: 'Quote Ready', accepted: 'Quote Accepted', declined: 'Quote Declined',
+  slots_sent: 'Choose a Pickup Slot', scheduled: 'Pickup Scheduled', on_way: 'On the Way', arrived: 'Team Arrived', weighed: 'Weighed',
   ready: 'Ready for Pickup', confirmed: 'Confirmed', completed: 'Completed', no_scrap: 'No Scrap at Site', cancelled: 'Cancelled',
 };
 app.locals.formatQuoteRate = formatQuoteRate;
@@ -441,10 +445,12 @@ app.get('/quote/:token', async (req, res) => {
         message: 'This link may be incomplete, or the request may have been removed. Please call us on +91 98188 26333 and we will help.',
       });
     }
-    const [events, docs] = await Promise.all([
+    const [events, docs, pickupDetails] = await Promise.all([
       timeline.eventsFor('pickup', [request.id]),
       documents.listFor('pickup', [request.id]),
+      dispatch.customerView([request.id]),
     ]);
+    request.pickup = pickupDetails.get(request.id) || null;
     res.render('quote', {
       timeline: timeline.buildTimeline('pickup', request, events.get(request.id) || []),
       docs,
@@ -475,7 +481,9 @@ app.get('/account', async (req, res) => {
       documents.listFor('demolition', idsOf('demolition')),
       schedules.listForCustomer(customerId),
     ]);
+    const pickupDetails = await dispatch.customerView(idsOf('pickup'));
     requests.forEach((r) => {
+      if (r.kind === 'pickup') r.pickup = pickupDetails.get(r.id) || null;
       const events = (r.kind === 'pickup' ? pickupEvents : demolitionEvents).get(r.id) || [];
       r.timeline = timeline.buildTimeline(r.kind, r, events);
       r.docs = (r.kind === 'pickup' ? pickupDocs : demolitionDocs).filter((d) => d.request_id === r.id);
@@ -513,5 +521,6 @@ app.listen(PORT, () => {
   push.init().catch(() => {}); // prepare notification keys early; logged inside if it fails
   updates.startSchedule(); // daily rates to subscribers
   schedules.start(); // repeat pickups customers have set up
+  dispatch.start(); // tells the owner when nobody chose a pickup slot in time
   quotes.addMissingTokens().catch((err) => console.error('adding quote links failed:', err.message));
 });
