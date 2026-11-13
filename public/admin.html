@@ -6,9 +6,12 @@
 <title>Admin Dashboard - Scrap Express</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/icons/favicon-32.png" sizes="32x32">
-<link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#16a34a">
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<!-- Installs as its own private app ("SE Admin"), separate from the customer app. -->
+<link rel="manifest" href="/admin.webmanifest">
+<meta name="theme-color" content="#0f172a">
+<link rel="apple-touch-icon" href="/icons/admin-apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="SE Admin">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
@@ -63,6 +66,7 @@
     </div>
     <div class="admin-topbar-right">
       <span id="welcomeUser" class="welcome-user"></span>
+      <button type="button" id="installAdminBtn" class="btn btn-accent" hidden>Install Admin App</button>
       <button id="logoutBtn" class="btn btn-outline">
         <svg class="icon"><use href="#icon-logout"/></svg> Logout
       </button>
