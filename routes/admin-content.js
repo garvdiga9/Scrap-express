@@ -181,12 +181,14 @@ router.get('/requests/:id/update-text', async (req, res) => {
     );
     const r = rows[0];
     if (!r) return res.status(404).json({ error: 'Not found' });
-    const kind = r.status === 'completed' && r.payment_method === 'bank' && r.bank_paid_at ? 'bank_paid' : r.status;
+    let kind = r.status === 'completed' && r.payment_method === 'bank' && r.bank_paid_at ? 'bank_paid' : r.status;
+    if (r.delivery_mode === 'self' && r.status === 'accepted') kind = 'drop_info';
     const extra = {
       slotText: r.slot_date ? dispatch.slotLabel(r) : '',
       deadlineText: r.slots_deadline ? new Date(r.slots_deadline).toLocaleString('en-IN', {
         weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata',
       }) : '',
+      yard: r.delivery_mode === 'self' ? await board.yard() : null,
     };
     res.json({ text: notify.manualText(kind, { ...r, ...extra }), channels: notify.channels() });
   } catch (err) {

@@ -9,7 +9,8 @@
     <nav class="main-nav" id="mainNav" aria-label="Main">
       <a href="/rates" class="nav-link<%= page === 'rates' ? ' active' : '' %>">Scrap Rates</a>
       <a href="/what-we-buy" class="nav-link<%= page === 'what-we-buy' ? ' active' : '' %>">What We Buy</a>
-      <a href="/book-pickup" class="nav-link<%= page === 'book-pickup' ? ' active' : '' %>">Bulk Pickup</a>
+      <%# Booking is the "Get a Quote" button; the menu offers what's for sale to recyclers instead. %>
+      <a href="/buy-from-us" class="nav-link<%= page === 'buy-from-us' ? ' active' : '' %>">Buy From Us</a>
       <a href="/demolition" class="nav-link<%= page === 'demolition' ? ' active' : '' %>">Demolition</a>
       <a href="/areas" class="nav-link<%= page === 'areas' ? ' active' : '' %>">Areas</a>
       <a href="tel:+919818826333" class="nav-link nav-account" data-callback>Request a Call Back</a>

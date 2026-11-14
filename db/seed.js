@@ -47,10 +47,15 @@ async function seed() {
   const client = await pool.connect();
   try {
     const adminUsername = process.env.ADMIN_USERNAME || 'admin';
+    // On the live site the owner's password must be set on the server: never
+    // fall back to the example password there.
+    const unsafe = process.env.NODE_ENV === 'production' && (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'changeme123');
     const adminPassword = process.env.ADMIN_PASSWORD || 'changeme123';
     const passwordHash = await bcrypt.hash(adminPassword, 10);
 
-    await client.query(
+    if (unsafe) {
+      console.warn('WARNING: ADMIN_PASSWORD is missing or still the example on the server. The owner login was left as it was. Set it in Render → Environment.');
+    } else await client.query(
       // The environment's admin is always the owner (and always switched on).
       `INSERT INTO admin_users (username, password_hash, role, active)
        VALUES ($1, $2, 'owner', TRUE)

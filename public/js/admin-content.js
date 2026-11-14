@@ -1067,7 +1067,8 @@ window.SESchedule = (() => {
     }
 
     // A ready-written WhatsApp message for where the pickup is now.
-    if (['slots_sent', 'scheduled', 'on_way', 'weighed', 'completed', 'no_scrap', 'cancelled'].includes(r.status)) {
+    if (['slots_sent', 'scheduled', 'on_way', 'weighed', 'completed', 'no_scrap', 'cancelled'].includes(r.status)
+      || (r.delivery_mode === 'self' && ['accepted', 'arrived'].includes(r.status))) {
       const update = document.createElement('a');
       update.className = 'btn btn-outline btn-sm wa-update';
       update.target = '_blank';

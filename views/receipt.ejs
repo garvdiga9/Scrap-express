@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pickup Receipt #<%= r.id %> - Scrap Express</title>
+<title><%= r.delivery_mode === 'self' ? 'Drop-off' : 'Pickup' %> Receipt #<%= r.id %> - Scrap Express</title>
 <meta name="robots" content="noindex">
 <link rel="stylesheet" href="/css/receipt.css">
 </head>
@@ -17,7 +17,7 @@
       <p class="receipt-small">Bulk scrap buyers · Delhi NCR · +91 98188 26333 · scrapexpress@gmail.com</p>
     </div>
     <div class="receipt-title">
-      <h1>Pickup Receipt</h1>
+      <h1><%= r.delivery_mode === 'self' ? 'Drop-off Receipt' : 'Pickup Receipt' %></h1>
       <p>#<%= r.id %></p>
     </div>
   </header>
@@ -25,11 +25,11 @@
   <% const when = (d) => new Date(d).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }); %>
   <section class="receipt-parties">
     <div>
-      <h2>Collected from</h2>
+      <h2><%= r.delivery_mode === 'self' ? 'Received from' : 'Collected from' %></h2>
       <p><strong><%= r.company_name %></strong><br><%= r.name %><br><%= r.address %></p>
     </div>
     <div>
-      <h2>Pickup</h2>
+      <h2><%= r.delivery_mode === 'self' ? 'Drop-off' : 'Pickup' %></h2>
       <p>
         <% if (r.pickup.chosen) { %>Slot: <%= r.pickup.chosen.label %><br><% } %>
         <% if (r.weighed_at) { %>Weighed: <%= when(r.weighed_at) %><br><% } %>

@@ -63,6 +63,7 @@ const HI = {
   'Quick Links': 'ज़रूरी लिंक',
   Home: 'होम',
   'Buy From Us (Recyclers)': 'हमसे खरीदें (रीसाइक्लर्स के लिए)',
+  'Buy From Us': 'हमसे खरीदें',
   'Install the App': 'ऐप इंस्टॉल करें',
   Contact: 'संपर्क',
   'Mobile: +91 98188 26333': 'मोबाइल: +91 98188 26333',
@@ -440,7 +441,6 @@ const HI = {
   kg: 'किलो',
   tonnes: 'टन',
   Continue: 'आगे बढ़ें',
-  'Saving…': 'सेव कर रहे हैं…',
   "We save this step straight away, so our team can call you back even if you don't finish.": 'हम यह कदम तुरंत सेव कर लेते हैं, ताकि आप फ़ॉर्म पूरा न भी करें तो हमारी टीम आपको कॉल कर सके।',
   'Contact Person *': 'संपर्क व्यक्ति *',
   'Business Type *': 'व्यवसाय का प्रकार *',
@@ -1085,7 +1085,6 @@ const HI = {
   "We'll create a new request from this one (same site, scrap and contact) two days before each date, and call you to confirm the quantity.": 'हर तारीख़ से दो दिन पहले हम इसी से नई रिक्वेस्ट बनाएंगे (वही साइट, स्क्रैप और संपर्क), और मात्रा पक्की करने के लिए कॉल करेंगे।',
   'How often': 'कितनी बार',
   'First pickup on': 'पहला पिकअप',
-  'The': '',
   'apply to every repeat pickup.': 'हर दोहराए जाने वाले पिकअप पर लागू हैं।',
   'Set Up Repeat Pickup': 'दोहराने वाला पिकअप तय करें',
   'Repeat Pickups': 'दोहराए जाने वाले पिकअप',
@@ -1196,7 +1195,6 @@ const HI = {
   'At the site': 'साइट पर',
   'Paid & done': 'भुगतान हुआ, काम पूरा',
   'Scrap type': 'स्क्रैप का प्रकार',
-  Contact: 'संपर्क',
   Address: 'पता',
   Notes: 'नोट',
   'Quoted rates': 'बताए गए रेट',
@@ -1207,7 +1205,6 @@ const HI = {
   'Give Back': 'वापस करें',
   'Give this pickup back so someone else can take it?': 'यह पिकअप वापस करें ताकि कोई और ले सके?',
   "I've Arrived": 'मैं पहुँच गया',
-  'No Scrap at Site': 'साइट पर स्क्रैप नहीं है',
   'Mark this pickup as "no scrap at site"? The owner and the customer will be told.': 'इस पिकअप को "साइट पर स्क्रैप नहीं" दर्ज करें? मालिक और ग्राहक को बता दिया जाएगा।',
   'Weight on the machine (kg)': 'मशीन पर वज़न (किलो)',
   'Photo of the weighing machine': 'तौल मशीन की तस्वीर',
@@ -1414,6 +1411,11 @@ const HI = {
   "We'll send you the yard address on WhatsApp shortly.": 'हम जल्द ही यार्ड का पता WhatsApp पर भेजेंगे।',
   'Contact person: {name},': 'संपर्क व्यक्ति: {name},',
   'Contact:': 'संपर्क:',
+
+  // ---------- Drop-off receipt ----------
+  'Drop-off Receipt': 'ड्रॉप-ऑफ़ रसीद',
+  'Drop-off Receipt #{n} - Scrap Express': 'ड्रॉप-ऑफ़ रसीद #{n} - Scrap Express',
+  'Received from': 'किससे मिला',
 };
 
 module.exports = { HI };

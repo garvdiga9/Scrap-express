@@ -223,7 +223,7 @@ router.put('/requests/:id/quote', requireAdmin, async (req, res) => {
       `UPDATE pickup_requests
        SET quote_items = $1, quote_note = $2, quoted_at = NOW(),
            quote_response = NULL, quote_responded_at = NULL, status = 'quoted',
-           ready_at = NULL, ready_date = NULL, dispatch_checked_at = NULL,
+           ready_at = NULL, ready_date = NULL, dispatch_checked_at = NULL, quote_reminded = FALSE,
            quote_token = COALESCE(quote_token, $4)
        WHERE id = $3
        RETURNING *`,
