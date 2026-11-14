@@ -633,9 +633,9 @@ function updateOpenDialog() {
   if (!fresh) return;
   dialogRequest = fresh;
   renderRequestSummary(fresh);
-  // The slots panel too, unless slots are being typed in it.
+  // The slots panel too, unless something is being typed or filled in it.
   const schedule = document.getElementById('requestSchedule');
-  if (!schedule.contains(document.activeElement)) window.SESchedule.mount(schedule, fresh);
+  if (!schedule.contains(document.activeElement) && !schedule.dataset.dirty) window.SESchedule.mount(schedule, fresh);
 }
 
 function openRequestDialog(r) {

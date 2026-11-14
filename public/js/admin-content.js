@@ -759,6 +759,7 @@ window.SESchedule = (() => {
   // After an action: reload the requests and redraw this panel.
   async function refresh() {
     if (document.activeElement) document.activeElement.blur();
+    delete document.getElementById('requestSchedule').dataset.dirty;
     try {
       await loadRequests();
       updateOpenDialog();
@@ -969,7 +970,7 @@ window.SESchedule = (() => {
     const stepButton = (text, url, body, ask) => {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'btn btn-accent btn-sm';
+      b.className = ask ? 'btn btn-outline btn-sm office-noscrap' : 'btn btn-accent btn-sm';
       b.textContent = text;
       b.addEventListener('click', async () => {
         if (ask && !confirm(ask)) return;
@@ -1043,6 +1044,9 @@ window.SESchedule = (() => {
 
   function mount(box, r) {
     box.innerHTML = '';
+    // Half-filled forms here survive live updates (admin.js updateOpenDialog).
+    delete box.dataset.dirty;
+    box.oninput = () => { box.dataset.dirty = '1'; };
     const title = document.createElement('h3');
     title.textContent = 'Pickup slot and staff';
     box.appendChild(title);
