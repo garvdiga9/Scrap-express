@@ -576,11 +576,20 @@ function renderRequestSummary(r) {
   if (r.past_no_scrap) addDetail('Warning', `${wastedTrips(r.past_no_scrap)} on this number or account before.`);
   addDetail('Received', formatDate(r.created_at));
   addDetail('Status', PICKUP_STATUS_LABELS[r.status] || r.status);
+  // How the scrap reaches us, and what the pickup involves (affects the quote).
+  if (r.delivery_mode === 'self') {
+    addDetail('Delivery', 'Customer sends it to our yard (own vehicle or a delivery app). You run the steps.').classList.add('detail-note');
+    if (r.sent_note) addDetail('How it is coming', r.sent_note);
+  } else {
+    addDetail('Delivery', 'We pick it up');
+    if (r.scrap_location) addDetail('Scrap kept', r.scrap_location);
+    if (r.needs_dismantling) addDetail('Taking down', 'Some items must be taken down or dismantled first').classList.add('detail-note');
+  }
   if (r.status === 'ready') addDetail('Before dispatch', 'Call the customer to confirm the scrap is ready, then set the status to Confirmed.');
   if (r.ready_date) addDetail('Scrap ready from', formatDate(r.ready_date));
   if (r.dispatch_checked_at) addDetail('Confirmed by call', formatDate(r.dispatch_checked_at));
   if (r.rated_at) addDetail('Customer rating', `${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}${r.rating_comment ? ` “${r.rating_comment}”` : ''}`);
-  if (r.chosen_slot) addDetail('Pickup slot', r.chosen_slot.label);
+  if (r.chosen_slot) addDetail(r.delivery_mode === 'self' ? 'Drop-off time' : 'Pickup slot', r.chosen_slot.label);
   if (r.status === 'cancelled' && r.cancelled_by === 'customer') addDetail('Cancelled by customer', r.cancel_reason || 'No reason given').classList.add('detail-warn');
   if (r.staff_name) addDetail('Staff', r.staff_name);
   if (r.weighed_kg != null) {

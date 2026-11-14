@@ -12,6 +12,7 @@ const live = require('../lib/live');
 const documents = require('../lib/documents');
 const schedules = require('../lib/schedules');
 const dispatch = require('../lib/dispatch');
+const notify = require('../lib/notify');
 const ratings = require('../lib/ratings');
 const pool = require('../db/pool');
 
@@ -175,6 +176,7 @@ router.post('/requests/:id/quote', requireCustomer, async (req, res) => {
     res.json({ ok: true, status: response });
     live.requestChanged(req.session.customerId, updated.quote_token);
     quotes.notifyAnswer(updated, response);
+    if (response === 'accepted') notify.quietly('drop_info', updated.id);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not save your answer. Please try again.' });
@@ -221,6 +223,19 @@ router.post('/requests/:id/slot', requireCustomer, async (req, res) => {
     if (row.error) return res.status(409).json({ error: row.error });
     res.json({ ok: true });
     dispatch.announceChosen(row);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save that. Please try again.' });
+  }
+});
+
+// A drop-off: "I've sent my scrap" { note }.
+router.post('/requests/:id/sent', requireCustomer, async (req, res) => {
+  try {
+    const row = await dispatch.customerSent(Number(req.params.id), { customerId: req.session.customerId }, req.body.note);
+    if (row.error) return res.status(409).json({ error: row.error });
+    res.json({ ok: true });
+    dispatch.announceSent(row);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not save that. Please try again.' });

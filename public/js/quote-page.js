@@ -19,4 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
   window.SEQuote.wire(document.getElementById('quoteDetails'), refreshQuote);
   window.SELive.on('quote', refreshQuote);
   window.SELive.start(`?quote=${token}`);
+  // A reminder to turn on alerts for this request (no login needed).
+  window.SEPush.mount(document.getElementById('quotePushCard'), `/api/quote/${token}`, {
+    on: "On. This phone gets an alert when it's time to choose a time, when our team is on the way, and when your scrap is weighed.",
+    off: "Don't miss a step: get an alert on this phone when it's time to choose a time, when our team is on the way, and when your scrap is weighed.",
+  });
 });

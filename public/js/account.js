@@ -79,8 +79,8 @@ async function refreshAccount() {
 document.addEventListener('DOMContentLoaded', () => {
   window.SEQuote.wire(document.getElementById('accountRequests'), refreshAccount);
   window.SEPush.mount(document.getElementById('pushCard'), '/api/customer', {
-    on: "On — we'll alert this phone when your quote is ready and when your pickup is confirmed.",
-    off: 'Get an alert on this phone the moment your quote is ready.',
+    on: "On. We'll alert this phone when your quote is ready, when to choose a time, and when our team is on the way.",
+    off: "Don't miss your quote or pickup time: get an alert on this phone when your quote is ready, when to choose a time, and when our team is on the way.",
   });
   window.SELive.on('account', refreshAccount);
   window.SELive.start();

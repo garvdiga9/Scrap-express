@@ -14,7 +14,12 @@
     </tbody>
   </table>
   <% if (r.quote_note) { %><p class="quote-note"><%= r.quote_note %></p><% } %>
-  <p class="quote-fine">Final amount is worked out from the weighbridge weight at pickup. GST invoice and payment by cash or bank transfer, whichever you prefer.</p>
+  <% const selfDrop = r.delivery_mode === 'self'; %>
+  <% if (selfDrop) { %>
+    <p class="quote-fine">You bring the scrap to our yard (your own vehicle, or Porter or any delivery app). The final amount is worked out from our weighbridge weight when it arrives. GST invoice and payment by cash or bank transfer, whichever you prefer.</p>
+  <% } else { %>
+    <p class="quote-fine">Final amount is worked out from the weighbridge weight at pickup. GST invoice and payment by cash or bank transfer, whichever you prefer.</p>
+  <% } %>
   <% if (r.status === 'quoted') { %>
     <div class="quote-actions">
       <button type="button" class="btn btn-accent" data-response="accept">Accept Quote</button>
@@ -45,10 +50,32 @@
   <% } else if (r.quote_response === 'accepted') { %>
     <p class="quote-response accepted">You accepted this quote on <%= fmtQuoteDate(r.quote_responded_at) %>.</p>
     <% const pk = r.pickup || {}; %>
+    <%# A drop-off: where to bring it and who to call, from the moment they accept. %>
+    <% if (selfDrop && ['accepted', 'slots_sent', 'scheduled', 'on_way'].includes(r.status)) { %>
+      <% const y = pk.yard || {}; %>
+      <div class="yard-box">
+        <strong>Where to bring your scrap</strong>
+        <% if (y.address) { %>
+          <span><%= y.address %></span>
+          <% if (y.hours) { %><span class="yard-hours">Open: <%= y.hours %></span><% } %>
+        <% } else { %>
+          <span>We'll send you the yard address on WhatsApp shortly.</span>
+        <% } %>
+        <% if (y.pocPhone) { %>
+          <span>Contact person: <%= y.pocName || 'Scrap Express yard' %>, <a href="tel:+91<%= y.pocPhone %>">+91 <%= y.pocPhone.slice(0, 5) %> <%= y.pocPhone.slice(5) %></a></span>
+        <% } else { %>
+          <span>Contact: <a href="tel:+919818826333">+91 98188 26333</a></span>
+        <% } %>
+        <div class="yard-actions">
+          <% if (y.map) { %><a href="<%= y.map %>" target="_blank" rel="noopener" class="btn btn-outline btn-sm">Open in Maps</a><% } %>
+          <% if (y.pocPhone) { %><a href="https://wa.me/91<%= y.pocPhone %>" target="_blank" rel="noopener" class="btn btn-outline btn-sm">WhatsApp</a><% } %>
+        </div>
+      </div>
+    <% } %>
     <% if (r.status === 'slots_sent' && pk.slots && pk.slots.length && !pk.expired) { %>
       <form class="slot-form" method="post">
         <fieldset>
-          <legend>Choose your pickup slot</legend>
+          <legend><%= selfDrop ? 'Choose when you will bring the scrap' : 'Choose your pickup slot' %></legend>
           <p class="slot-deadline">Please choose by <strong><%= new Date(pk.deadline).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }) %></strong>. After that we'll offer the slots to others.</p>
           <% pk.slots.forEach((slot, i) => { %>
             <label class="slot-option"><input type="radio" name="slotId" value="<%= slot.id %>"<%= i === 0 ? ' checked' : '' %>> <span><%= slot.label %></span></label>
@@ -65,6 +92,24 @@
     <% } else if (r.status === 'slots_sent') { %>
       <p class="quote-response declined">The time to choose a slot has passed. Please <a href="tel:+919818826333">call us</a> and we'll send new slots.</p>
     <% } else if (pk.chosen && ['scheduled', 'on_way', 'arrived', 'weighed'].includes(r.status)) { %>
+      <% if (selfDrop) { %>
+      <p class="quote-response accepted">
+        <strong>Drop-off: <%= pk.chosen.label %></strong><br>
+        <% if (r.status === 'scheduled') { %>Please bring the scrap to our yard in this time.
+        <% } else if (r.status === 'on_way') { %>You've sent the scrap<%= pk.sentNote ? ` (${pk.sentNote})` : '' %>. We'll weigh it when it reaches our yard.
+        <% } else if (r.status === 'arrived') { %>Your scrap has reached our yard. We'll weigh it shortly.
+        <% } else { %>Your scrap has been weighed. Payment is next.<% } %>
+      </p>
+      <% if (r.status === 'scheduled') { %>
+        <form class="sent-form" method="post">
+          <label>How is it coming? (optional)
+            <input type="text" name="note" maxlength="150" placeholder="e.g. Porter, vehicle DL1LA1234, driver's phone">
+          </label>
+          <div class="form-alert error" hidden></div>
+          <button type="submit" class="btn btn-accent">I've Sent My Scrap</button>
+        </form>
+      <% } %>
+      <% } else { %>
       <p class="quote-response accepted">
         <strong>Pickup: <%= pk.chosen.label %></strong><br>
         <% if (r.status === 'scheduled') { %><%= pk.outsideTruck ? `${pk.staffName} will come in this slot.` : pk.staffName ? `${pk.staffName} from our team will come.` : 'Our team will come in this slot.' %> We'll alert you when they set off.
@@ -72,6 +117,7 @@
         <% } else if (r.status === 'arrived') { %><%= pk.staffName || 'Our team' %> has arrived at your site.
         <% } else { %>Your scrap has been weighed. Payment is next.<% } %>
       </p>
+      <% } %>
       <% if (r.status === 'scheduled') { %>
         <% const others = (pk.slots || []).filter((s) => s.id !== pk.chosen.id && s.date >= new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })); %>
         <details class="change-pickup">
@@ -96,7 +142,7 @@
         </details>
       <% } %>
     <% } else if (r.status === 'accepted') { %>
-      <p class="quote-response accepted">Thank you. We'll send you 2–3 pickup slots to choose from shortly.</p>
+      <p class="quote-response accepted"><%= selfDrop ? "Thank you. We'll send you 2–3 times to bring the scrap to our yard shortly." : "Thank you. We'll send you 2–3 pickup slots to choose from shortly." %></p>
       <div class="change-actions">
         <button type="button" class="btn btn-danger" data-pickup-change="cancel">Cancel Pickup</button>
       </div>

@@ -3,6 +3,7 @@
 // Mounted at /api/staff.
 const router = require('express').Router();
 const dispatch = require('../lib/dispatch');
+const reminders = require('../lib/reminders');
 const documents = require('../lib/documents');
 const loginLimit = require('../lib/login-limit');
 const { mountPushRoutes } = require('./push');
@@ -66,7 +67,11 @@ mountPushRoutes(router, requireStaff, (req) => ({ staffId: req.staff.id }));
 
 router.get('/pickups', requireStaff, async (req, res) => {
   try {
-    res.json(await dispatch.listForStaff(req.staff.id));
+    const [list, todo] = await Promise.all([
+      dispatch.listForStaff(req.staff.id),
+      reminders.staffTasks(req.staff.id).catch(() => []),
+    ]);
+    res.json({ ...list, todo });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not load the pickups.' });

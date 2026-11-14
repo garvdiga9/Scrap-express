@@ -1,0 +1,27 @@
+<%# What the customer needs to do next, across their requests (My Account).
+    Locals: requests (with .pickup from lib/dispatch.js customerView). %>
+<% const fmtWhen = (d) => new Date(d).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }); %>
+<% const todo = []; %>
+<% requests.filter((r) => r.kind === 'pickup').forEach((r) => {
+  const pk = r.pickup || {};
+  const self = r.delivery_mode === 'self';
+  const link = `#request-pickup-${r.id}`;
+  if (r.status === 'quoted') todo.push({ link, text: `Your quote for request #${r.id} is ready. Please accept or decline it.` });
+  if (r.status === 'slots_sent' && pk.slots && pk.slots.length && !pk.expired) {
+    todo.push({ link, urgent: true, text: `Choose ${self ? 'when you will bring the scrap' : 'your pickup time'} for request #${r.id} by ${fmtWhen(pk.deadline)}.` });
+  }
+  if (self && r.status === 'scheduled' && pk.chosen) todo.push({ link, text: `Bring your scrap for request #${r.id} to our yard: ${pk.chosen.label}. Press “I've Sent My Scrap” when it leaves.` });
+  if (r.status === 'completed' && !r.rated_at && pk.paidAt && Date.now() - new Date(pk.paidAt) < 14 * 24 * 3600e3) {
+    todo.push({ link, text: `Please rate pickup #${r.id}. It takes ten seconds and helps us improve.` });
+  }
+}); %>
+<% if (todo.length) { %>
+  <div class="customer-todo">
+    <strong>To do</strong>
+    <ul>
+      <% todo.forEach((t) => { %>
+        <li class="<%= t.urgent ? 'is-urgent' : '' %>"><a href="<%= t.link %>"><%= t.text %></a></li>
+      <% }) %>
+    </ul>
+  </div>
+<% } %>

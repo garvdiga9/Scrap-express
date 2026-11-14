@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const router = require('express').Router();
 const pool = require('../db/pool');
 const {
-  BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS, RULES_VERSION, parseArea,
+  BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS, RULES_VERSION, parseArea, DELIVERY_MODES, SCRAP_LOCATIONS,
 } = require('../data/business');
 const { parseSite, outsideServiceArea } = require('../lib/location');
 const {
@@ -179,6 +179,13 @@ router.post('/', media.acceptMedia, async (req, res) => {
   if (gstin && !GSTIN_RE.test(gstin)) {
     return res.status(400).json({ error: GSTIN_ERROR });
   }
+  // How the scrap reaches us, and (for a pickup) where it's kept.
+  const deliveryMode = DELIVERY_MODES.includes(req.body.deliveryMode) ? req.body.deliveryMode : 'pickup';
+  const scrapLocation = deliveryMode === 'pickup' && req.body.scrapLocation ? String(req.body.scrapLocation) : null;
+  if (scrapLocation && !SCRAP_LOCATIONS.includes(scrapLocation)) {
+    return res.status(400).json({ error: 'Please choose where the scrap is kept from the list.' });
+  }
+  const needsDismantling = deliveryMode === 'pickup' && ['on', 'true', '1', 'yes'].includes(String(req.body.needsDismantling || '').toLowerCase());
   // Photos and videos are recommended (they speed up the quote) but optional.
   const tooFar = await outsideServiceArea(site.pincode);
   if (tooFar) return res.status(400).json({ error: tooFar });
@@ -192,14 +199,17 @@ router.post('/', media.acceptMedia, async (req, res) => {
       `INSERT INTO pickup_requests
         (company_name, business_type, pickup_frequency, gstin, customer_id,
          name, phone, email, address, area, pincode, scrap_type, approx_quantity, item_quantities, notes,
-         latitude, longitude, terms_accepted_at, terms_version)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),$18)
+         latitude, longitude, terms_accepted_at, terms_version,
+         delivery_mode, scrap_location, needs_dismantling, office_handled)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),$18,$19,$20,$21,$22)
        RETURNING id`,
       [
         companyName, businessType || null, pickupFrequency || null, gstin, customerId,
         name, phone, email, site.address, area || null, site.pincode,
         scrapType, quantity, itemQuantities && JSON.stringify(itemQuantities), notes || null,
         site.latitude, site.longitude, RULES_VERSION,
+        // A self drop-off is run by the office: staff never see it.
+        deliveryMode, scrapLocation, needsDismantling, deliveryMode === 'self',
       ]
     );
     const requestId = rows[0].id;
@@ -217,8 +227,8 @@ router.post('/', media.acceptMedia, async (req, res) => {
     live.publish('requests');
     analytics.record('quote_request', analytics.pageFrom(req));
     push.quietly(push.notifyAdmins({
-      title: `New pickup request #${requestId} 📦`,
-      body: [companyName, quantity, area, files ? `${files} photo${files === 1 ? '' : 's'}/video${files === 1 ? '' : 's'}` : 'no photos']
+      title: `New ${deliveryMode === 'self' ? 'drop-off' : 'pickup'} request #${requestId} 📦`,
+      body: [companyName, quantity, area, deliveryMode === 'self' ? 'customer sends it' : null, needsDismantling ? 'needs taking down' : null, files ? `${files} photo${files === 1 ? '' : 's'}/video${files === 1 ? '' : 's'}` : 'no photos']
         .filter(Boolean).join(' · '),
       url: `/admin.html#pickup-${requestId}`,
       tag: `pickup-${requestId}`,

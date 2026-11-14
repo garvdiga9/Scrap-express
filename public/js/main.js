@@ -579,6 +579,21 @@ if (otherCheckbox && otherWrap) {
   pickupForm.addEventListener('reset', () => { otherWrap.hidden = true; });
 }
 
+/* Pickup or "I'll send it myself": the pickup-only questions (where the
+   scrap is kept, taking down) only for a pickup. */
+if (pickupForm) {
+  const showDelivery = () => {
+    const self = Boolean(pickupForm.querySelector('[data-delivery-mode][value="self"]:checked'));
+    pickupForm.querySelectorAll('[data-pickup-only]').forEach((el) => { el.hidden = self; });
+    pickupForm.querySelectorAll('[data-self-only]').forEach((el) => { el.hidden = !self; });
+    const submit = document.getElementById('submitBtn');
+    if (submit) submit.textContent = self ? 'Request Quote for Drop-off' : 'Request Bulk Quote';
+  };
+  pickupForm.addEventListener('change', (e) => { if (e.target.matches('[data-delivery-mode]')) showDelivery(); });
+  pickupForm.addEventListener('reset', () => setTimeout(showDelivery));
+  showDelivery();
+}
+
 /* Quantity per item: with two or more scrap types ticked, ask for the
    quantity of each (added up for the minimum) instead of one total. */
 const KG_PER_UNIT = { kg: 1, tonnes: 1000 };

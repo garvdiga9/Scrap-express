@@ -541,3 +541,14 @@ body[data-role="manager"] .icon-btn:has(use[href="#icon-trash"]) { display: none
 .office-steps > .btn, .outside-form > .btn, .office-weigh > .btn, .office-pay > .btn { justify-self: start; }
 .book-slot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .office-noscrap { color: #b91c1c; border-color: #fca5a5; }
+.yard-form { margin: 0 0 16px; }
+.detail-note dd, .detail-note { font-weight: 600; }
+
+/* To do (lib/reminders.js) */
+.todo-card { margin: 0 0 22px; padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid #fcd34d; background: #fffbeb; color: #78350f; }
+.todo-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+.todo-count { font-size: 13px; font-weight: 600; }
+.todo-card ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.todo-item { background: none; border: 0; padding: 2px 0; text-align: left; color: inherit; font: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: rgba(120, 53, 15, 0.35); text-underline-offset: 3px; }
+.todo-card li.is-urgent .todo-item { font-weight: 700; }
+.todo-done { list-style: none; margin-left: -18px; font-weight: 600; color: #166534; }

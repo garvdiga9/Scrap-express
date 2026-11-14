@@ -9,7 +9,7 @@
       <div id="quoteDetails">
         <div class="quote-page-head">
           <div>
-            <h1>Bulk Pickup #<%= r.id %></h1>
+            <h1><%= r.delivery_mode === 'self' ? 'Drop-off' : 'Bulk Pickup' %> #<%= r.id %></h1>
             <p class="request-meta-line"><%= [r.company_name, r.area].filter(Boolean).join(' · ') %></p>
           </div>
           <span class="status-badge status-<%= r.status %>"><%= statusLabels[r.status] || r.status %></span>
@@ -21,6 +21,15 @@
         <% } %>
         <%- include('partials/request-progress', { timeline, docs, docBase: `/api/quote/${token}/documents/`, pickup: r.pickup, receiptUrl: `/quote/${token}/receipt` }) %>
         <%- include('partials/quote-box', { r, api: `/api/quote/${token}` }) %>
+      </div>
+      <%# Alerts for this request on this phone, no login needed. %>
+      <div class="push-card" id="quotePushCard" hidden>
+        <svg class="icon push-icon"><use href="#icon-bell"/></svg>
+        <div class="push-copy">
+          <strong>Turn on alerts for this request</strong>
+          <span data-push-status></span>
+        </div>
+        <button type="button" class="btn btn-accent" data-push-toggle hidden>Turn On Notifications</button>
       </div>
       <p class="quote-page-help">
         Questions about this quote?

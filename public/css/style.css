@@ -2026,3 +2026,45 @@ main[tabindex="-1"]:focus { outline: none; }
 .rating-comment { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: var(--color-dark); }
 .rating-comment textarea { padding: 10px 12px; border: 1.5px solid var(--color-border); border-radius: var(--radius-sm); font: inherit; font-weight: 400; background: var(--color-white); color: var(--color-dark); }
 .rating-form .btn { align-self: flex-start; }
+
+/* Booking: pickup or "I'll send it myself" */
+.delivery-choice { border: 0; padding: 0; margin: 0 0 18px; }
+.delivery-choice legend { font-weight: 600; margin-bottom: 8px; }
+.delivery-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.delivery-option { display: flex; gap: 10px; align-items: flex-start; padding: 14px; border: 1.5px solid var(--color-border); border-radius: var(--radius-sm); cursor: pointer; background: transparent; }
+.delivery-option input { width: 20px; height: 20px; flex: none; margin-top: 2px; accent-color: var(--color-primary); }
+.delivery-option span { display: grid; gap: 4px; }
+.delivery-option small { color: var(--color-text-light); font-size: 13.5px; line-height: 1.45; }
+.delivery-option:has(input:checked) { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15); }
+.form-label-like { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14.5px; }
+.dismantle-check span { font-size: 14px; }
+.form-hint-box { margin: 0 0 18px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--color-subtle); border: 1px solid var(--color-border); font-size: 14px; line-height: 1.5; }
+.yard-box { display: grid; gap: 4px; margin: 10px 0; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--color-subtle); border: 1px solid var(--color-border); font-size: 14.5px; }
+.yard-box .btn { justify-self: start; margin-top: 6px; }
+.yard-hours { color: var(--color-text-light); font-size: 13.5px; }
+.sent-form { display: grid; gap: 8px; margin-top: 10px; }
+.sent-form label { display: grid; gap: 6px; font-weight: 600; font-size: 14px; }
+.sent-form input { padding: 10px 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--color-border); background: transparent; color: inherit; font: inherit; }
+.sent-form .btn { justify-self: start; }
+
+/* Rates: what decides the final rate */
+.rate-factors { margin: 40px 0 28px; }
+.rate-factors h2 { font-size: clamp(22px, 3vw, 28px); margin: 0 0 8px; }
+.rate-factors-intro { color: var(--color-text-light); max-width: 760px; margin: 0 0 18px; line-height: 1.6; }
+.rate-factor-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.rate-factor-list li { display: flex; gap: 12px; align-items: flex-start; padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-subtle); }
+.rate-factor-list .icon { width: 26px; height: 26px; flex: none; color: var(--color-primary); margin-top: 2px; }
+.rate-factor-list div { display: grid; gap: 4px; }
+.rate-factor-list strong { font-size: 15.5px; }
+.rate-factor-list span { color: var(--color-text-light); font-size: 14px; line-height: 1.5; }
+.rate-factors-note { margin: 16px 0 0; font-size: 14.5px; color: var(--color-text-light); }
+
+/* Customer: what to do next (My Account) */
+.customer-todo { margin: 0 0 20px; padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid #fcd34d; background: rgba(251, 191, 36, 0.12); }
+.customer-todo strong { display: block; margin-bottom: 6px; }
+.customer-todo ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.customer-todo a { color: inherit; font-weight: 500; }
+.customer-todo li.is-urgent a { font-weight: 700; }
+.quote-page .push-card { margin-top: 18px; }
+.yard-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.yard-actions:empty { display: none; }

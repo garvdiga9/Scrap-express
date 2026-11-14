@@ -1,0 +1,39 @@
+<%# What changes the final rate in a quote, on the Rates page and each
+    material's rate page. Locals: compact (optional, a shorter version). %>
+<section class="rate-factors" aria-labelledby="rateFactorsTitle">
+  <h2 id="rateFactorsTitle">What decides your final rate</h2>
+  <p class="rate-factors-intro">The rates <%= locals.compact ? 'here are' : 'above are' %> a guide for clean, sorted material in bulk. Every lot is different, so we send you a quote for yours, based on these things:</p>
+  <ul class="rate-factor-list">
+    <li>
+      <svg class="icon" aria-hidden="true"><use href="#icon-scale"/></svg>
+      <div><strong>Quantity</strong><span>Bigger lots get better rates. Very small lots cost more to handle.</span></div>
+    </li>
+    <li>
+      <svg class="icon" aria-hidden="true"><use href="#icon-truck"/></svg>
+      <div><strong>We pick it up, or you send it</strong><span>If you bring it to our yard yourself (your own vehicle, Porter or any delivery app), we save the truck and labour, so the rate is usually higher.</span></div>
+    </li>
+    <li>
+      <svg class="icon" aria-hidden="true"><use href="#icon-building"/></svg>
+      <div><strong>Where it's kept</strong><span>Ground floor and easy to load is best. An upper floor without a lift, a basement or a rooftop takes more labour.</span></div>
+    </li>
+    <li>
+      <svg class="icon" aria-hidden="true"><use href="#icon-snowflake"/></svg>
+      <div><strong>Taking it down first</strong><span>For example a split AC fixed high on a wall: our team takes it down safely and carries it to the truck. Dismantling racks or machines works the same way.</span></div>
+    </li>
+    <li>
+      <svg class="icon" aria-hidden="true"><use href="#icon-check"/></svg>
+      <div><strong>Grade and sorting</strong><span>Clean, dry, sorted material is worth more than mixed, rusted, wet or dirty material.</span></div>
+    </li>
+    <% if (!locals.compact) { %>
+    <li>
+      <svg class="icon" aria-hidden="true"><use href="#icon-map"/></svg>
+      <div><strong>Distance and access</strong><span>How far the site is, whether a truck can reach it, and any timing limits at the site.</span></div>
+    </li>
+    <li>
+      <svg class="icon" aria-hidden="true"><use href="#icon-clock"/></svg>
+      <div><strong>How often</strong><span>Regular pickups (weekly or monthly) can get a better rate than a one-time clearance.</span></div>
+    </li>
+    <% } %>
+  </ul>
+  <p class="rate-factors-note">Tell us these when you book, with a few photos, and your quote will be accurate. You only agree to a rate when you accept the quote.</p>
+</section>

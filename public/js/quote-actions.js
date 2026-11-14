@@ -66,6 +66,25 @@ window.SEQuote = (() => {
       }
     });
 
+    // A drop-off: "I've sent my scrap", with how it's coming.
+    container.addEventListener('submit', async (e) => {
+      const form = e.target.closest('.sent-form');
+      if (!form) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const button = form.querySelector('button[type="submit"]');
+      const alertBox = form.querySelector('.form-alert');
+      alertBox.hidden = true;
+      button.disabled = true;
+      try {
+        if (await post(`${form.closest('[data-quote-api]').dataset.quoteApi}/sent`, { note: form.elements.note.value })) await refreshOrReload();
+      } catch (err) {
+        alertBox.textContent = err.message;
+        alertBox.hidden = false;
+        button.disabled = false;
+      }
+    });
+
     // Changing a booked pickup: another time, new times, or cancelling.
     container.addEventListener('submit', async (e) => {
       const form = e.target.closest('.change-slot-form');

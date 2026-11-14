@@ -64,6 +64,8 @@
         </ul>
       </div>
 
+      <%- include('partials/rate-factors', { compact: true }) %>
+
       <% if (related.length) { %>
         <h2 class="rate-related-title">Other <%= rate.categoryLabel.toLowerCase() %> rates</h2>
         <div class="rates-grid">

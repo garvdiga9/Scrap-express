@@ -102,6 +102,15 @@
       <button type="button" class="btn btn-accent" data-push-toggle hidden>Turn On Notifications</button>
     </div>
 
+    <!-- To do: what needs doing now, across all tabs (lib/reminders.js) -->
+    <section class="todo-card" id="adminTodo" hidden>
+      <div class="todo-head">
+        <strong>To do</strong>
+        <span class="todo-count" id="adminTodoCount"></span>
+      </div>
+      <ul id="adminTodoList"></ul>
+    </section>
+
     <!-- Requests tab -->
     <section class="tab-panel active" id="tab-requests">
       <div class="panel-head">
@@ -318,6 +327,21 @@
         <label>Trucks per slot <input type="number" id="perSlot" min="1" max="50" step="1"></label>
         <button type="submit" class="btn btn-outline btn-sm">Save</button>
         <span class="admin-card-hint">How many pickups you can do at the same time. A slot that's full can't be chosen by a customer, and shows a warning when you offer it.</span>
+      </form>
+      <form class="admin-card yard-form" id="yardForm" method="post" novalidate>
+        <h3>Your yard, for drop-offs</h3>
+        <p class="admin-card-hint">Customers who choose "I'll send it myself" get this as soon as they accept your quote: on their request page, and by email, WhatsApp and app alert. The contact person's phone is shown to them so they (or their driver) can call.</p>
+        <div class="lot-form-grid">
+          <label>Yard address <input type="text" name="address" maxlength="300" placeholder="Full address with landmark"></label>
+          <label>Open hours <input type="text" name="hours" maxlength="120" placeholder="e.g. Mon–Sat, 9 AM – 6 PM"></label>
+          <label>Google Maps link (optional) <input type="url" name="map" maxlength="500" placeholder="https://maps.app.goo.gl/..."></label>
+          <label>Contact person at the yard <input type="text" name="pocName" maxlength="100" placeholder="e.g. Suresh"></label>
+          <label>Contact person's phone <input type="tel" name="pocPhone" maxlength="15" placeholder="98765 43210"></label>
+        </div>
+        <div class="admin-card-actions">
+          <button type="submit" class="btn btn-outline btn-sm">Save Yard</button>
+          <span class="admin-card-hint" id="yardSaved"></span>
+        </div>
       </form>
       <p class="board-alert" id="boardAlert" hidden></p>
       <div class="board" id="boardDaysList"><p class="table-empty">Loading…</p></div>

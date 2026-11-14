@@ -55,3 +55,7 @@
 .staff-pay input { padding: 12px 14px; border: 1.5px solid var(--color-border); border-radius: var(--radius-sm); font: inherit; font-size: 18px; background: var(--color-white); color: var(--color-dark); }
 .staff-pay .btn { min-height: 48px; justify-content: center; }
 .staff-outbox { margin: 0; background: #fef3c7; border: 1px solid #fde68a; color: #78350f; border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14px; font-weight: 600; }
+.todo-card { background: #fffbeb; border: 1px solid #fcd34d; color: #78350f; border-radius: var(--radius-sm); padding: 12px 14px; }
+.todo-card strong { display: block; margin-bottom: 6px; color: #78350f; }
+.todo-card ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14.5px; }
+.todo-card li.is-urgent { font-weight: 700; }

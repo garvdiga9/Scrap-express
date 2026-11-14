@@ -23,11 +23,13 @@
       <div class="push-card" id="pushCard" hidden>
         <svg class="icon push-icon"><use href="#icon-bell"/></svg>
         <div class="push-copy">
-          <strong>Quote &amp; pickup alerts</strong>
+          <strong>Turn on alerts for your pickups</strong>
           <span data-push-status></span>
         </div>
         <button type="button" class="btn btn-accent" data-push-toggle hidden>Turn On Notifications</button>
       </div>
+
+      <div id="accountTodo" data-live-block><%- include('partials/customer-todo', { requests }) %></div>
 
       <div class="account-grid">
         <section class="account-card" id="accountRequests" data-live-block>
@@ -40,9 +42,9 @@
           <% } else { %>
             <ul class="request-list">
               <% requests.forEach((r) => { %>
-                <li class="request-item">
+                <li class="request-item" id="request-<%= r.kind %>-<%= r.id %>">
                   <div class="request-main">
-                    <span class="request-kind"><%= r.kind === 'pickup' ? 'Bulk Pickup' : 'Demolition' %> · #<%= r.id %> · <%= fmtDate(r.created_at) %></span>
+                    <span class="request-kind"><%= r.kind === 'pickup' ? (r.delivery_mode === 'self' ? 'Drop-off' : 'Bulk Pickup') : 'Demolition' %> · #<%= r.id %> · <%= fmtDate(r.created_at) %></span>
                     <strong class="request-detail"><%= r.detail %></strong>
                     <span class="request-meta"><%= [r.quantity && (r.item_quantities ? `${r.quantity} in total` : r.quantity), r.frequency, r.location].filter(Boolean).join(' · ') %></span>
                     <% if (r.item_quantities && r.item_quantities.length) { %>

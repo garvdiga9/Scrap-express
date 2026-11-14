@@ -6,7 +6,7 @@ const pgSession = require('connect-pg-simple')(session);
 
 const pool = require('./db/pool');
 const {
-  AREAS, OTHER_AREA, SERVICE_KM, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, formatQuoteRate, readyDateRange,
+  AREAS, OTHER_AREA, SERVICE_KM, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, SCRAP_LOCATIONS, formatQuoteRate, readyDateRange,
 } = require('./data/business');
 const ratesRouter = require('./routes/rates');
 const pickupRouter = require('./routes/pickup');
@@ -189,7 +189,9 @@ app.use(analytics.countPageView);
 
 // Hindi / English for the pages (lib/i18n.js), and the dictionary for the browser.
 app.get('/js/i18n-hi.js', (req, res) => {
-  res.type('application/javascript').set('Cache-Control', 'public, max-age=3600').send(i18n.clientScript());
+  // Checked each time (a quick "not changed" via the ETag), so new Hindi text
+  // shows straight after an update.
+  res.type('application/javascript').set('Cache-Control', 'no-cache').send(i18n.clientScript());
 });
 app.use(i18n.middleware);
 
@@ -227,6 +229,7 @@ app.locals.serviceKm = SERVICE_KM;
 app.locals.businessTypes = BUSINESS_TYPES;
 app.locals.scrapTypes = SCRAP_TYPES;
 app.locals.pickupFrequencies = PICKUP_FREQUENCIES;
+app.locals.scrapLocations = SCRAP_LOCATIONS;
 app.locals.minPickupKg = MIN_PICKUP_KG;
 app.locals.mediaLimits = media.LIMITS;
 app.locals.statusLabels = {
@@ -541,5 +544,6 @@ app.listen(PORT, () => {
   schedules.start(); // repeat pickups customers have set up
   dispatch.start(); // tells the owner when nobody chose a pickup slot in time
   require('./lib/activity').start(); // clears activity log entries older than a year
+  require('./lib/reminders').start(); // morning to-do alerts, and nudges for customers
   quotes.addMissingTokens().catch((err) => console.error('adding quote links failed:', err.message));
 });

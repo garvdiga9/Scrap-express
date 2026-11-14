@@ -101,6 +101,36 @@
           <h3 class="form-subtitle">Where is the scrap?</h3>
           <%- include('location-fields', { prefix: 'site', c, site: true }) %>
           <%- include('area-field', { prefix: 'site', c, required: true }) %>
+          <fieldset class="form-group delivery-choice">
+            <legend>How will the scrap reach us? *</legend>
+            <div class="delivery-options">
+              <label class="delivery-option">
+                <input type="radio" name="deliveryMode" value="pickup" checked data-delivery-mode>
+                <span><strong>Scrap Express picks it up</strong><small>Our truck and team come to your site, load it and weigh it there.</small></span>
+              </label>
+              <label class="delivery-option">
+                <input type="radio" name="deliveryMode" value="self" data-delivery-mode>
+                <span><strong>I'll send it to you myself</strong><small>In your own vehicle, or book Porter, Delhivery or any delivery app to our yard. We weigh it at the yard and pay you, usually at a better rate as there is no pickup cost.</small></span>
+              </label>
+            </div>
+          </fieldset>
+          <div data-pickup-only>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="scrapLocation">Where is the scrap kept? <span class="field-hint">Helps us quote correctly</span></label>
+                <select id="scrapLocation" name="scrapLocation">
+                  <option value="">Choose one</option>
+                  <% scrapLocations.forEach((place) => { %><option><%= place %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="form-group">
+                <span class="form-label-like">Taking down</span>
+                <label class="rules-check-label dismantle-check"><input type="checkbox" name="needsDismantling" value="yes"> <span>Some items must be taken down or dismantled first (e.g. split ACs on a wall, racks, machines)</span></label>
+              </div>
+            </div>
+          </div>
+          <p class="form-hint-box" data-self-only hidden>After you accept our quote, you choose a time to bring the scrap and we share our yard address. Weights are taken on our weighbridge when it arrives.</p>
           <div class="form-group">
             <label for="pickupFrequency">Pickup Frequency *</label>
             <select id="pickupFrequency" name="pickupFrequency" required>

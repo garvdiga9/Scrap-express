@@ -217,6 +217,7 @@ function applyLocally(pickupId, change) {
 
 function drawCached() {
   if (!cached) return;
+  drawTodo(cached.data.todo);
   draw('mineList', cached.data.mine, 'You have no pickups right now.');
   draw('availableList', cached.data.available, 'No pickups waiting right now.');
   draw('doneList', cached.data.done, 'Nothing finished in the last 7 days.');
@@ -462,6 +463,20 @@ function draw(listId, pickups, empty) {
   pickups.forEach((p) => list.appendChild(card(p)));
 }
 
+// The to-do list at the top: steps to finish, today's pickups, cash to hand back.
+function drawTodo(todo) {
+  const box = document.getElementById('staffTodo');
+  const list = document.getElementById('staffTodoList');
+  list.innerHTML = '';
+  (todo || []).forEach((t) => {
+    const li = document.createElement('li');
+    li.textContent = t.text;
+    if (t.level === 'urgent') li.className = 'is-urgent';
+    list.appendChild(li);
+  });
+  box.hidden = !list.children.length;
+}
+
 async function load(background = false) {
   try {
     // Saved updates go first, so the list comes back with them applied.
@@ -470,6 +485,7 @@ async function load(background = false) {
     cached = { at: Date.now(), data };
     try { localStorage.setItem(LIST_KEY, JSON.stringify(cached)); } catch (err) { /* full */ }
     showOutbox();
+    drawTodo(data.todo);
     draw('mineList', data.mine, 'You have no pickups right now. Take one from the list below.');
     draw('availableList', data.available, 'No pickups waiting right now.');
     draw('doneList', data.done, 'Nothing finished in the last 7 days.');

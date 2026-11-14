@@ -4,7 +4,23 @@ const quotes = require('../lib/quotes');
 const live = require('../lib/live');
 const documents = require('../lib/documents');
 const dispatch = require('../lib/dispatch');
+const notify = require('../lib/notify');
 const ratings = require('../lib/ratings');
+const { mountPushRoutes } = require('./push');
+
+// App alerts for this request on this phone, no login needed: the link
+// itself is the key (it must belong to a real quote).
+const tokenRouter = require('express').Router({ mergeParams: true });
+const realToken = async (req, res, next) => {
+  try {
+    if (await quotes.findByToken(req.params.token)) return next();
+    return res.status(404).json({ error: 'Not found' });
+  } catch (err) {
+    return next(err);
+  }
+};
+mountPushRoutes(tokenRouter, realToken, (req) => ({ quoteToken: req.params.token }));
+router.use('/:token', tokenRouter);
 
 // POST /api/quote/:token/quote { response } — accept or decline.
 router.post('/:token/quote', async (req, res) => {
@@ -16,6 +32,7 @@ router.post('/:token/quote', async (req, res) => {
     res.json({ ok: true, status: response });
     live.requestChanged(updated.customer_id, updated.quote_token);
     quotes.notifyAnswer(updated, response);
+    if (response === 'accepted') notify.quietly('drop_info', updated.id);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not save your answer. Please try again.' });
@@ -47,6 +64,21 @@ router.post('/:token/slot', async (req, res) => {
     if (row.error) return res.status(409).json({ error: row.error });
     res.json({ ok: true });
     dispatch.announceChosen(row);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save that. Please try again.' });
+  }
+});
+
+// POST /api/quote/:token/sent { note } — a drop-off: "I've sent my scrap".
+router.post('/:token/sent', async (req, res) => {
+  try {
+    const request = await quotes.findByToken(req.params.token);
+    if (!request) return res.status(404).json({ error: 'Not found' });
+    const row = await dispatch.customerSent(request.id, { token: req.params.token }, req.body.note);
+    if (row.error) return res.status(409).json({ error: row.error });
+    res.json({ ok: true });
+    dispatch.announceSent(row);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not save that. Please try again.' });

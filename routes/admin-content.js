@@ -14,6 +14,7 @@ const dispatch = require('../lib/dispatch');
 const cash = require('../lib/cash');
 const notify = require('../lib/notify');
 const board = require('../lib/board');
+const reminders = require('../lib/reminders');
 const ratings = require('../lib/ratings');
 const { cleanPhone } = require('../lib/validation');
 const documents = require('../lib/documents');
@@ -290,6 +291,39 @@ router.put('/requests/:id/staff', async (req, res) => {
   }
 });
 
+// ---- the to-do list at the top of the dashboard ----
+
+router.get('/todo', async (req, res) => {
+  try {
+    res.json(await reminders.adminTasks());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load the to-do list' });
+  }
+});
+
+// ---- yard address for drop-offs ----
+
+router.get('/board/yard', async (req, res) => {
+  try {
+    res.json(await board.yard());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load the yard address' });
+  }
+});
+
+router.put('/board/yard', async (req, res) => {
+  try {
+    const { yard, error } = await board.saveYard(req.body || {});
+    if (error) return res.status(400).json({ error });
+    res.json(yard);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save the yard address.' });
+  }
+});
+
 // ---- the office runs a pickup itself (outside truck) ----
 
 const MOVED_ON = 'This pickup has changed meanwhile. Please refresh.';
@@ -349,6 +383,8 @@ const officeStep = (run) => async (req, res) => {
 
 // { step: 'on_way' | 'arrived' }
 router.post('/requests/:id/office/step', officeStep((req, id) => dispatch.step(null, id, req.body.step)));
+// A drop-off can arrive without the customer saying they sent it.
+router.post('/requests/:id/office/step-yard', officeStep((req, id) => dispatch.reachedYard(id)));
 router.post('/requests/:id/office/no-scrap', officeStep((req, id) => dispatch.noScrap(null, id)));
 // { method: 'cash' | 'bank', amount, note }
 router.post('/requests/:id/office/paid', officeStep((req, id) => dispatch.paid(null, id, req.body.method, req.body.amount, req.body.note)));

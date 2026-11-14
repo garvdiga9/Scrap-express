@@ -62,6 +62,20 @@ const PICKUP_FREQUENCIES = [
   'Not sure yet',
 ];
 
+// How the scrap reaches us (pickup_requests.delivery_mode).
+const DELIVERY_MODES = ['pickup', 'self'];
+// Where the scrap is kept, for pickups: it changes the labour, so the quote.
+const SCRAP_LOCATIONS = [
+  'Ground floor, easy to load',
+  'Upper floor, lift available',
+  'Upper floor, stairs only',
+  'Basement',
+  'Rooftop / terrace',
+  'Fixed or installed (e.g. AC on a wall, machines, racks)',
+  'Open yard / outdoors',
+  'Different places',
+];
+
 // Bulk pickups only: smaller lots aren't worth a truck trip.
 const MIN_PICKUP_KG = 300;
 const QUANTITY_UNITS = { kg: 1, tonnes: 1000 };
@@ -79,7 +93,7 @@ const QUOTE_UNITS = ['per kg', 'per tonne', 'per piece', 'lump sum'];
 
 // Change this whenever views/rules.ejs changes in substance, so each request
 // records which version its customer accepted.
-const RULES_VERSION = '2026-11-13';
+const RULES_VERSION = '2026-11-14';
 const READY_DATE_MAX_DAYS = 30;
 
 // 'YYYY-MM-DD' in India, and the dates a customer can say their scrap is ready.
@@ -124,6 +138,6 @@ function parseArea(area, otherArea, { required = true } = {}) {
 }
 
 module.exports = {
-  AREAS, OTHER_AREA, SERVICE_KM, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS,
+  AREAS, OTHER_AREA, SERVICE_KM, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS, DELIVERY_MODES, SCRAP_LOCATIONS,
   PICKUP_STATUSES, QUOTE_UNITS, RULES_VERSION, MAX_OTHER_AREA, RATE_CATEGORIES, formatQuoteRate, readyDateRange, parseArea,
 };

@@ -964,7 +964,8 @@ window.SESchedule = (() => {
     const wrap = document.createElement('div');
     wrap.className = 'office-steps';
     const heading = document.createElement('strong');
-    heading.textContent = 'You run this pickup';
+    const selfDrop = r.delivery_mode === 'self';
+    heading.textContent = selfDrop ? 'Drop-off steps' : 'You run this pickup';
     wrap.appendChild(heading);
     const alertBox = alertLine();
     const stepButton = (text, url, body, ask) => {
@@ -988,12 +989,13 @@ window.SESchedule = (() => {
     };
     const base = `/api/admin/requests/${r.id}/office`;
     if (r.status === 'scheduled') {
-      wrap.appendChild(stepButton('Truck Is On the Way', `${base}/step`, { step: 'on_way' }));
+      wrap.appendChild(stepButton(selfDrop ? 'Customer Has Sent It' : 'Truck Is On the Way', `${base}/step`, { step: 'on_way' }));
+      if (selfDrop) wrap.appendChild(stepButton('Reached Our Yard', `${base}/step-yard`, {}));
     } else if (r.status === 'on_way') {
-      wrap.appendChild(stepButton('Truck Has Arrived', `${base}/step`, { step: 'arrived' }));
+      wrap.appendChild(stepButton(selfDrop ? 'Reached Our Yard' : 'Truck Has Arrived', `${base}/step`, { step: 'arrived' }));
     } else if (r.status === 'arrived') {
       wrap.appendChild(weighForm(r));
-      wrap.appendChild(stepButton('No Scrap at Site', `${base}/no-scrap`, {}, 'Mark this pickup as "no scrap at site"? The customer will be told.'));
+      wrap.appendChild(stepButton(selfDrop ? 'Not Accepted' : 'No Scrap at Site', `${base}/no-scrap`, {}, selfDrop ? 'Mark this drop-off as not accepted? The customer will be told.' : 'Mark this pickup as "no scrap at site"? The customer will be told.'));
     } else if (r.status === 'weighed') {
       wrap.appendChild(payForm(r));
       const fix = document.createElement('details');
@@ -1048,7 +1050,8 @@ window.SESchedule = (() => {
     delete box.dataset.dirty;
     box.oninput = () => { box.dataset.dirty = '1'; };
     const title = document.createElement('h3');
-    title.textContent = 'Pickup slot and staff';
+    const selfDrop = r.delivery_mode === 'self';
+    title.textContent = selfDrop ? 'Drop-off time (customer brings it)' : 'Pickup slot and staff';
     box.appendChild(title);
     const note = (text, className = 'quote-hint') => {
       const p = document.createElement('p');
@@ -1113,7 +1116,10 @@ window.SESchedule = (() => {
     }
 
     // Who is doing it: a staff member, or an outside truck the office runs.
-    if (ASSIGNABLE.includes(r.status)) {
+    // A drop-off has neither: the customer brings it and you mark the steps.
+    if (selfDrop) {
+      if (ASSIGNABLE.includes(r.status) || r.status === 'weighed') note('The customer brings the scrap to your yard. Mark each step below when it happens.');
+    } else if (ASSIGNABLE.includes(r.status)) {
       const label = document.createElement('label');
       label.className = 'schedule-staff';
       label.textContent = 'Who is doing it ';
@@ -1171,7 +1177,9 @@ window.SESchedule = (() => {
     form.className = 'slot-offer';
     form.noValidate = true;
     const heading = document.createElement('strong');
-    heading.textContent = r.slots && r.slots.length ? 'Send new slots (replaces the ones above)' : 'Send 2–3 free pickup slots';
+    heading.textContent = r.slots && r.slots.length
+      ? (selfDrop ? 'Send new drop-off times (replaces the ones above)' : 'Send new slots (replaces the ones above)')
+      : (selfDrop ? 'Send 2–3 times the customer can bring the scrap' : 'Send 2–3 free pickup slots');
     const rows = document.createElement('div');
     rows.className = 'slot-rows';
     rows.append(slotRow(plusDays(1), '10:00', '13:00'), slotRow(plusDays(1), '14:00', '17:00'), slotRow(plusDays(2), '10:00', '13:00'));
@@ -1448,7 +1456,7 @@ function boardWindow(w, perSlot) {
     main.textContent = `#${p.id} ${p.company_name}${p.area ? ` · ${p.area}` : ''}`;
     const side = document.createElement('span');
     side.className = 'board-side';
-    const who = p.office_handled ? `${p.outside_provider || 'Outside'} truck (you)` : p.staff_name || 'No staff yet';
+    const who = p.delivery_mode === 'self' ? 'Drop-off (customer brings it)' : p.office_handled ? `${p.outside_provider || 'Outside'} truck (you)` : p.staff_name || 'No staff yet';
     side.textContent = `${who} · ${BOARD_STATUS[p.status] || p.status}`;
     if (!p.staff_name && !p.office_handled && p.status === 'scheduled') side.classList.add('board-warn');
     row.append(main, side);
@@ -1505,6 +1513,39 @@ async function loadBoard() {
   }
 }
 document.getElementById('boardDays').addEventListener('change', loadBoard);
+
+// Yard address for drop-offs (customers who bring the scrap themselves).
+const yardForm = document.getElementById('yardForm');
+async function loadYard() {
+  try {
+    const res = await fetch('/api/admin/board/yard');
+    if (!res.ok) return;
+    const y = await res.json();
+    if (!yardForm.contains(document.activeElement)) {
+      yardForm.elements.address.value = y.address;
+      yardForm.elements.hours.value = y.hours;
+      yardForm.elements.map.value = y.map;
+      yardForm.elements.pocName.value = y.pocName;
+      yardForm.elements.pocPhone.value = y.pocPhone;
+    }
+  } catch (err) {
+    // Tried again when the tab is opened.
+  }
+}
+yardForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const note = document.getElementById('yardSaved');
+  const res = await fetch('/api/admin/board/yard', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      address: yardForm.elements.address.value, hours: yardForm.elements.hours.value, map: yardForm.elements.map.value, pocName: yardForm.elements.pocName.value, pocPhone: yardForm.elements.pocPhone.value,
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  note.textContent = res.ok ? 'Saved ✓' : (data.error || 'Could not save.');
+});
+document.querySelector('.tab-btn[data-tab="board"]').addEventListener('click', loadYard);
 document.getElementById('boardSettings').addEventListener('submit', async (e) => {
   e.preventDefault();
   const res = await fetch('/api/admin/board/settings', {
@@ -1722,3 +1763,47 @@ document.getElementById('teamCancelEdit').addEventListener('click', resetTeamFor
 activityWho.addEventListener('change', loadActivity);
 activityArea.addEventListener('change', loadActivity);
 document.querySelector('.tab-btn[data-tab="team"]').addEventListener('click', loadTeam);
+
+/* ---------- To do (top of the dashboard) ---------- */
+async function loadTodo() {
+  const box = document.getElementById('adminTodo');
+  try {
+    const res = await fetch('/api/admin/todo');
+    if (!res.ok) return;
+    const tasks = await res.json();
+    const list = document.getElementById('adminTodoList');
+    list.innerHTML = '';
+    tasks.forEach((t) => {
+      const li = document.createElement('li');
+      if (t.level === 'urgent') li.className = 'is-urgent';
+      const go = document.createElement('button');
+      go.type = 'button';
+      go.className = 'todo-item';
+      go.textContent = t.text;
+      go.addEventListener('click', () => {
+        const tab = document.querySelector(`.tab-btn[data-tab="${t.tab}"]`);
+        if (tab) tab.click();
+        document.querySelector('.admin-tabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      li.appendChild(go);
+      list.appendChild(li);
+    });
+    const urgent = tasks.filter((t) => t.level === 'urgent').length;
+    document.getElementById('adminTodoCount').textContent = tasks.length
+      ? `${tasks.length} waiting${urgent ? `, ${urgent} urgent` : ''}`
+      : '';
+    if (!tasks.length) {
+      const li = document.createElement('li');
+      li.className = 'todo-done';
+      li.textContent = 'Nothing waiting. All caught up ✓';
+      list.appendChild(li);
+    }
+    box.hidden = false;
+  } catch (err) {
+    // Tried again on the next update.
+  }
+}
+window.SELive.on('requests', () => { if (!dashboard.hidden) loadTodo(); });
+new MutationObserver(() => { if (!dashboard.hidden) loadTodo(); }).observe(dashboard, { attributes: true, attributeFilter: ['hidden'] });
+setInterval(() => { if (!dashboard.hidden && !document.hidden) loadTodo(); }, 5 * 60 * 1000);
+if (!dashboard.hidden) loadTodo();

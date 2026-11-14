@@ -7,7 +7,7 @@
 <%- include('partials/page-hero', {
   eyebrow: 'Indicative Rates',
   heading: 'Scrap Rates Today in Delhi NCR',
-  text: 'Reference prices per kg (unless noted) for common scrap categories. Business lots are priced on volume, grade and location, so your final rate comes in a bulk quote.',
+  text: 'Reference prices per kg (unless noted) for common scrap categories. Your final rate depends on quantity, grade, where the scrap is kept and whether we pick it up, so it comes in a quote.',
   links: [{ href: '#subscribe', label: '🔔 Get these rates every morning' }],
 }) %>
 
@@ -52,10 +52,12 @@
         <% } %>
       </div>
 
+      <%- include('partials/rate-factors') %>
+
       <div class="rates-quote-note">
         <div>
           <h3>Selling in bulk?</h3>
-          <p>Final rates depend on volume, grade and pickup frequency. Tell us what you have and we'll send a quote for your lot.</p>
+          <p>Tell us what you have, where it is kept, and whether we pick it up or you send it. We'll send a quote for your lot.</p>
         </div>
         <a href="/book-pickup" class="btn btn-accent btn-lg">Request a Bulk Quote</a>
       </div>

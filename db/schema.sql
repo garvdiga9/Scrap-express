@@ -528,3 +528,20 @@ ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS outside_driver VARCHAR(100)
 ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS outside_phone VARCHAR(20);
 ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS outside_vehicle VARCHAR(20);
 ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS outside_fare NUMERIC(10,2);
+
+-- How the scrap reaches us: 'pickup' (our truck) or 'self' (the customer
+-- brings it, or books Porter / a delivery app, to our yard). Self drop-offs
+-- are run by the office (office_handled). Where the scrap is kept, and
+-- whether it must be taken down first, help the quote.
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS delivery_mode VARCHAR(10) NOT NULL DEFAULT 'pickup';
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS scrap_location VARCHAR(80);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS needs_dismantling BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS sent_note VARCHAR(150);
+
+-- Reminders already sent (lib/reminders.js), so each goes once.
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS slots_reminded BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS quote_reminded BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- App alerts for customers who use their private quote link (no login).
+ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS quote_token VARCHAR(48);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_token ON push_subscriptions(quote_token);
