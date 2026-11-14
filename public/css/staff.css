@@ -47,3 +47,11 @@
 .staff-fix summary { cursor: pointer; font-size: 13.5px; font-weight: 600; color: var(--color-primary-dark); padding: 6px 0; }
 .staff-completed, .staff-no_scrap { opacity: 0.75; }
 .status-badge.status-no_scrap, .status-badge.status-completed { white-space: nowrap; }
+.staff-weigh-title { margin: 0; font-weight: 700; color: var(--color-dark); }
+.staff-weigh-line { display: grid !important; grid-template-columns: 1fr 120px; align-items: center; gap: 10px !important; font-weight: 600; }
+.staff-weigh-line input { padding: 11px 12px; border: 1.5px solid var(--color-border); border-radius: var(--radius-sm); font: inherit; font-size: 18px; font-weight: 700; background: var(--color-white); color: var(--color-dark); width: 100%; }
+.staff-fixed { text-align: right; color: var(--color-text); }
+.staff-total { margin: 0; font-family: var(--font-heading); font-size: 18px; font-weight: 800; color: var(--color-primary-dark); }
+.staff-pay input { padding: 12px 14px; border: 1.5px solid var(--color-border); border-radius: var(--radius-sm); font: inherit; font-size: 18px; background: var(--color-white); color: var(--color-dark); }
+.staff-pay .btn { min-height: 48px; justify-content: center; }
+.staff-outbox { margin: 0; background: #fef3c7; border: 1px solid #fde68a; color: #78350f; border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14px; font-weight: 600; }

@@ -119,4 +119,6 @@
   const nativeConfirm = window.confirm.bind(window);
   window.alert = (message) => nativeAlert(window.SETranslate(String(message)));
   window.confirm = (message) => nativeConfirm(window.SETranslate(String(message)));
+  const nativePrompt = window.prompt.bind(window);
+  window.prompt = (message, value) => nativePrompt(window.SETranslate(String(message)), value);
 })();

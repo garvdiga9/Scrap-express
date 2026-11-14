@@ -1985,3 +1985,36 @@ main[tabindex="-1"]:focus { outline: none; }
 .status-badge.status-on_way { background: #e0e7ff; color: #3730a3; }
 .status-badge.status-arrived { background: #cffafe; color: #155e75; }
 .status-badge.status-weighed { background: #ccfbf1; color: #115e59; }
+
+/* The receipt on a request page */
+.request-receipt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.request-weight { align-items: flex-start; flex-wrap: wrap; }
+.receipt-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.receipt-table th, .receipt-table td { padding: 6px 6px; border-bottom: 1px solid var(--color-border); text-align: left; color: var(--color-text); }
+.receipt-table thead th { font-size: 12px; color: var(--color-text-light); font-weight: 600; }
+.receipt-table td:last-child, .receipt-table th:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.receipt-table tfoot th, .receipt-table tfoot td { font-weight: 800; color: var(--color-dark); border-bottom: 0; }
+.receipt-table .receipt-paid th, .receipt-table .receipt-paid td { color: var(--color-trend-up); }
+.receipt-note { margin: 0; font-size: 13px; }
+.receipt-link { align-self: flex-start; font-weight: 700; color: var(--color-primary-dark); font-size: 14px; }
+.receipt-table .receipt-pending th, .receipt-table .receipt-pending td { color: var(--color-accent-dark); }
+
+/* Changing or cancelling a booked pickup */
+.change-pickup { margin-top: 10px; }
+.change-pickup summary { cursor: pointer; font-weight: 600; color: var(--color-primary-dark); font-size: 14px; }
+.change-pickup .slot-form { margin-top: 10px; }
+.change-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+/* Rating a finished pickup: five stars, right to left so CSS can light up
+   the chosen one and all before it. */
+.rating-form { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.rating-form fieldset { border: 0; padding: 0; margin: 0; }
+.rating-form legend { font-weight: 700; color: var(--color-dark); padding: 0; margin-bottom: 4px; }
+.rating-stars { display: inline-flex; flex-direction: row-reverse; gap: 2px; }
+.rating-stars input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.rating-stars label { font-size: 34px; line-height: 1; color: var(--color-border); cursor: pointer; padding: 2px; }
+.rating-stars input:checked ~ label, .rating-stars label:hover, .rating-stars label:hover ~ label { color: var(--color-accent); }
+.rating-stars input:focus-visible + label { outline: 3px solid var(--color-accent); outline-offset: 2px; border-radius: 4px; }
+.rating-comment { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: var(--color-dark); }
+.rating-comment textarea { padding: 10px 12px; border: 1.5px solid var(--color-border); border-radius: var(--radius-sm); font: inherit; font-weight: 400; background: var(--color-white); color: var(--color-dark); }
+.rating-form .btn { align-self: flex-start; }

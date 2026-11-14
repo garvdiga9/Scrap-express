@@ -51,9 +51,10 @@ async function seed() {
     const passwordHash = await bcrypt.hash(adminPassword, 10);
 
     await client.query(
-      `INSERT INTO admin_users (username, password_hash)
-       VALUES ($1, $2)
-       ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash`,
+      // The environment's admin is always the owner (and always switched on).
+      `INSERT INTO admin_users (username, password_hash, role, active)
+       VALUES ($1, $2, 'owner', TRUE)
+       ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash, role = 'owner', active = TRUE`,
       [adminUsername, passwordHash]
     );
     console.log(`Admin user "${adminUsername}" is ready.`);

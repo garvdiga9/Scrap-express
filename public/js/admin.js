@@ -19,7 +19,7 @@ async function checkSession() {
     const res = await fetch('/api/admin/me');
     if (res.ok) {
       const data = await res.json();
-      enterDashboard(data.username);
+      enterDashboard(data);
     }
   } catch (err) {
     /* not logged in, stay on login screen */
@@ -28,10 +28,14 @@ async function checkSession() {
 
 let pushMounted = false;
 
-function enterDashboard(username) {
+// who: { username, name, role }. Managers don't see the owner's controls
+// (Team tab, delete buttons, staff logins); the server refuses those anyway.
+function enterDashboard(who) {
   loginScreen.hidden = true;
+  const role = who.role || 'owner';
+  document.body.dataset.role = role;
   dashboard.hidden = false;
-  welcomeUser.textContent = `Signed in as ${username}`;
+  welcomeUser.textContent = `Signed in as ${who.name || who.username}${role === 'manager' ? ' (manager)' : ''}`;
   Promise.all([loadRequests(), loadDemolitionRequests(), loadCallbacks()]).then(openFromLink);
   loadLeads();
   loadCustomers();
@@ -112,7 +116,7 @@ async function submitLogin() {
       throw new Error(`The server sent an unexpected response (status ${res.status}). Please try again.`);
     }
     if (!res.ok) throw new Error(data.error || 'Login failed');
-    enterDashboard(data.username);
+    enterDashboard(data);
   } catch (err) {
     showLoginAlert(err.name === 'AbortError'
       ? 'The server took too long to respond. Check your connection and try again.'
@@ -575,9 +579,25 @@ function renderRequestSummary(r) {
   if (r.status === 'ready') addDetail('Before dispatch', 'Call the customer to confirm the scrap is ready, then set the status to Confirmed.');
   if (r.ready_date) addDetail('Scrap ready from', formatDate(r.ready_date));
   if (r.dispatch_checked_at) addDetail('Confirmed by call', formatDate(r.dispatch_checked_at));
+  if (r.rated_at) addDetail('Customer rating', `${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}${r.rating_comment ? ` “${r.rating_comment}”` : ''}`);
   if (r.chosen_slot) addDetail('Pickup slot', r.chosen_slot.label);
+  if (r.status === 'cancelled' && r.cancelled_by === 'customer') addDetail('Cancelled by customer', r.cancel_reason || 'No reason given').classList.add('detail-warn');
   if (r.staff_name) addDetail('Staff', r.staff_name);
-  if (r.weighed_kg != null) addDetail('Weighed', `${Number(r.weighed_kg).toLocaleString('en-IN')} kg${r.payment_method ? ` · paid by ${r.payment_method === 'cash' ? 'cash' : 'bank transfer'}` : ''}`);
+  if (r.weighed_kg != null) {
+    const inr = (n) => `₹${Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+    const lines = (r.weighed_items || []).map((i) => `• ${i.material}: ${i.unit === 'lump sum' ? 'fixed' : `${Number(i.qty).toLocaleString('en-IN')} ${i.unit === 'per piece' ? 'pcs' : 'kg'}`} × ${inr(i.rate)} ${i.unit} = ${inr(i.amount)}`);
+    addDetail('Weighed', [`${Number(r.weighed_kg).toLocaleString('en-IN')} kg${r.amount_due != null ? ` · due ${inr(r.amount_due)}` : ''}`, ...lines].join(String.fromCharCode(10)));
+  }
+  if (r.weigh_warnings && r.weigh_warnings.length) {
+    addDetail('Photo check', `⚠️ ${r.weigh_warnings.join(' ')}`).classList.add('detail-warn');
+  } else if (r.weighed_kg != null && r.weigh_photo_taken_at) {
+    addDetail('Photo check', `Taken ${formatDateTime(r.weigh_photo_taken_at)}${r.weigh_distance_m != null ? `, ${r.weigh_distance_m < 1000 ? `${r.weigh_distance_m} m` : `${(r.weigh_distance_m / 1000).toFixed(1)} km`} from the site pin` : ''}`);
+  }
+  if (r.weigh_latitude != null) addDetail('Uploaded from', 'See on the map', `https://www.google.com/maps?q=${r.weigh_latitude},${r.weigh_longitude}`);
+  if (r.amount_paid != null) {
+    addDetail('Paid', `₹${Number(r.amount_paid).toLocaleString('en-IN')} by ${r.payment_method === 'cash' ? 'cash' : 'bank transfer'}${r.payment_note ? ` · reason: ${r.payment_note}` : ''}`);
+  }
+  if (r.weighed_items && r.quote_token) addDetail('Receipt', 'Open the printable receipt', `/quote/${r.quote_token}/receipt`);
   addDetail('Company', r.company_name);
   addDetail('Business type', r.business_type);
   addDetail('GSTIN', r.gstin);

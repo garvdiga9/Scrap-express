@@ -4,6 +4,7 @@ const quotes = require('../lib/quotes');
 const live = require('../lib/live');
 const documents = require('../lib/documents');
 const dispatch = require('../lib/dispatch');
+const ratings = require('../lib/ratings');
 
 // POST /api/quote/:token/quote { response } — accept or decline.
 router.post('/:token/quote', async (req, res) => {
@@ -46,6 +47,51 @@ router.post('/:token/slot', async (req, res) => {
     if (row.error) return res.status(409).json({ error: row.error });
     res.json({ ok: true });
     dispatch.announceChosen(row);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save that. Please try again.' });
+  }
+});
+
+// Changing a booked pickup, or cancelling, before our team sets off.
+router.post('/:token/reschedule', async (req, res) => {
+  try {
+    const request = await quotes.findByToken(req.params.token);
+    if (!request) return res.status(404).json({ error: 'Not found' });
+    const result = req.body.newSlots
+      ? await dispatch.askNewSlots(request.id, { token: req.params.token })
+      : await dispatch.changeSlot(request.id, { token: req.params.token }, Number(req.body.slotId));
+    if (result.error) return res.status(409).json({ error: result.error });
+    res.json({ ok: true });
+    dispatch.announceChange(req.body.newSlots ? 'new_slots' : 'moved', result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save that. Please try again.' });
+  }
+});
+
+router.post('/:token/cancel', async (req, res) => {
+  try {
+    const request = await quotes.findByToken(req.params.token);
+    if (!request) return res.status(404).json({ error: 'Not found' });
+    const result = await dispatch.cancelByCustomer(request.id, { token: req.params.token }, req.body.reason);
+    if (result.error) return res.status(409).json({ error: result.error });
+    res.json({ ok: true });
+    dispatch.announceChange('cancelled', result, result.cancel_reason);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save that. Please try again.' });
+  }
+});
+
+// Rating a finished pickup.
+router.post('/:token/rating', async (req, res) => {
+  try {
+    const request = await quotes.findByToken(req.params.token);
+    if (!request) return res.status(404).json({ error: 'Not found' });
+    const result = await ratings.rate(request.id, { token: req.params.token }, req.body || {});
+    if (result.error) return res.status(409).json({ error: result.error });
+    res.json({ ok: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not save that. Please try again.' });

@@ -77,7 +77,9 @@
     <button class="tab-btn active" data-tab="requests">Pickup <span class="tab-long">Requests</span> <span class="tab-count" id="pickupCount" hidden></span></button>
     <button class="tab-btn" data-tab="demolition">Demolition <span class="tab-long">Requests</span> <span class="tab-count" id="demolitionCount" hidden></span></button>
     <button class="tab-btn" data-tab="callbacks">Call Backs <span class="tab-count" id="callbackCount" hidden></span></button>
+    <button class="tab-btn" data-tab="board">Pickups <span class="tab-count" id="unassignedCount" hidden></span></button>
     <button class="tab-btn" data-tab="staff">Staff</button>
+    <button class="tab-btn" data-tab="money">Money <span class="tab-count" id="bankToPayCount" hidden></span></button>
     <button class="tab-btn" data-tab="customers">Customers</button>
     <button class="tab-btn" data-tab="rates"><span class="tab-long">Scrap</span> Rates</button>
     <button class="tab-btn" data-tab="testimonials">Reviews</button>
@@ -85,6 +87,7 @@
     <button class="tab-btn" data-tab="lots">Buy From Us <span class="tab-count" id="lotEnquiryCount" hidden></span></button>
     <button class="tab-btn" data-tab="subscribers">Subscribers</button>
     <button class="tab-btn" data-tab="analytics">Analytics</button>
+    <button class="tab-btn owner-only" data-tab="team">Team</button>
   </div>
 
   <main class="admin-content container">
@@ -280,6 +283,15 @@
         <p class="table-empty">Loading reviews…</p>
       </div>
 
+      <h3 class="admin-subhead">Customers' ratings <span class="lead-meta" id="ratingsAverage"></span></h3>
+      <p class="admin-card-hint">Customers rate each finished pickup. Ratings they allowed us to show, with a comment, can go on the home page with one click.</p>
+      <div class="table-wrap">
+        <table class="admin-table" id="ratingsTable">
+          <thead><tr><th>Date</th><th>Customer</th><th>Rating</th><th>Comment</th><th></th></tr></thead>
+          <tbody id="ratingsBody"><tr><td colspan="5" class="table-empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+
       <form class="admin-card stats-card" id="statsForm" method="post" novalidate>
         <h3>Home Page Numbers</h3>
         <p class="admin-card-hint">The figures at the top of the home page and in "Our Impact". Keep them true: CO₂ avoided and trees saved are worked out from the kilograms recycled.</p>
@@ -292,6 +304,25 @@
       </form>
     </section>
 
+    <!-- Pickups tab: the dispatch board (lib/board.js) -->
+    <section class="tab-panel" id="tab-board">
+      <div class="panel-head">
+        <h2>Pickups</h2>
+        <select id="boardDays" aria-label="How many days">
+          <option value="3">Next 3 days</option>
+          <option value="7" selected>Next 7 days</option>
+          <option value="14">Next 14 days</option>
+        </select>
+      </div>
+      <form class="board-settings" id="boardSettings" method="post" novalidate>
+        <label>Trucks per slot <input type="number" id="perSlot" min="1" max="50" step="1"></label>
+        <button type="submit" class="btn btn-outline btn-sm">Save</button>
+        <span class="admin-card-hint">How many pickups you can do at the same time. A slot that's full can't be chosen by a customer, and shows a warning when you offer it.</span>
+      </form>
+      <p class="board-alert" id="boardAlert" hidden></p>
+      <div class="board" id="boardDaysList"><p class="table-empty">Loading…</p></div>
+    </section>
+
     <!-- Staff tab: the people who do pickups, and their Staff app logins -->
     <section class="tab-panel" id="tab-staff">
       <div class="panel-head">
@@ -299,7 +330,7 @@
         <a href="/staff.html" target="_blank" rel="noopener" class="btn btn-outline">Open Staff app</a>
       </div>
       <p class="admin-card-hint">Each staff member signs in to the Staff app with the username and password you set here. They open <strong id="staffAppAddress"></strong> on their phone, sign in, and tap "Install Staff App". They only see pickups: no rates, customers or quotes. When a customer chooses a pickup slot, every staff member is alerted and the first one free takes it.</p>
-      <form class="admin-card staff-form" id="staffForm" method="post" novalidate>
+      <form class="admin-card staff-form owner-only" id="staffForm" method="post" novalidate>
         <h3 id="staffFormTitle">Add a staff member</h3>
         <input type="hidden" id="staffEditId">
         <div class="lot-form-grid">
@@ -318,6 +349,86 @@
         <table class="admin-table" id="staffTable">
           <thead><tr><th>Name</th><th>Username</th><th>Phone</th><th>Open pickups</th><th>Done</th><th>Last signed in</th><th>Status</th><th></th></tr></thead>
           <tbody id="staffBody"><tr><td colspan="8" class="table-empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Team tab (owner only): dashboard logins for managers, and the activity log -->
+    <section class="tab-panel" id="tab-team">
+      <div class="panel-head">
+        <h2>Team</h2>
+      </div>
+      <p class="admin-card-hint">Give each manager their own login instead of sharing yours, so the activity log below shows who did what. Managers can do the daily work: requests, quotes, slots, assigning staff, money, rates, reviews. Only you can delete things, add or change logins (team and staff), and read this log. Your own login is the one set on the server and isn't listed for editing.</p>
+      <form class="admin-card staff-form" id="teamForm" method="post" novalidate>
+        <h3 id="teamFormTitle">Add a manager</h3>
+        <input type="hidden" id="teamEditId">
+        <div class="lot-form-grid">
+          <label>Name <input type="text" id="teamName" maxlength="150" required></label>
+          <label>Username <input type="text" id="teamUser" maxlength="50" autocapitalize="none" autocomplete="off" placeholder="e.g. amit" required></label>
+          <label><span id="teamPassLabel">Password (8+ characters)</span> <input type="text" id="teamPass" maxlength="100" autocomplete="off"></label>
+        </div>
+        <div id="teamFormAlert" class="form-alert" hidden></div>
+        <div class="admin-card-actions">
+          <button type="submit" class="btn btn-accent" id="teamSaveBtn">Add Manager</button>
+          <button type="button" class="btn btn-outline" id="teamCancelEdit" hidden>Cancel</button>
+        </div>
+      </form>
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Last signed in</th><th>Status</th><th></th></tr></thead>
+          <tbody id="teamBody"><tr><td colspan="6" class="table-empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="panel-head activity-head">
+        <h3 class="admin-subhead">Activity log</h3>
+        <div class="activity-filters">
+          <label>Who <select id="activityWho"><option value="">Everyone</option></select></label>
+          <label>About <select id="activityArea">
+            <option value="">Everything</option>
+            <option value="login">Sign-ins</option>
+            <option value="requests">Pickup requests</option>
+            <option value="demolition">Demolition requests</option>
+            <option value="cash">Money</option>
+            <option value="rates">Rates</option>
+            <option value="staff">Staff</option>
+            <option value="team">Team</option>
+            <option value="testimonials">Reviews</option>
+            <option value="ratings">Ratings</option>
+          </select></label>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>When</th><th>Who</th><th>What</th><th>Details</th></tr></thead>
+          <tbody id="activityBody"><tr><td colspan="4" class="table-empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <p class="admin-card-hint">Kept for a year. The last 200 entries are shown.</p>
+    </section>
+
+    <!-- Money tab: cash with each staff member, and bank transfers to make (lib/cash.js) -->
+    <section class="tab-panel" id="tab-money">
+      <div class="panel-head">
+        <h2>Money</h2>
+      </div>
+      <div class="stat-tiles" id="moneyTiles"></div>
+      <h3 class="admin-subhead">Cash with staff</h3>
+      <p class="admin-card-hint">Record the cash you hand each person. Cash they pay customers is taken off automatically, so you can see what they should still have. When they hand cash back, press <strong>Settle Up</strong> and enter what you counted; any difference is recorded.</p>
+      <div class="cash-cards" id="cashCards"><p class="table-empty">Loading…</p></div>
+      <h3 class="admin-subhead">Bank transfers to customers</h3>
+      <p class="admin-card-hint">Pickups where the customer chose a bank transfer. Pay them, then enter the UTR or cheque number; the customer is told and their receipt shows it as paid.</p>
+      <div class="table-wrap">
+        <table class="admin-table" id="bankTable">
+          <thead><tr><th>Pickup</th><th>Customer</th><th>Amount</th><th>Weighed by</th><th>Status</th></tr></thead>
+          <tbody id="bankBody"><tr><td colspan="5" class="table-empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <h3 class="admin-subhead">Settle-ups</h3>
+      <div class="table-wrap">
+        <table class="admin-table" id="settleTable">
+          <thead><tr><th>Date</th><th>Staff</th><th>Should have had</th><th>Handed back</th><th>Difference</th><th>Note</th></tr></thead>
+          <tbody id="settleBody"><tr><td colspan="6" class="table-empty">Loading…</td></tr></tbody>
         </table>
       </div>
     </section>

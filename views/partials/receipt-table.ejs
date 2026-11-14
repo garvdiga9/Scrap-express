@@ -1,0 +1,23 @@
+<%# The weighed materials and the amount, on the customer's request page and
+    the printable receipt. Locals: pickup (from lib/dispatch.js customerView). %>
+<% const inr = (n) => `₹${Number(n).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`; %>
+<% const qtyText = (item) => (item.unit === 'lump sum' ? '—' : item.unit === 'per piece' ? `${Number(item.qty).toLocaleString('en-IN')} pcs` : `${Number(item.qty).toLocaleString('en-IN')} kg`); %>
+<table class="receipt-table">
+  <thead><tr><th scope="col">Material</th><th scope="col">Weight</th><th scope="col">Rate</th><th scope="col">Amount</th></tr></thead>
+  <tbody>
+    <% pickup.items.forEach((item) => { %>
+      <tr><td><%= item.material %></td><td><%= qtyText(item) %></td><td><%= inr(item.rate) %> <%= item.unit %></td><td><%= inr(item.amount) %></td></tr>
+    <% }) %>
+  </tbody>
+  <tfoot>
+    <tr><th scope="row" colspan="3">Total (<%= Number(pickup.weighedKg).toLocaleString('en-IN') %> kg)</th><td><%= inr(pickup.amountDue) %></td></tr>
+    <% if (pickup.amountPaid != null) { %>
+      <% if (pickup.bankPending) { %>
+        <tr class="receipt-pending"><th scope="row" colspan="3">To be paid by bank transfer</th><td><%= inr(pickup.amountPaid) %></td></tr>
+      <% } else { %>
+        <tr class="receipt-paid"><th scope="row" colspan="3">Paid by <%= (pickup.payment || '').toLowerCase() %><%= pickup.bankReference ? ` (ref. ${pickup.bankReference})` : '' %></th><td><%= inr(pickup.amountPaid) %></td></tr>
+      <% } %>
+    <% } %>
+  </tfoot>
+</table>
+<% if (pickup.amountPaid != null && pickup.paymentNote) { %><p class="receipt-note">Note: <%= pickup.paymentNote %></p><% } %>

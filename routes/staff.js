@@ -108,16 +108,24 @@ router.post('/pickups/:id/step', requireStaff, action(
 
 // Photo of the weighing machine (field "file") + the weight in kg.
 router.post('/pickups/:id/weigh', requireStaff, documents.acceptDocument, async (req, res) => {
-  const kg = Number(req.body.kg);
+  let quantities;
+  try {
+    quantities = JSON.parse(req.body.quantities || 'null');
+  } catch (err) {
+    quantities = null;
+  }
   const fail = async (status, error) => {
     await documents.removeFiles([req.document.fileName]);
     res.status(status).json({ error });
   };
   if (!req.document.mime.startsWith('image/')) return fail(400, 'Please take a photo of the weighing machine.');
-  if (!Number.isFinite(kg) || kg <= 0 || kg > 1000000) return fail(400, 'Please enter the weight in kg.');
+  if (!Array.isArray(quantities)) return fail(400, 'Please enter a weight for each material.');
   try {
-    const row = await dispatch.weigh(req.staff.id, Number(req.params.id), kg, req.document);
+    const row = await dispatch.weigh(req.staff.id, Number(req.params.id), quantities, req.document, {
+      takenAt: req.body.takenAt, latitude: req.body.latitude, longitude: req.body.longitude,
+    });
     if (!row) return fail(409, MOVED_ON);
+    if (row.error) return fail(400, row.error);
     res.json({ ok: true, status: row.status });
     dispatch.announceStep(row);
   } catch (err) {
@@ -126,11 +134,19 @@ router.post('/pickups/:id/weigh', requireStaff, documents.acceptDocument, async 
   }
 });
 
-// { method: 'cash' | 'bank' }
-router.post('/pickups/:id/paid', requireStaff, action(
-  (req) => dispatch.paid(req.staff.id, Number(req.params.id), req.body.method),
-  (row) => dispatch.announceStep(row)
-));
+// { method: 'cash' | 'bank', amount, note }
+router.post('/pickups/:id/paid', requireStaff, async (req, res) => {
+  try {
+    const row = await dispatch.paid(req.staff.id, Number(req.params.id), req.body.method, req.body.amount, req.body.note);
+    if (!row) return res.status(409).json({ error: MOVED_ON });
+    if (row.error) return res.status(400).json({ error: row.error });
+    res.json({ ok: true, status: row.status });
+    dispatch.announceStep(row);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save that. Please try again.' });
+  }
+});
 
 router.post('/pickups/:id/no-scrap', requireStaff, action(
   (req) => dispatch.noScrap(req.staff.id, Number(req.params.id)),

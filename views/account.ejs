@@ -50,7 +50,7 @@
                     <% } %>
                   </div>
                   <span class="status-badge status-<%= r.status %>"><%= statusLabels[r.status] || r.status %></span>
-                  <%- include('partials/request-progress', { timeline: r.timeline, docs: r.docs, docBase: '/api/customer/documents/', pickup: r.pickup }) %>
+                  <%- include('partials/request-progress', { timeline: r.timeline, docs: r.docs, docBase: '/api/customer/documents/', pickup: r.pickup, receiptUrl: r.quote_token ? `/quote/${r.quote_token}/receipt` : null }) %>
                   <% if (r.quote_items && r.quote_items.length) { %>
                     <%- include('partials/quote-box', { r, api: `/api/customer/requests/${r.id}` }) %>
                   <% } %>

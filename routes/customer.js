@@ -12,6 +12,7 @@ const live = require('../lib/live');
 const documents = require('../lib/documents');
 const schedules = require('../lib/schedules');
 const dispatch = require('../lib/dispatch');
+const ratings = require('../lib/ratings');
 const pool = require('../db/pool');
 
 const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30;
@@ -220,6 +221,48 @@ router.post('/requests/:id/slot', requireCustomer, async (req, res) => {
     if (row.error) return res.status(409).json({ error: row.error });
     res.json({ ok: true });
     dispatch.announceChosen(row);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save that. Please try again.' });
+  }
+});
+
+// Changing a booked pickup, or cancelling, before our team sets off.
+router.post('/requests/:id/reschedule', requireCustomer, async (req, res) => {
+  try {
+    
+    const result = req.body.newSlots
+      ? await dispatch.askNewSlots(Number(req.params.id), { customerId: req.session.customerId })
+      : await dispatch.changeSlot(Number(req.params.id), { customerId: req.session.customerId }, Number(req.body.slotId));
+    if (result.error) return res.status(409).json({ error: result.error });
+    res.json({ ok: true });
+    dispatch.announceChange(req.body.newSlots ? 'new_slots' : 'moved', result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save that. Please try again.' });
+  }
+});
+
+router.post('/requests/:id/cancel', requireCustomer, async (req, res) => {
+  try {
+    
+    const result = await dispatch.cancelByCustomer(Number(req.params.id), { customerId: req.session.customerId }, req.body.reason);
+    if (result.error) return res.status(409).json({ error: result.error });
+    res.json({ ok: true });
+    dispatch.announceChange('cancelled', result, result.cancel_reason);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save that. Please try again.' });
+  }
+});
+
+// Rating a finished pickup.
+router.post('/requests/:id/rating', requireCustomer, async (req, res) => {
+  try {
+    
+    const result = await ratings.rate(Number(req.params.id), { customerId: req.session.customerId }, req.body || {});
+    if (result.error) return res.status(409).json({ error: result.error });
+    res.json({ ok: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not save that. Please try again.' });

@@ -1,7 +1,8 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const pool = require('../db/pool');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin, roleOf } = require('../middleware/auth');
+const activity = require('../lib/activity');
 const {
   PICKUP_STATUSES, QUOTE_UNITS, BUSINESS_TYPES, AREAS, RATE_CATEGORIES, formatQuoteRate,
 } = require('../data/business');
@@ -45,7 +46,7 @@ router.post('/login', async (req, res) => {
     const { rows } = await pool.query('SELECT * FROM admin_users WHERE username = $1', [username]);
     const user = rows[0];
     const ok = await bcrypt.compare(password, user ? user.password_hash : DUMMY_HASH);
-    if (!user || !ok) {
+    if (!user || !ok || user.active === false) {
       loginLimit.recordFailure(req.ip, username);
       console.warn(`admin login failed for "${username.slice(0, 50)}" from ${req.ip}`);
       return res.status(401).json({ error: 'Invalid username or password' });
@@ -55,9 +56,14 @@ router.post('/login', async (req, res) => {
     await new Promise((resolve, reject) => req.session.regenerate((err) => (err ? reject(err) : resolve())));
     req.session.isAdmin = true;
     req.session.username = user.username;
+    req.session.adminId = user.id;
+    req.session.adminName = user.name || user.username;
+    req.session.adminRole = user.role || 'manager';
+    pool.query('UPDATE admin_users SET last_login_at = NOW() WHERE id = $1', [user.id]).catch(() => {});
+    activity.quietly(activity.record({ id: user.id, name: req.session.adminName }, { action: 'Signed in', area: 'login' }));
     // "Keep me signed in" on a phone; otherwise the default one-day session.
     if (req.body.remember === true) req.session.cookie.maxAge = THIRTY_DAYS;
-    res.json({ message: 'Logged in', username: user.username });
+    res.json({ message: 'Logged in', username: user.username, name: req.session.adminName, role: req.session.adminRole });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Login failed' });
@@ -70,7 +76,7 @@ router.post('/logout', (req, res) => {
 
 router.get('/me', (req, res) => {
   if (req.session && req.session.isAdmin) {
-    return res.json({ username: req.session.username });
+    return res.json({ username: req.session.username, name: req.session.adminName || req.session.username, role: roleOf(req) });
   }
   res.status(401).json({ error: 'Not authenticated' });
 });

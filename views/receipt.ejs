@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="<%= locals.lang === 'hi' ? 'hi-IN' : 'en-IN' %>">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pickup Receipt #<%= r.id %> - Scrap Express</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="/css/receipt.css">
+</head>
+<%# A printable receipt for one pickup, from its private quote link. Not a GST
+    invoice: that comes separately, under "Your papers". %>
+<body>
+<main class="receipt">
+  <header class="receipt-head">
+    <div>
+      <p class="receipt-brand">♻ Scrap <span>Express</span></p>
+      <p class="receipt-small">Bulk scrap buyers · Delhi NCR · +91 98188 26333 · scrapexpress@gmail.com</p>
+    </div>
+    <div class="receipt-title">
+      <h1>Pickup Receipt</h1>
+      <p>#<%= r.id %></p>
+    </div>
+  </header>
+
+  <% const when = (d) => new Date(d).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }); %>
+  <section class="receipt-parties">
+    <div>
+      <h2>Collected from</h2>
+      <p><strong><%= r.company_name %></strong><br><%= r.name %><br><%= r.address %></p>
+    </div>
+    <div>
+      <h2>Pickup</h2>
+      <p>
+        <% if (r.pickup.chosen) { %>Slot: <%= r.pickup.chosen.label %><br><% } %>
+        <% if (r.weighed_at) { %>Weighed: <%= when(r.weighed_at) %><br><% } %>
+        <% if (r.pickup.paidAt) { %>Paid: <%= when(r.pickup.paidAt) %><br><% } %>
+        <% if (r.pickup.staffName) { %>By: <%= r.pickup.staffName %><% } %>
+      </p>
+    </div>
+  </section>
+
+  <%- include('partials/receipt-table', { pickup: r.pickup }) %>
+
+  <p class="receipt-small receipt-fine">Weights are from the weighbridge or weighing machine at pickup, and rates are from the quote you accepted. This is a pickup receipt, not a tax invoice; your GST invoice is issued separately.</p>
+  <p class="receipt-actions"><button type="button" onclick="window.print()">Print or save as PDF</button></p>
+</main>
+</body>
+</html>

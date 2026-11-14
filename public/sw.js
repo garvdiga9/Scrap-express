@@ -6,7 +6,7 @@
 //  - Images, icons, fonts: served from the saved copy, refreshed in the background.
 //  - /api/ (requests, quotes, uploads, admin) is never cached.
 // Bump CACHE_VERSION whenever the list of pre-saved files changes.
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE = `se-static-${CACHE_VERSION}`;
 const PRECACHE = [
   '/offline.html',
@@ -102,6 +102,15 @@ self.addEventListener('fetch', (event) => {
   if (sameOrigin && url.pathname.startsWith('/api/')) return;
 
   if (request.mode === 'navigate') {
+    // The staff app works at sites with no signal: keep its page (it holds no
+    // personal data; the pickups come from the API) and open the saved copy.
+    if (sameOrigin && url.pathname === '/staff.html') {
+      event.respondWith(fetch(request).then(async (response) => {
+        if (response.ok) (await caches.open(STATIC_CACHE)).put('/staff.html', response.clone());
+        return response;
+      }).catch(async () => (await caches.match('/staff.html')) || caches.match('/offline.html')));
+      return;
+    }
     event.respondWith(fetch(request).catch(() => caches.match('/offline.html')));
     return;
   }

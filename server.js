@@ -171,6 +171,8 @@ app.use('/api/rates', ratesRouter);
 app.use('/api/pickup', pickupRouter);
 app.use('/api/demolition', demolitionRouter);
 app.use('/api/testimonials', testimonialsRouter);
+// Every change made in the dashboard is written to the activity log.
+app.use('/api/admin', require('./lib/activity').middleware);
 app.use('/api/admin', adminRouter);
 app.use('/api/admin', adminContentRouter); // photos, lots for sale, enquiries
 app.use('/api/staff', require('./routes/staff'));
@@ -432,6 +434,22 @@ app.get('/unsubscribe', async (req, res) => {
 });
 
 // The private quote link: no login, so it mustn't be cached or leak elsewhere.
+// The printable pickup receipt, from the private quote link (also linked from
+// My Account and the admin).
+app.get('/quote/:token/receipt', async (req, res, next) => {
+  res.set({ 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' });
+  try {
+    const request = await quotes.findByToken(req.params.token);
+    if (!request) return notFound(req, res);
+    const { rows: [extra] } = await pool.query('SELECT name, address, weighed_at FROM pickup_requests WHERE id = $1', [request.id]);
+    const details = (await dispatch.customerView([request.id])).get(request.id);
+    if (!details || !details.items) return notFound(req, res);
+    res.render('receipt', { r: { ...request, ...extra, pickup: details } });
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.get('/quote/:token', async (req, res) => {
   res.set({ 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' });
   try {
@@ -522,5 +540,6 @@ app.listen(PORT, () => {
   updates.startSchedule(); // daily rates to subscribers
   schedules.start(); // repeat pickups customers have set up
   dispatch.start(); // tells the owner when nobody chose a pickup slot in time
+  require('./lib/activity').start(); // clears activity log entries older than a year
   quotes.addMissingTokens().catch((err) => console.error('adding quote links failed:', err.message));
 });

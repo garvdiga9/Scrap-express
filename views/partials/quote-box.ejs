@@ -21,6 +21,27 @@
       <button type="button" class="btn btn-outline" data-response="decline">Decline</button>
     </div>
     <div class="form-alert error quote-alert" hidden></div>
+  <% } else if (r.status === 'completed' && !r.rated_at) { %>
+    <form class="rating-form" method="post">
+      <fieldset>
+        <legend>How was your pickup?</legend>
+        <div class="rating-stars" role="radiogroup" aria-label="Your rating">
+          <% for (let n = 5; n >= 1; n--) { %>
+            <input type="radio" name="rating" value="<%= n %>" id="rate<%= r.id %>-<%= n %>"><label for="rate<%= r.id %>-<%= n %>" title="<%= n %> star<%= n === 1 ? '' : 's' %>"><span class="sr-only"><%= n %> star<%= n === 1 ? '' : 's' %></span>★</label>
+          <% } %>
+        </div>
+      </fieldset>
+      <label class="rating-comment">Anything to tell us? (optional)
+        <textarea name="comment" rows="2" maxlength="1000"></textarea>
+      </label>
+      <label class="rules-check-label"><input type="checkbox" name="allowPublic"> <span>You may show my comment on your website, with my company name, type of business and area.</span></label>
+      <div class="form-alert error" hidden></div>
+      <button type="submit" class="btn btn-accent">Send Rating</button>
+    </form>
+  <% } else if (r.status === 'completed' && r.rated_at) { %>
+    <p class="quote-response accepted">You rated this pickup <%= '★'.repeat(r.rating) %><%= '☆'.repeat(5 - r.rating) %>. Thank you!</p>
+  <% } else if (r.status === 'cancelled' && r.cancelled_by === 'customer') { %>
+    <p class="quote-response declined">You cancelled this pickup. Call us if you'd like to book it again.</p>
   <% } else if (r.quote_response === 'accepted') { %>
     <p class="quote-response accepted">You accepted this quote on <%= fmtQuoteDate(r.quote_responded_at) %>.</p>
     <% const pk = r.pickup || {}; %>
@@ -35,20 +56,51 @@
         </fieldset>
         <div class="form-alert error" hidden></div>
         <button type="submit" class="btn btn-accent">Confirm This Slot</button>
-        <p class="slot-help">None of these work? <a href="tel:+919818826333">Call us</a> and we'll find another time.</p>
       </form>
+      <div class="change-actions">
+        <button type="button" class="btn btn-outline" data-pickup-change="new-slots">None of these times work</button>
+        <button type="button" class="btn btn-danger" data-pickup-change="cancel">Cancel Pickup</button>
+      </div>
+      <div class="form-alert error change-alert" hidden></div>
     <% } else if (r.status === 'slots_sent') { %>
       <p class="quote-response declined">The time to choose a slot has passed. Please <a href="tel:+919818826333">call us</a> and we'll send new slots.</p>
     <% } else if (pk.chosen && ['scheduled', 'on_way', 'arrived', 'weighed'].includes(r.status)) { %>
       <p class="quote-response accepted">
         <strong>Pickup: <%= pk.chosen.label %></strong><br>
-        <% if (r.status === 'scheduled') { %><%= pk.staffName ? `${pk.staffName} from our team will come.` : 'Our team will come in this slot.' %> We'll alert you when they set off.
+        <% if (r.status === 'scheduled') { %><%= pk.outsideTruck ? `${pk.staffName} will come in this slot.` : pk.staffName ? `${pk.staffName} from our team will come.` : 'Our team will come in this slot.' %> We'll alert you when they set off.
         <% } else if (r.status === 'on_way') { %><%= pk.staffName || 'Our team' %> is on the way to your site.
         <% } else if (r.status === 'arrived') { %><%= pk.staffName || 'Our team' %> has arrived at your site.
         <% } else { %>Your scrap has been weighed. Payment is next.<% } %>
       </p>
+      <% if (r.status === 'scheduled') { %>
+        <% const others = (pk.slots || []).filter((s) => s.id !== pk.chosen.id && s.date >= new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })); %>
+        <details class="change-pickup">
+          <summary>Change or cancel this pickup</summary>
+          <% if (others.length) { %>
+            <form class="slot-form change-slot-form" method="post">
+              <fieldset>
+                <legend>Move to another time</legend>
+                <% others.forEach((slot, i) => { %>
+                  <label class="slot-option"><input type="radio" name="slotId" value="<%= slot.id %>"<%= i === 0 ? ' checked' : '' %>> <span><%= slot.label %></span></label>
+                <% }) %>
+              </fieldset>
+              <div class="form-alert error" hidden></div>
+              <button type="submit" class="btn btn-outline">Move My Pickup</button>
+            </form>
+          <% } %>
+          <div class="change-actions">
+            <button type="button" class="btn btn-outline" data-pickup-change="new-slots">None of these times work</button>
+            <button type="button" class="btn btn-danger" data-pickup-change="cancel">Cancel Pickup</button>
+          </div>
+          <div class="form-alert error change-alert" hidden></div>
+        </details>
+      <% } %>
     <% } else if (r.status === 'accepted') { %>
       <p class="quote-response accepted">Thank you. We'll send you 2–3 pickup slots to choose from shortly.</p>
+      <div class="change-actions">
+        <button type="button" class="btn btn-danger" data-pickup-change="cancel">Cancel Pickup</button>
+      </div>
+      <div class="form-alert error change-alert" hidden></div>
     <% } %>
     <%# From before slots existed: requests where the customer said the scrap is ready. %>
     <% if (r.status === 'ready') { %>

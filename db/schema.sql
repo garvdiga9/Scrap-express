@@ -306,6 +306,51 @@ ALTER TABLE request_documents DROP CONSTRAINT IF EXISTS request_documents_kind_c
 ALTER TABLE request_documents ADD CONSTRAINT request_documents_kind_check
   CHECK (kind IN ('weight_slip', 'invoice', 'other', 'weigh_photo'));
 
+-- What was actually weighed and paid: one line per quoted material
+-- ({ material, unit, rate, qty, kg, amount }), the total due, and what was paid.
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS weighed_items JSONB;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS amount_due NUMERIC(14,2);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS amount_paid NUMERIC(14,2);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS payment_note VARCHAR(300);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS paid_at TIMESTAMP;
+
+-- The customer's rating of a finished pickup, and whether they allow us to
+-- show it on the website (it becomes a review only when the owner publishes it).
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS rating SMALLINT CHECK (rating BETWEEN 1 AND 5);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS rating_comment VARCHAR(1000);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS rating_public BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS rated_at TIMESTAMP;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS review_id INT REFERENCES testimonials(id) ON DELETE SET NULL;
+
+-- Why a customer cancelled (they can, until our team sets off).
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS cancel_reason VARCHAR(300);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS cancelled_by VARCHAR(20);
+
+-- When and where the weighing photo was taken (from the staff phone), and
+-- any warnings worked out from it (lib/dispatch.js photoChecks).
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS weigh_photo_taken_at TIMESTAMP;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS weigh_latitude NUMERIC(9,6);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS weigh_longitude NUMERIC(9,6);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS weigh_distance_m INT;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS weigh_warnings JSONB;
+
+-- Cash the owner hands staff, and each settle-up (lib/cash.js). Bank
+-- transfers to customers are paid by the office and ticked off with a reference.
+CREATE TABLE IF NOT EXISTS staff_cash (
+  id SERIAL PRIMARY KEY,
+  staff_id INT NOT NULL REFERENCES staff_users(id) ON DELETE CASCADE,
+  kind VARCHAR(10) NOT NULL CHECK (kind IN ('given', 'settled')),
+  amount NUMERIC(14,2) NOT NULL,
+  expected NUMERIC(14,2),
+  difference NUMERIC(14,2),
+  note VARCHAR(200),
+  created_by VARCHAR(50),
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_staff_cash_staff ON staff_cash(staff_id, created_at);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS bank_reference VARCHAR(100);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS bank_paid_at TIMESTAMP;
+
 -- Visits and conversions, counted per day (lib/analytics.js). Totals only:
 -- no names, numbers, addresses or cookies.
 CREATE TABLE IF NOT EXISTS analytics_daily (
@@ -454,3 +499,32 @@ CREATE INDEX IF NOT EXISTS idx_pickup_requests_status ON pickup_requests(status)
 CREATE INDEX IF NOT EXISTS idx_pickup_requests_created_at ON pickup_requests(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_demolition_requests_status ON demolition_requests(status);
 CREATE INDEX IF NOT EXISTS idx_demolition_requests_created_at ON demolition_requests(created_at DESC);
+
+-- Dashboard logins: the owner (from ADMIN_USERNAME, set by db/seed.js) and
+-- managers added in the Team tab (lib/team.js).
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS name VARCHAR(150);
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'manager';
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP;
+
+-- Who did what in the dashboard (lib/activity.js).
+CREATE TABLE IF NOT EXISTS admin_activity (
+  id SERIAL PRIMARY KEY,
+  admin_id INTEGER REFERENCES admin_users(id) ON DELETE SET NULL,
+  admin_name VARCHAR(150) NOT NULL,
+  action VARCHAR(200) NOT NULL,
+  area VARCHAR(40),
+  target_id INTEGER,
+  detail TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS admin_activity_created_idx ON admin_activity (created_at DESC);
+
+-- Outside trucks: when every staff member is busy the office books a truck
+-- (Porter, Delhivery...) and does the pickup's steps from the admin itself.
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS office_handled BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS outside_provider VARCHAR(40);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS outside_driver VARCHAR(100);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS outside_phone VARCHAR(20);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS outside_vehicle VARCHAR(20);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS outside_fare NUMERIC(10,2);

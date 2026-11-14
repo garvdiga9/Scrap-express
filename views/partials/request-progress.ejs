@@ -24,10 +24,15 @@
         <img src="<%= docBase %><%= weighPhoto.id %>?view=1" alt="Photo of the weighing machine showing the weight" loading="lazy" decoding="async" width="160" height="120">
       </a>
     <% } %>
-    <div>
-      <span class="weigh-label">Weighed</span>
-      <strong class="weigh-kg"><%= pickup.weighedKg.toLocaleString('en-IN', { maximumFractionDigits: 2 }) %> kg</strong>
-      <% if (pickup.payment) { %><span class="weigh-paid">Paid by <%= pickup.payment.toLowerCase() %></span><% } %>
+    <div class="request-receipt">
+      <% if (pickup.items && pickup.items.length) { %>
+        <%- include('receipt-table', { pickup }) %>
+        <% if (locals.receiptUrl) { %><a href="<%= receiptUrl %>" target="_blank" rel="noopener" class="receipt-link">Print receipt</a><% } %>
+      <% } else { %>
+        <span class="weigh-label">Weighed</span>
+        <strong class="weigh-kg"><%= pickup.weighedKg.toLocaleString('en-IN', { maximumFractionDigits: 2 }) %> kg</strong>
+        <% if (pickup.payment) { %><span class="weigh-paid">Paid by <%= pickup.payment.toLowerCase() %></span><% } %>
+      <% } %>
     </div>
   </div>
 <% } %>

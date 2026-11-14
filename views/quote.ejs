@@ -19,7 +19,7 @@
         <% if (r.item_quantities && r.item_quantities.length) { %>
           <p class="request-items"><%= r.item_quantities.map((i) => `${i.type}: ${i.quantity} ${i.unit}`).join(' · ') %></p>
         <% } %>
-        <%- include('partials/request-progress', { timeline, docs, docBase: `/api/quote/${token}/documents/`, pickup: r.pickup }) %>
+        <%- include('partials/request-progress', { timeline, docs, docBase: `/api/quote/${token}/documents/`, pickup: r.pickup, receiptUrl: `/quote/${token}/receipt` }) %>
         <%- include('partials/quote-box', { r, api: `/api/quote/${token}` }) %>
       </div>
       <p class="quote-page-help">
