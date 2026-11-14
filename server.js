@@ -262,7 +262,7 @@ const PAGES = [
   {
     path: '/', view: 'index', page: 'home', priority: '1.0',
     title: 'Sell Scrap in Delhi NCR | Bulk Scrap Buyers | Scrap Express',
-    description: 'Sell scrap in Delhi NCR to Scrap Express: bulk scrap buyers for factories, offices, hospitals, hotels and restaurants. Pickup from 300 kg, weighbridge weight, GST invoice, cash or bank payment.',
+    description: `Sell scrap in Delhi NCR to Scrap Express: bulk scrap buyers for factories, offices, hospitals, hotels and restaurants. Pickup from ${MIN_PICKUP_KG} kg, weighbridge weight, GST invoice, cash or bank payment.`,
   },
   {
     path: '/rates', view: 'rates', page: 'rates', priority: '0.9',

@@ -77,7 +77,7 @@ const SCRAP_LOCATIONS = [
 ];
 
 // Bulk pickups only: smaller lots aren't worth a truck trip.
-const MIN_PICKUP_KG = 300;
+const MIN_PICKUP_KG = 50;
 const QUANTITY_UNITS = { kg: 1, tonnes: 1000 };
 
 // A pickup request's life: received → quote sent → customer accepts or
