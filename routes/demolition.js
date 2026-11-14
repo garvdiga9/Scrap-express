@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const spam = require('../lib/spam');
 const pool = require('../db/pool');
 const {
   PHONE_ERROR, EMAIL_ERROR, cleanPhone, cleanEmail,
@@ -12,7 +13,7 @@ const analytics = require('../lib/analytics');
 
 // POST /api/demolition - public: request a demolition site visit & quote,
 // optionally with photos/videos of the building.
-router.post('/', media.acceptMedia, async (req, res) => {
+router.post('/', spam.limit('demolition', { max: 10 }), media.acceptMedia, spam.honeypot(), async (req, res) => {
   const { name, buildingType, approxArea, notes } = req.body;
 
   if (!name || !req.body.phone || !buildingType) {

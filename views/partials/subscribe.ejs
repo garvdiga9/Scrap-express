@@ -9,6 +9,11 @@
     </div>
     <div class="subscribe-actions">
       <form class="subscribe-form" id="subscribeForm" method="post" action="/api/subscribe" novalidate>
+        <%# Hidden from people; only bots fill it in (lib/spam.js). %>
+        <div class="callback-website" aria-hidden="true">
+          <label for="subscribeWebsite">Website</label>
+          <input type="text" id="subscribeWebsite" name="website" tabindex="-1" autocomplete="off">
+        </div>
         <label for="subscribeContact" class="sr-only">Email or WhatsApp number</label>
         <input id="subscribeContact" name="contact" type="text" autocomplete="email" placeholder="Email or WhatsApp number" maxlength="200">
         <button class="btn btn-accent" type="submit" id="subscribeBtn">Subscribe</button>

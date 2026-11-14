@@ -130,7 +130,7 @@ if (subscribeForm) {
       const res = await fetch('/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contact }),
+        body: JSON.stringify({ contact, website: subscribeForm.elements.website ? subscribeForm.elements.website.value : '' }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Could not subscribe you right now. Please try again.');

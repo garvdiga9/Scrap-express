@@ -3,7 +3,8 @@
 // /api/admin; every route needs the admin login.
 const router = require('express').Router();
 const pool = require('../db/pool');
-const { requireAdmin, requireOwner } = require('../middleware/auth');
+const { requireAdmin, requireOwner, roleOf } = require('../middleware/auth');
+const backup = require('../lib/backup');
 const team = require('../lib/team');
 const activity = require('../lib/activity');
 const siteImages = require('../lib/site-images');
@@ -297,10 +298,46 @@ router.put('/requests/:id/staff', async (req, res) => {
 
 router.get('/todo', async (req, res) => {
   try {
-    res.json(await reminders.adminTasks());
+    const tasks = await reminders.adminTasks();
+    // Some reminders (backups) are for the owner only.
+    res.json(roleOf(req) === 'owner' ? tasks : tasks.filter((t) => !t.ownerOnly));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to load the to-do list' });
+  }
+});
+
+// ---- backups (owner only, lib/backup.js) ----
+
+router.get('/backup/status', requireOwner, async (req, res) => {
+  try {
+    res.json({ last: await backup.lastBackup() });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load backup status' });
+  }
+});
+
+// GET /backup?files=1 downloads data and uploaded files; without, data only.
+router.get('/backup', requireOwner, async (req, res) => {
+  const withFiles = req.query.files === '1';
+  const day = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  res.set({
+    'Content-Type': 'application/gzip',
+    'Content-Disposition': `attachment; filename="site-backup-${day}${withFiles ? '-with-photos' : ''}.tar.gz"`,
+    'Cache-Control': 'no-store',
+  });
+  try {
+    const manifest = await backup.write(res, { withFiles });
+    activity.quietly(activity.record(activity.whoIs(req), {
+      action: withFiles ? 'Downloaded a backup with photos' : 'Downloaded a data backup',
+      area: 'backup',
+      detail: `${Object.values(manifest.tables).reduce((a, b) => a + b, 0)} rows${withFiles ? `, ${manifest.files} files` : ''}`,
+    }));
+  } catch (err) {
+    console.error('Backup failed:', err);
+    if (!res.headersSent) res.status(500).json({ error: 'Could not make the backup.' });
+    else res.destroy(err);
   }
 });
 

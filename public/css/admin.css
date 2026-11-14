@@ -552,3 +552,5 @@ body[data-role="manager"] .icon-btn:has(use[href="#icon-trash"]) { display: none
 .todo-item { background: none; border: 0; padding: 2px 0; text-align: left; color: inherit; font: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: rgba(120, 53, 15, 0.35); text-underline-offset: 3px; }
 .todo-card li.is-urgent .todo-item { font-weight: 700; }
 .todo-done { list-style: none; margin-left: -18px; font-weight: 600; color: #166534; }
+.backup-card { margin: 18px 0 8px; }
+.backup-last { font-weight: 600; margin: 6px 0 10px; }

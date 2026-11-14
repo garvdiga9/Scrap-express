@@ -21,6 +21,11 @@
           <li class="form-step-dot" data-step-dot="2"><span>2</span> Site &amp; photos</li>
         </ol>
         <input type="hidden" name="leadToken" id="leadToken">
+        <%# Hidden from people; only bots fill it in (lib/spam.js). %>
+        <div class="callback-website" aria-hidden="true">
+          <label for="pickupWebsite">Website</label>
+          <input type="text" id="pickupWebsite" name="website" tabindex="-1" autocomplete="off">
+        </div>
 
         <fieldset class="form-step" data-step="1">
           <legend class="form-section-title" tabindex="-1">Step 1 of 2: Your scrap</legend>

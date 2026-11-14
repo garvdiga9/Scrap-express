@@ -21,6 +21,11 @@
       </div>
       <% const c = locals.customer || {}; %>
       <form class="book-form" id="demolitionForm" method="post" novalidate>
+        <%# Hidden from people; only bots fill it in (lib/spam.js). %>
+        <div class="callback-website" aria-hidden="true">
+          <label for="demolitionWebsite">Website</label>
+          <input type="text" id="demolitionWebsite" name="website" tabindex="-1" autocomplete="off">
+        </div>
         <div id="demolitionAlert" class="form-alert" hidden></div>
         <div class="form-row">
           <div class="form-group">

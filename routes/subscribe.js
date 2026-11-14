@@ -1,6 +1,7 @@
 // Public sign-up for daily rates & news: email / WhatsApp number, or
 // notifications on this device. Mounted at /api/subscribe.
 const router = require('express').Router();
+const spam = require('../lib/spam');
 const updates = require('../lib/updates');
 const { mountPushRoutes } = require('./push');
 const live = require('../lib/live');
@@ -30,7 +31,7 @@ const MESSAGES = {
 };
 
 // POST /api/subscribe { contact }
-router.post('/', async (req, res) => {
+router.post('/', spam.honeypot((req, res) => reply(req, res, 200, { message: MESSAGES['email:pending'] })), async (req, res) => {
   const contact = updates.parseContact(req.body.contact);
   if (!contact) {
     return reply(req, res, 400, { error: 'Please enter a valid email address or a 10-digit mobile number.' });

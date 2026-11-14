@@ -404,6 +404,17 @@
         </table>
       </div>
 
+      <section class="admin-card backup-card" id="backupCard">
+        <h3>Backups</h3>
+        <p class="admin-card-hint">A copy of everything (requests, customers, rates, staff, money records, settings), to keep somewhere safe such as your Google Drive or a pen drive. With it the site can be rebuilt on any host. Download one at least once a week. The file contains customer details, so keep it private.</p>
+        <p class="backup-last" id="backupLast"></p>
+        <div class="admin-card-actions">
+          <a class="btn btn-accent" href="/api/admin/backup" id="backupData" download>Download Data Backup</a>
+          <a class="btn btn-outline" href="/api/admin/backup?files=1" id="backupFiles" download>Download With Photos</a>
+        </div>
+        <p class="admin-card-hint">"With photos" also includes every uploaded photo, video and paper, so it is much bigger and takes longer.</p>
+      </section>
+
       <div class="panel-head activity-head">
         <h3 class="admin-subhead">Activity log</h3>
         <div class="activity-filters">
@@ -659,7 +670,30 @@
 
 <script src="js/push.js"></script>
 <script src="js/live.js"></script>
-<script src="js/admin.js"></script>
-<script src="js/admin-content.js"></script>
+<!-- The dashboard, one file per part (same order as before). -->
+<script src="js/admin/core.js"></script>
+<script src="js/admin/requests.js"></script>
+<script src="js/admin/request-dialog.js"></script>
+<script src="js/admin/demolition.js"></script>
+<script src="js/admin/callbacks.js"></script>
+<script src="js/admin/customers.js"></script>
+<script src="js/admin/rates.js"></script>
+<script src="js/admin/reviews.js"></script>
+<script src="js/admin/subscribers.js"></script>
+<script src="js/admin/layout.js"></script>
+<script src="js/admin/leads.js"></script>
+<script src="js/admin/shared.js"></script>
+<script src="js/admin/photos.js"></script>
+<script src="js/admin/lots.js"></script>
+<script src="js/admin/papers.js"></script>
+<script src="js/admin/analytics.js"></script>
+<script src="js/admin/install.js"></script>
+<script src="js/admin/staff.js"></script>
+<script src="js/admin/schedule.js"></script>
+<script src="js/admin/money.js"></script>
+<script src="js/admin/board.js"></script>
+<script src="js/admin/ratings.js"></script>
+<script src="js/admin/team.js"></script>
+<script src="js/admin/todo.js"></script>
 </body>
 </html>

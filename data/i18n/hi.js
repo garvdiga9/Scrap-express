@@ -5,7 +5,7 @@
 // translated too when that part is itself in this list.
 // Missing text simply stays in English, so it's safe to add pages first and
 // their Hindi later.
-/* eslint-disable max-len */
+ 
 const HI = {
   // ---------- Header, footer, shared ----------
   'Skip to main content': 'मुख्य सामग्री पर जाएं',

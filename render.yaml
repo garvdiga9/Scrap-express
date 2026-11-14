@@ -14,6 +14,8 @@ services:
     region: singapore
     buildCommand: npm install
     startCommand: node db/migrate.js && node db/seed.js && node server.js
+    # A new version only takes over once this answers OK (site and database up).
+    healthCheckPath: /healthz
     # Customer photos/videos. The service's own filesystem is wiped on every
     # deploy, so uploads go on a persistent disk (can be enlarged later, not shrunk).
     disk:

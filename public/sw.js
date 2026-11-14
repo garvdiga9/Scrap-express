@@ -6,7 +6,7 @@
 //  - Images, icons, fonts: served from the saved copy, refreshed in the background.
 //  - /api/ (requests, quotes, uploads, admin) is never cached.
 // Bump CACHE_VERSION whenever the list of pre-saved files changes.
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `se-static-${CACHE_VERSION}`;
 const PRECACHE = [
   '/offline.html',

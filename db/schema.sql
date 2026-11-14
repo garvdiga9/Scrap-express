@@ -223,6 +223,11 @@ CREATE OR REPLACE TRIGGER pickup_requests_events
 CREATE OR REPLACE TRIGGER demolition_requests_events
   AFTER INSERT OR UPDATE OF status ON demolition_requests
   FOR EACH ROW EXECUTE FUNCTION record_request_event('demolition');
+-- Columns the rebuild below reads (also added further down, where they were
+-- first introduced); here so a brand-new database can be set up in one go.
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS ready_at TIMESTAMP;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS ready_date DATE;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS dispatch_checked_at TIMESTAMP;
 -- Requests from before the timeline: rebuild what's known from their dates.
 INSERT INTO request_events (request_type, request_id, status, at)
   SELECT 'pickup', p.id, e.status, e.at FROM pickup_requests p

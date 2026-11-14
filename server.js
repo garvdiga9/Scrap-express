@@ -46,8 +46,44 @@ const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 
 app.set('trust proxy', 1);
+// Health check (before the custom-domain forwarding, so Render can always
+// reach it), error counting and alerts (lib/health.js).
+const health = require('./lib/health');
+health.watchProcess();
+app.get('/healthz', health.healthz);
+app.use(health.watch);
 // Once SITE_URL is a custom domain, the old address forwards to it (lib/site-url.js).
 app.use(redirectToSiteUrl);
+// Security headers on every response (lib/security-headers.js).
+const { securityHeaders, cspReport } = require('./lib/security-headers');
+app.use(securityHeaders({ production: isProduction }));
+// The business name and contacts (lib/brand.js): when they're set on the
+// server, they replace the current ones in every reply and app file.
+const brand = require('./lib/brand');
+if (brand.changed) {
+  app.use((req, res, next) => {
+    const send = res.send.bind(res);
+    res.send = (body) => send(typeof body === 'string' ? brand.brandify(body) : body);
+    next();
+  });
+  // Static pages and app files (admin, staff, offline page, manifests,
+  // scripts), read once and kept with the new details.
+  const brandedFiles = new Map();
+  const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.webmanifest': 'application/manifest+json' };
+  app.get(/\.(html|js|webmanifest)$/, async (req, res, next) => {
+    const ext = path.extname(req.path);
+    const file = path.join(__dirname, 'public', path.normalize(req.path).replace(/^([\\/]\.\.)+/, ''));
+    if (!file.startsWith(path.join(__dirname, 'public') + path.sep)) return next();
+    try {
+      if (!brandedFiles.has(file)) brandedFiles.set(file, brand.brandify(await require('fs/promises').readFile(file, 'utf8')));
+      res.type(TYPES[ext]).set('Cache-Control', 'no-cache').send(brandedFiles.get(file));
+    } catch (err) {
+      next();
+    }
+  });
+}
+// Browsers send what the security policy blocked here (logged).
+app.post('/api/csp-report', express.json({ type: ['application/csp-report', 'application/json', 'application/reports+json'], limit: '20kb' }), cspReport);
 app.use(express.json());
 
 // One line per API call, so a request that stalls or gets dropped shows up in
@@ -536,6 +572,9 @@ app.use((req, res) => {
     message: "This page doesn't exist or may have moved. Our home page has everything you need.",
   });
 });
+
+// Anything that went wrong and wasn't handled: a friendly page, logged and counted.
+app.use(health.errorHandler(NOTICE));
 
 app.listen(PORT, () => {
   console.log(`Scrap Express server running at http://localhost:${PORT}`);

@@ -9,6 +9,7 @@ const {
   GSTIN_RE, GSTIN_ERROR, PHONE_ERROR, EMAIL_ERROR, cleanPhone, cleanEmail,
 } = require('../lib/validation');
 const customers = require('../lib/customers');
+const spam = require('../lib/spam');
 const media = require('../lib/media');
 const push = require('../lib/push');
 const live = require('../lib/live');
@@ -108,7 +109,7 @@ const TOKEN_RE = /^[a-f0-9]{48}$/;
 
 // POST /api/pickup/lead - step 1, saved straight away. Sending step 1 again
 // with the same token (the customer went back and changed it) updates it.
-router.post('/lead', async (req, res) => {
+router.post('/lead', spam.limit('pickup-lead', { max: 40 }), spam.honeypot((req, res) => res.status(201).json({ leadToken: require('crypto').randomBytes(24).toString('hex') })), async (req, res) => {
   const step = parseStepOne(req.body);
   if (step.error) return res.status(400).json({ error: step.error });
   const customerId = (req.session && req.session.customerId) || null;
@@ -148,7 +149,7 @@ router.post('/lead', async (req, res) => {
 
 // POST /api/pickup - public: a business sends its bulk scrap pickup request
 // (both steps), optionally with photos/videos of the scrap.
-router.post('/', media.acceptMedia, async (req, res) => {
+router.post('/', spam.limit('pickup', { max: 10 }), media.acceptMedia, spam.honeypot((req, res) => res.status(201).json({ id: 0, message: 'Request received! Our team will call you to confirm the details.' })), async (req, res) => {
   const { businessType, pickupFrequency, notes } = req.body;
   const name = String(req.body.name ?? '').trim().slice(0, 150);
 
