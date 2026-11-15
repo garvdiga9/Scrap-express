@@ -186,6 +186,23 @@ if (navToggle && mainNav) {
   });
 }
 
+/* ---------- "Services" menu in the header ---------- */
+document.querySelectorAll('[data-nav-group]').forEach((group) => {
+  const button = group.querySelector('.nav-group-btn');
+  const set = (open) => {
+    group.classList.toggle('open', open);
+    button.setAttribute('aria-expanded', String(open));
+  };
+  button.addEventListener('click', () => set(!group.classList.contains('open')));
+  document.addEventListener('click', (e) => { if (!group.contains(e.target)) set(false); });
+  group.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && group.classList.contains('open')) {
+      set(false);
+      button.focus();
+    }
+  });
+});
+
 /* ---------- Light / dark theme ----------
    head.ejs already applied the saved choice (or the device's setting). The
    button switches and remembers it on this device. */

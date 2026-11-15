@@ -203,7 +203,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .brand-icon { width: 26px; height: 26px; color: var(--color-primary); }
 .brand strong { font-weight: 800; color: var(--color-primary); }
 
-.main-nav { display: flex; align-items: center; gap: 20px; }
+.main-nav { display: flex; align-items: center; gap: 26px; }
 .nav-link { font-weight: 500; font-size: 14.5px; color: var(--color-text); position: relative; padding: 6px 0; white-space: nowrap; }
 .nav-link:hover { color: var(--color-primary); }
 .nav-link.active { color: var(--color-primary); }
@@ -217,10 +217,37 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .nav-link:hover::after, .nav-link.active::after { transform: scaleX(1); }
 
-.header-actions { display: flex; align-items: center; gap: 16px; }
-.header-callback { font-size: 14px; }
-.header-account { font-size: 14px; }
-.header-account.active { color: var(--color-primary); }
+.header-actions { display: flex; align-items: center; gap: 10px; }
+/* Round icon buttons in the header: call back, account (and the theme). */
+.round-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--color-border);
+  background: var(--color-white); color: var(--color-dark); flex-shrink: 0;
+}
+.round-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.round-btn .icon { width: 18px; height: 18px; }
+.header-account.active { color: var(--color-primary); border-color: var(--color-primary); }
+
+/* "Services": a small menu under its button on wide screens. */
+.nav-group { position: relative; }
+.nav-group-btn { display: inline-flex; align-items: center; gap: 4px; background: none; border: 0; cursor: pointer; font-family: inherit; }
+.nav-caret { width: 14px; height: 14px; transition: transform 0.2s ease; }
+.nav-menu {
+  display: none; position: absolute; top: calc(100% + 10px); left: -14px; min-width: 190px;
+  padding: 8px; border-radius: var(--radius-sm); background: var(--color-white);
+  border: 1px solid var(--color-border); box-shadow: var(--shadow-md); z-index: 50;
+}
+/* A bridge so moving the mouse down to the menu doesn't close it. */
+.nav-menu::before { content: ''; position: absolute; left: 0; right: 0; top: -12px; height: 12px; }
+.nav-menu-link { display: block; padding: 9px 12px; border-radius: 8px; font-weight: 500; font-size: 14.5px; color: var(--color-text); white-space: nowrap; }
+.nav-menu-link:hover, .nav-menu-link:focus-visible { background: var(--color-subtle); color: var(--color-primary); }
+.nav-menu-link.active { color: var(--color-primary); font-weight: 600; }
+@media (hover: hover) {
+  .nav-group:hover .nav-menu { display: block; }
+  .nav-group:hover .nav-caret { transform: rotate(180deg); }
+}
+.nav-group.open .nav-menu { display: block; }
+.nav-group.open .nav-caret { transform: rotate(180deg); }
 /* Account link lives in the hamburger menu on smaller screens. */
 .nav-account { display: none; }
 .nav-toggle {
@@ -1647,7 +1674,7 @@ main:has(> .cta-banner:last-child) + .subscribe-band { border-top: 0; }
   .footer-col a { margin-bottom: 4px; padding: 7px 0; }
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1024px) {
   .header-inner { padding: 0 16px; }
   .main-nav { display: none; }
   .nav-toggle { display: flex; }
@@ -1672,6 +1699,12 @@ main:has(> .cta-banner:last-child) + .subscribe-band { border-top: 0; }
     gap: 18px;
     box-shadow: var(--shadow-md);
   }
+  /* In the phone menu, the services are simply listed under their heading. */
+  .main-nav.open .nav-group-btn { pointer-events: none; color: var(--color-text-light); font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; padding: 0; }
+  .main-nav.open .nav-group-btn::after, .main-nav.open .nav-caret { display: none; }
+  .main-nav.open .nav-menu { display: flex; flex-direction: column; align-items: center; gap: 4px; position: static; border: 0; box-shadow: none; padding: 6px 0 0; min-width: 0; background: transparent; }
+  .main-nav.open .nav-menu::before { display: none; }
+  .main-nav.open .nav-menu-link { padding: 6px 0; font-size: 15px; }
 }
 
 @media (max-width: 760px) {

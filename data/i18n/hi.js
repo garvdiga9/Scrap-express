@@ -1492,6 +1492,9 @@ const HI = {
   'Online payment': 'ऑनलाइन भुगतान',
   'By road': 'सड़क मार्ग से',
   'Cash on the spot, a bank transfer or an online payment, whichever you prefer, with a proper GST invoice.': 'मौके पर नकद, बैंक ट्रांसफ़र या ऑनलाइन भुगतान, जो आप चाहें, सही GST बिल के साथ।',
+
+  // ---------- Header: services menu ----------
+  'Services': 'सेवाएं',
 };
 
 module.exports = { HI };
