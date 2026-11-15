@@ -1495,6 +1495,43 @@ const HI = {
 
   // ---------- Header: services menu ----------
   'Services': 'सेवाएं',
+
+  // ---------- Header: services menu ----------
+
+  // ---------- About: our team and why us ----------
+  'Why us': 'हम क्यों',
+  'Our Team': 'हमारी टीम',
+  '{a}–{b} people, each with a clear job': '{a}–{b} लोग, हर एक का काम तय',
+  'Behind every pickup is a team that values, collects, pays and keeps the records straight.': 'हर पिकअप के पीछे एक टीम है जो क़ीमत लगाती है, माल उठाती है, भुगतान करती है और हिसाब साफ़ रखती है।',
+  'Experienced Scrap Valuers': 'अनुभवी स्क्रैप मूल्यांकनकर्ता',
+  'They inspect your lot, identify every grade and price it fairly, on site or from your photos.': 'वे आपका लॉट जांचते हैं, हर ग्रेड पहचानते हैं और साइट पर या आपकी फ़ोटो से उचित क़ीमत लगाते हैं।',
+  'Market Intelligence': 'बाज़ार की जानकारी',
+  'They follow metal, paper and plastic prices every day, so our quotes keep up with the market.': 'वे रोज़ धातु, कागज़ और प्लास्टिक के भाव देखते हैं, ताकि हमारे कोटेशन बाज़ार के साथ चलें।',
+  'Pickup & Logistics Crews': 'पिकअप और लॉजिस्टिक्स टीम',
+  'Trained crews with trucks and weighing equipment for safe, quick collection from your site.': 'ट्रक और तौल उपकरण के साथ प्रशिक्षित टीम, आपकी साइट से सुरक्षित और जल्दी माल उठाने के लिए।',
+  'Finance & Accounts': 'वित्त और अकाउंट्स',
+  "GST invoices, weight slips and prompt payments, ready for your company's books.": 'GST बिल, वज़न की पर्ची और समय पर भुगतान, आपकी कंपनी के हिसाब-किताब के लिए तैयार।',
+  'Legal, Risk & Compliance': 'कानूनी, जोखिम और अनुपालन',
+  'Proper paperwork, safe handling and responsible recycling, so your disposal is on record.': 'सही कागज़ात, सुरक्षित संभाल और ज़िम्मेदार रीसाइक्लिंग, ताकि आपके माल का निपटारा रिकॉर्ड में रहे।',
+  'Corporate Partnerships': 'कॉर्पोरेट साझेदारी',
+  'Empanelled channel partners and a dedicated desk for large companies and regular contracts.': 'सूचीबद्ध चैनल पार्टनर और बड़ी कंपनियों व नियमित कॉन्ट्रैक्ट के लिए अलग डेस्क।',
+  'For more information': 'ज़्यादा जानकारी के लिए',
+  'Contact Us': 'संपर्क करें',
+  'Why Us': 'हम क्यों',
+  'Why businesses choose us': 'व्यवसाय हमें क्यों चुनते हैं',
+  'With an experienced team and the right tools, we deliver to industry standards on every lot. Our corporate clients trust us because every step is open and on record.': 'अनुभवी टीम और सही साधनों के साथ हम हर लॉट पर उद्योग के मानकों के अनुसार काम करते हैं। हमारे कॉर्पोरेट ग्राहक हम पर भरोसा करते हैं क्योंकि हर कदम खुला और दर्ज होता है।',
+  'Experienced professionals': 'अनुभवी पेशेवर',
+  'In the scrap trade since {n}, with valuers who know every grade.': '{n} से स्क्रैप कारोबार में, ऐसे मूल्यांकनकर्ताओं के साथ जो हर ग्रेड जानते हैं।',
+  'Competitive prices': 'प्रतिस्पर्धी रेट',
+  'Rates that follow the market every day. You see the rate for each material and agree to it first.': 'रेट जो रोज़ बाज़ार के साथ चलते हैं। आप हर सामग्री का रेट देखते हैं और पहले उसे मंज़ूर करते हैं।',
+  'Strict quality standards': 'सख़्त गुणवत्ता मानक',
+  'Scrap is sorted by material and grade, so recyclers and mills get consistent lots.': 'स्क्रैप सामग्री और ग्रेड के हिसाब से छांटा जाता है, ताकि रीसाइक्लर्स और मिलों को एक जैसे लॉट मिलें।',
+  'Timely pickup and delivery': 'समय पर पिकअप और डिलीवरी',
+  'You choose the pickup time and follow our team live. Lots for buyers leave on schedule.': 'आप पिकअप का समय चुनते हैं और हमारी टीम को लाइव देखते हैं। खरीदारों के लॉट तय समय पर निकलते हैं।',
+  'Wide network': 'बड़ा नेटवर्क',
+  'A wide network of recyclers, mills and buyers, so every material finds the best home and price.': 'रीसाइक्लर्स, मिलों और खरीदारों का बड़ा नेटवर्क, ताकि हर सामग्री को सबसे अच्छी जगह और क़ीमत मिले।',
+  'Streamlined operations': 'सुव्यवस्थित काम',
+  'Online quotes, pickup slots, live tracking and digital receipts: modern tools behind a proven record.': 'ऑनलाइन कोटेशन, पिकअप का समय, लाइव ट्रैकिंग और डिजिटल रसीद: एक भरोसेमंद रिकॉर्ड के पीछे आधुनिक साधन।',
 };
 
 module.exports = { HI };

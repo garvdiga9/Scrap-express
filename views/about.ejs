@@ -11,11 +11,23 @@
     { icon: 'ewaste', title: 'Electronic & Electrical Waste', text: 'Computers, servers, UPS, batteries, ACs, motors and other end-of-life equipment.' },
     { icon: 'chair', title: 'Machinery & Office Clear-outs', text: 'Whole factories, offices, hotels and hospitals cleared, from furniture to generators.' },
   ];
+  const team = [
+    { icon: 'scale', title: 'Experienced Scrap Valuers', text: 'They inspect your lot, identify every grade and price it fairly, on site or from your photos.' },
+    { icon: 'clock', title: 'Market Intelligence', text: 'They follow metal, paper and plastic prices every day, so our quotes keep up with the market.' },
+    { icon: 'truck', title: 'Pickup & Logistics Crews', text: 'Trained crews with trucks and weighing equipment for safe, quick collection from your site.' },
+    { icon: 'paper', title: 'Finance & Accounts', text: 'GST invoices, weight slips and prompt payments, ready for your company\'s books.' },
+    { icon: 'shield', title: 'Legal, Risk & Compliance', text: 'Proper paperwork, safe handling and responsible recycling, so your disposal is on record.' },
+    { icon: 'building', title: 'Corporate Partnerships', text: 'Empanelled channel partners and a dedicated desk for large companies and regular contracts.' },
+  ];
   const ways = [
+    { icon: 'user', title: 'Experienced professionals', text: `In the scrap trade since ${foundedYear}, with valuers who know every grade.` },
     { icon: 'scale', title: 'Honest weighing', text: 'Every load is weighed on a weighbridge or calibrated scale, with a photo of the reading and a receipt.' },
-    { icon: 'quote', title: 'Clear, fair quotes', text: 'You see the rate for each material before anything moves, and you agree to it first.' },
+    { icon: 'quote', title: 'Competitive prices', text: 'Rates that follow the market every day. You see the rate for each material and agree to it first.' },
+    { icon: 'check', title: 'Strict quality standards', text: 'Scrap is sorted by material and grade, so recyclers and mills get consistent lots.' },
+    { icon: 'clock', title: 'Timely pickup and delivery', text: 'You choose the pickup time and follow our team live. Lots for buyers leave on schedule.' },
     { icon: 'shield', title: 'Paid on time', text: 'Cash on the spot, a bank transfer or an online payment, whichever you prefer, with a proper GST invoice.' },
-    { icon: 'truck', title: 'Pickup or drop-off', text: 'Our team collects from your site, or you send the scrap to our yard for a better rate.' },
+    { icon: 'map', title: 'Wide network', text: 'A wide network of recyclers, mills and buyers, so every material finds the best home and price.' },
+    { icon: 'gear', title: 'Streamlined operations', text: 'Online quotes, pickup slots, live tracking and digital receipts: modern tools behind a proven record.' },
   ];
 %>
 
@@ -25,7 +37,7 @@
   eyebrow: 'About Us',
   heading: `Delhi's trusted scrap partner since ${foundedYear}`,
   text: `For ${years} years we have bought, sorted and recycled scrap for Delhi's businesses, from a single office clear-out to regular contracts with large companies.`,
-  links: [{ href: '#story', label: 'Our story' }, { href: '#materials', label: 'What we handle' }, { href: '#visit', label: 'Visit us' }],
+  links: [{ href: '#story', label: 'Our story' }, { href: '#team', label: 'Our team' }, { href: '#why-us', label: 'Why us' }, { href: '#visit', label: 'Visit us' }],
 }) %>
 
   <section class="section after-page-hero" id="story">
@@ -46,7 +58,31 @@
     </div>
   </section>
 
-  <section class="section section-alt" id="materials">
+  <section class="section section-alt" id="team">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Our Team</span>
+        <h2><%= teamSize.min %>–<%= teamSize.max %> people, each with a clear job</h2>
+        <p>Behind every pickup is a team that values, collects, pays and keeps the records straight.</p>
+      </div>
+      <div class="why-grid">
+        <% team.forEach((t) => { %>
+          <div class="why-card">
+            <svg class="icon icon-lg"><use href="#icon-<%= t.icon %>"/></svg>
+            <h3><%= t.title %></h3>
+            <p><%= t.text %></p>
+          </div>
+        <% }) %>
+      </div>
+      <div class="about-contact-line">
+        <span>For more information</span>
+        <button type="button" class="btn btn-accent" data-callback>Contact Us</button>
+        <a href="tel:+919818826333" class="btn btn-outline">Call +91 98188 26333</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="materials">
     <div class="container">
       <div class="section-head">
         <span class="eyebrow">What We Handle</span>
@@ -65,14 +101,14 @@
     </div>
   </section>
 
-  <section class="section" id="how">
+  <section class="section section-alt" id="why-us">
     <div class="container">
       <div class="section-head">
-        <span class="eyebrow">How We Work</span>
-        <h2>Business expertise you can check</h2>
-        <p>Our corporate clients trust us because every step is open and on record.</p>
+        <span class="eyebrow">Why Us</span>
+        <h2>Why businesses choose us</h2>
+        <p>With an experienced team and the right tools, we deliver to industry standards on every lot. Our corporate clients trust us because every step is open and on record.</p>
       </div>
-      <div class="why-grid">
+      <div class="why-grid about-why-grid">
         <% ways.forEach((w) => { %>
           <div class="why-card">
             <svg class="icon icon-lg"><use href="#icon-<%= w.icon %>"/></svg>
@@ -85,7 +121,7 @@
     </div>
   </section>
 
-  <section class="section section-alt" id="responsibility">
+  <section class="section" id="responsibility">
     <div class="container about-story">
       <div class="about-story-text">
         <span class="eyebrow">Our Responsibility</span>
@@ -101,7 +137,7 @@
     </div>
   </section>
 
-  <section class="section" id="visit">
+  <section class="section section-alt" id="visit">
     <div class="container">
       <div class="about-visit">
         <div>

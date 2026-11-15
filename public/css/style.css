@@ -2131,3 +2131,6 @@ main[tabindex="-1"]:focus { outline: none; }
 .trade-terms dt .icon { color: var(--color-primary); }
 .trade-terms dd { margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .trade-chip { display: inline-block; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--color-border); font-size: 14px; font-weight: 500; }
+.about-why-grid { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.about-why-grid .why-card h3 { font-size: 16px; }
+.about-contact-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 16px; margin-top: 28px; font-weight: 600; }
