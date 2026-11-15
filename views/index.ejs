@@ -332,13 +332,14 @@
   },
   hasMap: shopAddress.mapsUrl,
   foundingDate: String(foundedYear),
+  numberOfEmployees: { '@type': 'QuantitativeValue', minValue: teamSize.min, maxValue: teamSize.max },
   areaServed: ['Delhi', 'Gurugram', 'Noida', 'Greater Noida', 'Faridabad', 'Ghaziabad', 'Sonipat', 'Bahadurgarh', 'Manesar', 'Meerut']
     .map((city) => ({ '@type': 'City', name: city })),
   openingHoursSpecification: [
     { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Monday', opens: '09:00', closes: '14:00' },
     { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], opens: '09:00', closes: '20:00' },
   ],
-  paymentAccepted: 'Cash, Bank Transfer',
+  paymentAccepted: paymentModes.join(', '),
   knowsAbout: ['Scrap buying', 'Bulk scrap pickup', 'E-waste recycling', 'Industrial scrap', 'Building demolition'],
 }) %></script>
 <script type="application/ld+json"><%- jsonLd({

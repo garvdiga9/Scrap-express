@@ -6,7 +6,7 @@ const pgSession = require('connect-pg-simple')(session);
 
 const pool = require('./db/pool');
 const {
-  AREAS, OTHER_AREA, SERVICE_KM, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, SCRAP_LOCATIONS, SHOP_ADDRESS, FOUNDED_YEAR, yearsInBusiness, formatQuoteRate, readyDateRange,
+  AREAS, OTHER_AREA, SERVICE_KM, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, SCRAP_LOCATIONS, SHOP_ADDRESS, FOUNDED_YEAR, yearsInBusiness, TEAM_SIZE, PAYMENT_MODES, SHIPMENT_MODE, formatQuoteRate, readyDateRange,
 } = require('./data/business');
 const ratesRouter = require('./routes/rates');
 const pickupRouter = require('./routes/pickup');
@@ -269,6 +269,9 @@ app.locals.scrapLocations = SCRAP_LOCATIONS;
 app.locals.shopAddress = SHOP_ADDRESS;
 app.locals.foundedYear = FOUNDED_YEAR;
 app.locals.yearsInBusiness = yearsInBusiness;
+app.locals.teamSize = TEAM_SIZE;
+app.locals.paymentModes = PAYMENT_MODES;
+app.locals.shipmentMode = SHIPMENT_MODE;
 app.locals.minPickupKg = MIN_PICKUP_KG;
 app.locals.mediaLimits = media.LIMITS;
 app.locals.statusLabels = {

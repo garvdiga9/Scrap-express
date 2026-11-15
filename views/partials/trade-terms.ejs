@@ -1,0 +1,15 @@
+<%# Payment and shipment terms (data/business.js PAYMENT_MODES, SHIPMENT_MODE),
+    on the About and Buy From Us pages. %>
+<div class="trade-terms">
+  <h3>Payment &amp; Shipment</h3>
+  <dl>
+    <div>
+      <dt><svg class="icon" aria-hidden="true"><use href="#icon-shield"/></svg> Payment</dt>
+      <dd><% paymentModes.forEach((mode) => { %><span class="trade-chip"><%= mode %></span><% }) %></dd>
+    </div>
+    <div>
+      <dt><svg class="icon" aria-hidden="true"><use href="#icon-truck"/></svg> Shipment</dt>
+      <dd><span class="trade-chip"><%= shipmentMode %></span></dd>
+    </div>
+  </dl>
+</div>

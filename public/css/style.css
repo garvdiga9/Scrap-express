@@ -2088,3 +2088,13 @@ main[tabindex="-1"]:focus { outline: none; }
 @media (max-width: 820px) {
   .about-story { grid-template-columns: 1fr; gap: 24px; }
 }
+
+/* Payment & shipment terms */
+.trade-terms { margin: 28px 0; padding: 18px 20px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-subtle); }
+.trade-terms h3 { margin: 0 0 12px; font-size: 17px; }
+.trade-terms dl { margin: 0; display: grid; gap: 12px; }
+.trade-terms dl > div { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.trade-terms dt { display: flex; align-items: center; gap: 8px; font-weight: 600; min-width: 120px; }
+.trade-terms dt .icon { color: var(--color-primary); }
+.trade-terms dd { margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.trade-chip { display: inline-block; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--color-border); font-size: 14px; font-weight: 500; }

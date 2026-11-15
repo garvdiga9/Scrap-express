@@ -14,7 +14,7 @@
   const ways = [
     { icon: 'scale', title: 'Honest weighing', text: 'Every load is weighed on a weighbridge or calibrated scale, with a photo of the reading and a receipt.' },
     { icon: 'quote', title: 'Clear, fair quotes', text: 'You see the rate for each material before anything moves, and you agree to it first.' },
-    { icon: 'shield', title: 'Paid on time', text: 'Cash on the spot or a bank transfer, whichever you prefer, with a proper GST invoice.' },
+    { icon: 'shield', title: 'Paid on time', text: 'Cash on the spot, a bank transfer or an online payment, whichever you prefer, with a proper GST invoice.' },
     { icon: 'truck', title: 'Pickup or drop-off', text: 'Our team collects from your site, or you send the scrap to our yard for a better rate.' },
   ];
 %>
@@ -40,6 +40,7 @@
       <div class="about-facts">
         <div class="about-fact"><strong><%= foundedYear %></strong><span>Started in Delhi</span></div>
         <div class="about-fact"><strong><%= years %>+</strong><span>Years in the scrap trade</span></div>
+        <div class="about-fact"><strong><%= teamSize.min %>–<%= teamSize.max %> people</strong><span>Our team: buyers, pickup crews and office staff</span></div>
         <div class="about-fact"><strong>Wholesale &amp; Retail</strong><span>From single lots to regular contracts</span></div>
       </div>
     </div>
@@ -80,6 +81,7 @@
           </div>
         <% }) %>
       </div>
+      <%- include('partials/trade-terms') %>
     </div>
   </section>
 

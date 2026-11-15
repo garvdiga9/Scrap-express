@@ -65,6 +65,11 @@ const PICKUP_FREQUENCIES = [
 // When the business started; "years in business" is worked out from it.
 const FOUNDED_YEAR = 1996;
 const yearsInBusiness = () => new Date().getFullYear() - FOUNDED_YEAR;
+// How many people work here (About page and search engines).
+const TEAM_SIZE = { min: 11, max: 25 };
+// How we pay and get paid, and how goods move (About, Buy From Us, search engines).
+const PAYMENT_MODES = ['Cash', 'Bank transfer', 'Online payment'];
+const SHIPMENT_MODE = 'By road';
 
 // The main shop (shown in the footer, receipts, emails, the legal pages and
 // to search engines). Change it here when the shop moves.
@@ -154,6 +159,6 @@ function parseArea(area, otherArea, { required = true } = {}) {
 }
 
 module.exports = {
-  AREAS, OTHER_AREA, SERVICE_KM, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS, DELIVERY_MODES, SCRAP_LOCATIONS, SHOP_ADDRESS, FOUNDED_YEAR, yearsInBusiness,
+  AREAS, OTHER_AREA, SERVICE_KM, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS, DELIVERY_MODES, SCRAP_LOCATIONS, SHOP_ADDRESS, FOUNDED_YEAR, yearsInBusiness, TEAM_SIZE, PAYMENT_MODES, SHIPMENT_MODE,
   PICKUP_STATUSES, QUOTE_UNITS, RULES_VERSION, MAX_OTHER_AREA, RATE_CATEGORIES, formatQuoteRate, readyDateRange, parseArea,
 };

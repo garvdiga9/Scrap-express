@@ -1480,6 +1480,18 @@ const HI = {
   'Buying scrap in Delhi since {n}, with the paperwork your accounts team needs.': '{n} से दिल्ली में स्क्रैप की खरीद, उन कागज़ों के साथ जो आपकी अकाउंट्स टीम को चाहिए।',
   'Since {n}': '{n} से',
   'Since {n}: bulk scrap buyers for factories, offices and institutions across Delhi NCR. GST invoice, weighbridge slips, payment by cash or bank transfer.': '{n} से: पूरे दिल्ली NCR में फैक्ट्रियों, ऑफ़िसों और संस्थानों के लिए बल्क स्क्रैप खरीदार। GST बिल, धर्मकांटे की पर्ची, नकद या बैंक ट्रांसफ़र से भुगतान।',
+
+  // ---------- Team size ----------
+  '{a}–{b} people': '{a}–{b} लोग',
+  'Our team: buyers, pickup crews and office staff': 'हमारी टीम: खरीदार, पिकअप टीम और ऑफ़िस स्टाफ़',
+
+  // ---------- Payment & shipment terms ----------
+  'Payment & Shipment': 'भुगतान और शिपमेंट',
+  'Shipment': 'शिपमेंट',
+  'Cash': 'नकद',
+  'Online payment': 'ऑनलाइन भुगतान',
+  'By road': 'सड़क मार्ग से',
+  'Cash on the spot, a bank transfer or an online payment, whichever you prefer, with a proper GST invoice.': 'मौके पर नकद, बैंक ट्रांसफ़र या ऑनलाइन भुगतान, जो आप चाहें, सही GST बिल के साथ।',
 };
 
 module.exports = { HI };
