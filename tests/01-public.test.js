@@ -8,7 +8,7 @@ const { MIN_PICKUP_KG, PICKUP_FREQUENCIES } = require('../data/business');
 
 after(async () => { await cleanUp(); await pool.end(); });
 
-const PAGES = ['/', '/rates', '/what-we-buy', '/book-pickup', '/demolition', '/areas', '/buy-from-us', '/rules', '/privacy', '/delete-account', '/login'];
+const PAGES = ['/', '/about', '/rates', '/what-we-buy', '/book-pickup', '/demolition', '/areas', '/buy-from-us', '/rules', '/privacy', '/delete-account', '/login'];
 
 test('every public page opens, in English and Hindi', async () => {
   for (const p of PAGES) {
@@ -26,7 +26,7 @@ test('Hindi pages have no English sentences left', async () => {
   // Brand, contact details, units and dates may stay in English.
   const OK = /^(Scrap|Express|Scrap Express|scrapexpress@gmail\.com|WhatsApp|GSTIN|OpenStreetMap|&copy;|&times;|हिंदी|English|kg|\/kg|CPU|UPS|AC PCB|GST|you@company\.com|you@example\.com|98765 43210|\+91 98188 26333|07ABCDE1234F1Z5|Shri Ram Honda|Kirloskar|Sudhir|Mahindra)$/;
   const left = [];
-  for (const p of ['/', '/rates', '/what-we-buy', '/book-pickup', '/demolition', '/areas', '/buy-from-us', '/rules', '/privacy']) {
+  for (const p of ['/', '/about', '/rates', '/what-we-buy', '/book-pickup', '/demolition', '/areas', '/buy-from-us', '/rules', '/privacy']) {
     let html = await (await fetch(`${BASE}${p}?lang=hi`)).text();
     html = html.replace(/<(script|style|textarea)\b[\s\S]*?<\/\1>/gi, '');
     for (const m of html.matchAll(/>([^<>]+)</g)) {

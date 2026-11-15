@@ -8,7 +8,7 @@
         <svg class="icon brand-icon"><use href="#icon-recycle"/></svg>
         <span>Scrap <strong>Express</strong></span>
       </a>
-      <p>Bulk scrap buyers for factories, offices and institutions across Delhi NCR. GST invoice, weighbridge slips, payment by cash or bank transfer.</p>
+      <p>Since <%= foundedYear %>: bulk scrap buyers for factories, offices and institutions across Delhi NCR. GST invoice, weighbridge slips, payment by cash or bank transfer.</p>
       <div class="footer-social">
         <a href="https://wa.me/919818826333" target="_blank" rel="noopener" aria-label="WhatsApp"><svg class="icon"><use href="#icon-whatsapp"/></svg></a>
       </div>
@@ -16,6 +16,7 @@
     <div class="footer-col">
       <h4>Quick Links</h4>
       <a href="/">Home</a>
+      <a href="/about">About Us</a>
       <a href="/rates">Scrap Rates</a>
       <a href="/what-we-buy">What We Buy</a>
       <a href="/book-pickup">Bulk Pickup</a>
@@ -29,7 +30,8 @@
       <h4>Contact</h4>
       <a href="tel:+919818826333"><svg class="icon"><use href="#icon-phone"/></svg> Mobile: +91 98188 26333</a>
       <a href="mailto:scrapexpress@gmail.com"><svg class="icon"><use href="#icon-mail"/></svg> scrapexpress@gmail.com</a>
-      <p><svg class="icon"><use href="#icon-map"/></svg> Within <%= serviceKm %> km of Delhi</p>
+      <a href="<%= shopAddress.mapsUrl %>" target="_blank" rel="noopener" class="footer-address"><svg class="icon"><use href="#icon-map"/></svg> <span><%= shopAddress.full %></span></a>
+      <p><svg class="icon"><use href="#icon-truck"/></svg> Pickups within <%= serviceKm %> km of Delhi</p>
       <p class="footer-hours"><svg class="icon"><use href="#icon-clock"/></svg>
         <span>Monday: 9 AM – 2 PM<br>Tuesday – Sunday: 9 AM – 8 PM</span></p>
     </div>

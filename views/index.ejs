@@ -27,6 +27,7 @@
           <a href="/rates" class="btn btn-outline-light btn-lg">View Indicative Rates</a>
         </div>
         <ul class="hero-badges">
+          <li><svg class="icon"><use href="#icon-clock"/></svg> Since <%= foundedYear %></li>
           <li><svg class="icon"><use href="#icon-paper"/></svg> GST Invoice</li>
           <li><svg class="icon"><use href="#icon-scale"/></svg> Weighbridge Slip</li>
           <li><svg class="icon"><use href="#icon-shield"/></svg> Cash or Bank Transfer</li>
@@ -185,7 +186,7 @@
       <div class="section-head">
         <span class="eyebrow">Why Scrap Express</span>
         <h2>A Scrap Partner Built for Business</h2>
-        <p>35+ years in Delhi's scrap trade, with the paperwork your accounts team needs.</p>
+        <p>Buying scrap in Delhi since <%= foundedYear %>, with the paperwork your accounts team needs. <a href="/about">Our story</a></p>
       </div>
       <div class="why-grid">
         <div class="why-card">
@@ -326,7 +327,11 @@
   image: `${siteUrl}/images/og-image.png`,
   telephone: '+91-98188-26333',
   email: 'scrapexpress@gmail.com',
-  address: { '@type': 'PostalAddress', addressLocality: 'Delhi', addressRegion: 'Delhi', addressCountry: 'IN' },
+  address: {
+    '@type': 'PostalAddress', streetAddress: shopAddress.street, addressLocality: shopAddress.city, addressRegion: shopAddress.region, postalCode: shopAddress.postalCode, addressCountry: shopAddress.country,
+  },
+  hasMap: shopAddress.mapsUrl,
+  foundingDate: String(foundedYear),
   areaServed: ['Delhi', 'Gurugram', 'Noida', 'Greater Noida', 'Faridabad', 'Ghaziabad', 'Sonipat', 'Bahadurgarh', 'Manesar', 'Meerut']
     .map((city) => ({ '@type': 'City', name: city })),
   openingHoursSpecification: [

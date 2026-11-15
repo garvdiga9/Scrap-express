@@ -2068,3 +2068,23 @@ main[tabindex="-1"]:focus { outline: none; }
 .quote-page .push-card { margin-top: 18px; }
 .yard-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .yard-actions:empty { display: none; }
+.footer-address { align-items: flex-start; }
+.footer-address span { line-height: 1.45; }
+
+/* About Us */
+.about-story { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 40px; align-items: center; }
+.about-story-text h2 { font-size: clamp(24px, 3.2vw, 32px); margin: 8px 0 16px; }
+.about-story-text p { line-height: 1.75; color: var(--color-text-light); margin: 0 0 14px; }
+.about-facts { display: grid; gap: 14px; }
+.about-fact { display: grid; gap: 4px; padding: 18px 20px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-subtle); }
+.about-fact strong { font-family: Poppins, Inter, sans-serif; font-size: 26px; color: var(--color-primary); line-height: 1.1; }
+.about-fact .icon-lg { color: var(--color-primary); }
+.about-fact span { color: var(--color-text-light); font-size: 14.5px; }
+.about-visit { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 24px; padding: 28px; border-radius: var(--radius); border: 1px solid var(--color-border); background: var(--color-subtle); }
+.about-visit h2 { margin: 8px 0 14px; }
+.about-visit p { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 10px; line-height: 1.5; }
+.about-visit p .icon { flex: none; margin-top: 3px; color: var(--color-primary); }
+.about-visit-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+@media (max-width: 820px) {
+  .about-story { grid-template-columns: 1fr; gap: 24px; }
+}

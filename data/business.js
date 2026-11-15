@@ -62,6 +62,22 @@ const PICKUP_FREQUENCIES = [
   'Not sure yet',
 ];
 
+// When the business started; "years in business" is worked out from it.
+const FOUNDED_YEAR = 1996;
+const yearsInBusiness = () => new Date().getFullYear() - FOUNDED_YEAR;
+
+// The main shop (shown in the footer, receipts, emails, the legal pages and
+// to search engines). Change it here when the shop moves.
+const SHOP_ADDRESS = {
+  street: 'Shop No. 2, House No. 211, Block B-6, Sector 7, Rohini',
+  city: 'New Delhi',
+  region: 'Delhi',
+  postalCode: '110085',
+  country: 'IN',
+};
+SHOP_ADDRESS.full = `${SHOP_ADDRESS.street}, ${SHOP_ADDRESS.city}, ${SHOP_ADDRESS.region} ${SHOP_ADDRESS.postalCode}`;
+SHOP_ADDRESS.mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(SHOP_ADDRESS.full)}`;
+
 // How the scrap reaches us (pickup_requests.delivery_mode).
 const DELIVERY_MODES = ['pickup', 'self'];
 // Where the scrap is kept, for pickups: it changes the labour, so the quote.
@@ -138,6 +154,6 @@ function parseArea(area, otherArea, { required = true } = {}) {
 }
 
 module.exports = {
-  AREAS, OTHER_AREA, SERVICE_KM, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS, DELIVERY_MODES, SCRAP_LOCATIONS,
+  AREAS, OTHER_AREA, SERVICE_KM, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, QUANTITY_UNITS, DELIVERY_MODES, SCRAP_LOCATIONS, SHOP_ADDRESS, FOUNDED_YEAR, yearsInBusiness,
   PICKUP_STATUSES, QUOTE_UNITS, RULES_VERSION, MAX_OTHER_AREA, RATE_CATEGORIES, formatQuoteRate, readyDateRange, parseArea,
 };

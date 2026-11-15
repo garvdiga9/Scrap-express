@@ -1,0 +1,124 @@
+<%- include('partials/head') %>
+<%- include('partials/sprite') %>
+<%- include('partials/header') %>
+<% const years = yearsInBusiness(); %>
+<%
+  const materials = [
+    { icon: 'plastic', title: 'Plastic Scrap', text: 'PET bottles, HDPE, PP, films, crates, drums and mixed plastic from production and packaging.' },
+    { icon: 'paper', title: 'Waste Paper & Cardboard', text: 'Cartons, kraft, office paper, newspaper and printing waste, loose or baled.' },
+    { icon: 'metal', title: 'Iron & Steel Scrap', text: 'Heavy melting scrap, sheets, structures, machinery, racks and fabrication waste.' },
+    { icon: 'copper-pipe', title: 'Copper, Brass & Aluminium', text: 'Wire, cable, pipes, radiators, castings and other non-ferrous metals.' },
+    { icon: 'ewaste', title: 'Electronic & Electrical Waste', text: 'Computers, servers, UPS, batteries, ACs, motors and other end-of-life equipment.' },
+    { icon: 'chair', title: 'Machinery & Office Clear-outs', text: 'Whole factories, offices, hotels and hospitals cleared, from furniture to generators.' },
+  ];
+  const ways = [
+    { icon: 'scale', title: 'Honest weighing', text: 'Every load is weighed on a weighbridge or calibrated scale, with a photo of the reading and a receipt.' },
+    { icon: 'quote', title: 'Clear, fair quotes', text: 'You see the rate for each material before anything moves, and you agree to it first.' },
+    { icon: 'shield', title: 'Paid on time', text: 'Cash on the spot or a bank transfer, whichever you prefer, with a proper GST invoice.' },
+    { icon: 'truck', title: 'Pickup or drop-off', text: 'Our team collects from your site, or you send the scrap to our yard for a better rate.' },
+  ];
+%>
+
+<main id="top" tabindex="-1">
+
+<%- include('partials/page-hero', {
+  eyebrow: 'About Us',
+  heading: `Delhi's trusted scrap partner since ${foundedYear}`,
+  text: `For ${years} years we have bought, sorted and recycled scrap for Delhi's businesses, from a single office clear-out to regular contracts with large companies.`,
+  links: [{ href: '#story', label: 'Our story' }, { href: '#materials', label: 'What we handle' }, { href: '#visit', label: 'Visit us' }],
+}) %>
+
+  <section class="section after-page-hero" id="story">
+    <div class="container about-story">
+      <div class="about-story-text">
+        <span class="eyebrow">Our Story</span>
+        <h2>From a Delhi scrap trader to a partner for businesses</h2>
+        <p>We started in Delhi in <%= foundedYear %> as wholesale and retail scrap traders. Over the years we have grown into one of the fastest growing and most trusted scrap partners for factories, offices, hospitals, institutions and well-established corporate companies, many of which have worked with us for years.</p>
+        <p>We handle large consignments of plastic scrap, waste paper, iron and steel, non-ferrous metals and electronic scrap. Because we deal in volume, we can offer fair rates, weigh every load properly and pay promptly, with the paperwork your accounts team needs.</p>
+        <p>Today we combine that experience with modern tools: online quotes, pickup slots you choose, live updates as our team arrives, and a digital receipt for every pickup. Selling scrap should be as simple for a business as ordering anything else.</p>
+      </div>
+      <div class="about-facts">
+        <div class="about-fact"><strong><%= foundedYear %></strong><span>Started in Delhi</span></div>
+        <div class="about-fact"><strong><%= years %>+</strong><span>Years in the scrap trade</span></div>
+        <div class="about-fact"><strong>Wholesale &amp; Retail</strong><span>From single lots to regular contracts</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" id="materials">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">What We Handle</span>
+        <h2>Large consignments of every kind of scrap</h2>
+        <p>If your business has scrap, we can most likely take it. <a href="/what-we-buy">See everything we buy</a>.</p>
+      </div>
+      <div class="why-grid">
+        <% materials.forEach((m) => { %>
+          <div class="why-card">
+            <svg class="icon icon-lg"><use href="#icon-<%= m.icon %>"/></svg>
+            <h3><%= m.title %></h3>
+            <p><%= m.text %></p>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="how">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">How We Work</span>
+        <h2>Business expertise you can check</h2>
+        <p>Our corporate clients trust us because every step is open and on record.</p>
+      </div>
+      <div class="why-grid">
+        <% ways.forEach((w) => { %>
+          <div class="why-card">
+            <svg class="icon icon-lg"><use href="#icon-<%= w.icon %>"/></svg>
+            <h3><%= w.title %></h3>
+            <p><%= w.text %></p>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" id="responsibility">
+    <div class="container about-story">
+      <div class="about-story-text">
+        <span class="eyebrow">Our Responsibility</span>
+        <h2>Good for business, good for the environment</h2>
+        <p>We are a socially responsible company and we care about the environment we all share. Scrap that would otherwise end up in a landfill is sorted by material and sent back into manufacturing as raw material.</p>
+        <p>We buy old and end-of-life electrical and electronic equipment (e-waste) and see that it is recycled, so its metals, plastics and other materials are used to make new, useful products instead of polluting soil and water.</p>
+      </div>
+      <div class="about-facts">
+        <div class="about-fact"><svg class="icon icon-lg"><use href="#icon-recycle"/></svg><span>Sorted by material, sent back into manufacturing</span></div>
+        <div class="about-fact"><svg class="icon icon-lg"><use href="#icon-leaf"/></svg><span>Less waste in landfills</span></div>
+        <div class="about-fact"><svg class="icon icon-lg"><use href="#icon-ewaste"/></svg><span>E-waste recycled responsibly</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="visit">
+    <div class="container">
+      <div class="about-visit">
+        <div>
+          <span class="eyebrow">Visit Us</span>
+          <h2>Our shop in Rohini</h2>
+          <p class="about-address"><svg class="icon"><use href="#icon-map"/></svg> <span><%= shopAddress.full %></span></p>
+          <p><svg class="icon"><use href="#icon-phone"/></svg> <a href="tel:+919818826333">+91 98188 26333</a></p>
+          <p><svg class="icon"><use href="#icon-clock"/></svg> <span>Monday: 9 AM – 2 PM<br>Tuesday – Sunday: 9 AM – 8 PM</span></p>
+        </div>
+        <div class="about-visit-actions">
+          <a href="/book-pickup" class="btn btn-accent btn-lg">Get a Quote</a>
+          <a href="<%= shopAddress.mapsUrl %>" target="_blank" rel="noopener" class="btn btn-outline btn-lg">Open in Google Maps</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<%- include('partials/cta') %>
+
+</main>
+
+<%- include('partials/footer') %>

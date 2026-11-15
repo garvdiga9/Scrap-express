@@ -6,7 +6,7 @@ const pgSession = require('connect-pg-simple')(session);
 
 const pool = require('./db/pool');
 const {
-  AREAS, OTHER_AREA, SERVICE_KM, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, SCRAP_LOCATIONS, formatQuoteRate, readyDateRange,
+  AREAS, OTHER_AREA, SERVICE_KM, BUSINESS_TYPES, SCRAP_TYPES, PICKUP_FREQUENCIES, MIN_PICKUP_KG, SCRAP_LOCATIONS, SHOP_ADDRESS, FOUNDED_YEAR, yearsInBusiness, formatQuoteRate, readyDateRange,
 } = require('./data/business');
 const ratesRouter = require('./routes/rates');
 const pickupRouter = require('./routes/pickup');
@@ -266,6 +266,9 @@ app.locals.businessTypes = BUSINESS_TYPES;
 app.locals.scrapTypes = SCRAP_TYPES;
 app.locals.pickupFrequencies = PICKUP_FREQUENCIES;
 app.locals.scrapLocations = SCRAP_LOCATIONS;
+app.locals.shopAddress = SHOP_ADDRESS;
+app.locals.foundedYear = FOUNDED_YEAR;
+app.locals.yearsInBusiness = yearsInBusiness;
 app.locals.minPickupKg = MIN_PICKUP_KG;
 app.locals.mediaLimits = media.LIMITS;
 app.locals.statusLabels = {
@@ -329,6 +332,11 @@ const PAGES = [
     path: '/buy-from-us', view: 'buy-from-us', page: 'buy-from-us', priority: '0.7',
     title: 'Buy Baled Scrap: Kraft Paper, PET, Steel, Aluminium | Scrap Express',
     description: 'Recyclers and mills: buy sorted, baled scrap lots from Scrap Express in Delhi NCR. Kraft paper, PET bottles, GI sheet, steel and aluminium, with grade, quantity and photos.',
+  },
+  {
+    path: '/about', view: 'about', page: 'about', priority: '0.6',
+    title: 'About Us: Scrap Buyers in Delhi Since 1996 | Scrap Express',
+    description: `Buying and recycling scrap in Delhi since 1996: plastic, paper, iron and steel, metals and e-waste, for businesses large and small. Our story, how we work and where to find us.`,
   },
   {
     path: '/rules', view: 'rules', page: 'rules', priority: '0.3',
