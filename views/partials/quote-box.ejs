@@ -16,9 +16,9 @@
   <% if (r.quote_note) { %><p class="quote-note"><%= r.quote_note %></p><% } %>
   <% const selfDrop = r.delivery_mode === 'self'; %>
   <% if (selfDrop) { %>
-    <p class="quote-fine">You bring the scrap to our yard (your own vehicle, or Porter or any delivery app). The final amount is worked out from our weighbridge weight when it arrives. GST invoice and payment by cash or bank transfer, whichever you prefer.</p>
+    <p class="quote-fine">You bring the scrap to our yard (your own vehicle, or Porter or any delivery app). The final amount is worked out from our weighbridge weight when it arrives. GST invoice and payment by cash, UPI or bank transfer, whichever you prefer.</p>
   <% } else { %>
-    <p class="quote-fine">Final amount is worked out from the weighbridge weight at pickup. GST invoice and payment by cash or bank transfer, whichever you prefer.</p>
+    <p class="quote-fine">Final amount is worked out from the weighbridge weight at pickup. GST invoice and payment by cash or UPI at the site, or bank transfer, whichever you prefer.</p>
   <% } %>
   <% if (r.status === 'quoted') { %>
     <div class="quote-actions">

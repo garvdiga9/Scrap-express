@@ -147,7 +147,7 @@ async function loadMoney() {
     const t = data.totals;
     const tiles = document.getElementById('moneyTiles');
     tiles.innerHTML = '';
-    [['Cash paid today', inrAdmin(t.cash_today)], ['Bank transfers today', inrAdmin(t.bank_today)], ['Weighed today', `${t.kg_today.toLocaleString('en-IN')} kg`],
+    [['Cash paid today', inrAdmin(t.cash_today)], ['UPI paid today', inrAdmin(t.upi_today)], ['Bank transfers today', inrAdmin(t.bank_today)], ['Weighed today', `${t.kg_today.toLocaleString('en-IN')} kg`],
       ['Paid this month', inrAdmin(t.paid_month)], ['Weighed this month', `${t.kg_month.toLocaleString('en-IN')} kg`], ['Bank transfers still to pay', inrAdmin(t.bank_to_pay)]]
       .forEach(([label, value], i) => {
         const div = document.createElement('div');

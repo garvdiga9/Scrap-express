@@ -590,3 +590,31 @@ CREATE INDEX IF NOT EXISTS grievances_status_idx ON grievances (status, created_
 ALTER TABLE pickup_requests ALTER COLUMN handover_code SET DEFAULT lpad(floor(random() * 10000)::int::text, 4, '0');
 UPDATE pickup_requests SET handover_code = lpad(floor(random() * 10000)::int::text, 4, '0')
 WHERE handover_code IS NULL AND status IN ('pending', 'quoted', 'accepted', 'ready', 'slots_sent', 'scheduled', 'on_way', 'arrived');
+
+-- UPI payments at the site: the transaction ID (UTR) from the payment app.
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS payment_reference VARCHAR(40);
+
+-- Workers (everyone on the payroll, with or without a login), their daily
+-- attendance, and the month-end pay worked out from it (lib/workers.js).
+CREATE TABLE IF NOT EXISTS workers (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  phone VARCHAR(20),
+  department VARCHAR(40) NOT NULL,
+  designation VARCHAR(100),
+  wage_type VARCHAR(10) NOT NULL DEFAULT 'daily',
+  wage NUMERIC(10,2) NOT NULL DEFAULT 0,
+  joined_on DATE,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  notes VARCHAR(300),
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS attendance (
+  worker_id INTEGER NOT NULL REFERENCES workers(id) ON DELETE CASCADE,
+  day DATE NOT NULL,
+  status VARCHAR(12) NOT NULL,
+  marked_by VARCHAR(150),
+  marked_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (worker_id, day)
+);
+CREATE INDEX IF NOT EXISTS attendance_day_idx ON attendance (day);

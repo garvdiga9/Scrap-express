@@ -80,6 +80,7 @@
     <button class="tab-btn" data-tab="grievances">Complaints <span class="tab-count" id="grievanceCount" hidden></span></button>
     <button class="tab-btn" data-tab="board">Pickups <span class="tab-count" id="unassignedCount" hidden></span></button>
     <button class="tab-btn" data-tab="staff">Staff</button>
+    <button class="tab-btn" data-tab="workers">Workers</button>
     <button class="tab-btn" data-tab="money">Money <span class="tab-count" id="bankToPayCount" hidden></span></button>
     <button class="tab-btn" data-tab="customers">Customers</button>
     <button class="tab-btn" data-tab="rates"><span class="tab-long">Scrap</span> Rates</button>
@@ -379,6 +380,73 @@
     </section>
 
     <!-- Team tab (owner only): dashboard logins for managers, and the activity log -->
+    <!-- Workers: attendance and month-end pay -->
+    <section class="tab-panel" id="tab-workers">
+      <div class="panel-head">
+        <h2>Workers</h2>
+        <label class="workers-filter">Department
+          <select id="workerDept"><option value="">All departments</option></select>
+        </label>
+      </div>
+      <p class="admin-card-hint">Everyone on the payroll, by department. Mark attendance every day; at the month end the pay is worked out from it. Staff app logins are separate (Staff tab).</p>
+
+      <section class="admin-card" id="attendanceCard">
+        <div class="attendance-head">
+          <h3>Daily attendance</h3>
+          <label>Date <input type="date" id="attendanceDate"></label>
+          <button type="button" class="btn btn-outline btn-sm" id="markAllPresent">Mark everyone present</button>
+        </div>
+        <p class="admin-card-hint">P = present, ½ = half day, A = absent, L = paid leave, Off = week off or holiday. Tap to change, then save.</p>
+        <div id="attendanceList" class="attendance-list"><p class="table-empty">Loading…</p></div>
+        <div id="attendanceAlert" class="form-alert" hidden></div>
+        <div class="admin-card-actions"><button type="button" class="btn btn-accent" id="saveAttendance">Save Attendance</button></div>
+      </section>
+
+      <section class="admin-card owner-only" id="payrollCard">
+        <div class="attendance-head">
+          <h3>Monthly pay</h3>
+          <label>Month <input type="month" id="payrollMonth"></label>
+          <a class="btn btn-outline btn-sm" id="payrollCsv" href="#" download>Download Spreadsheet</a>
+        </div>
+        <p class="admin-card-hint"><strong>Daily wage:</strong> wage × (present + ½ × half days + paid leave). <strong>Monthly wage:</strong> wage ÷ days in the month × (present + ½ × half days + paid leave + week offs). Absent and unmarked days are not paid; mark unmarked days before paying.</p>
+        <div id="payrollSummary" class="payroll-summary"></div>
+        <div class="table-wrap">
+          <table class="admin-table payroll-table">
+            <thead><tr><th>Worker</th><th>Wage</th><th>P</th><th>½</th><th>L</th><th>Off</th><th>A</th><th>Unmarked</th><th>Paid days</th><th>Amount</th></tr></thead>
+            <tbody id="payrollBody"><tr><td colspan="10" class="table-empty">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <form class="admin-card staff-form owner-only" id="workerForm" novalidate>
+        <h3 id="workerFormTitle">Add a worker</h3>
+        <input type="hidden" id="workerId">
+        <div class="lot-form-grid">
+          <label>Name <input type="text" name="name" maxlength="150" required></label>
+          <label>Phone <input type="tel" name="phone" maxlength="20"></label>
+          <label>Department <select name="department" id="workerDeptField"></select></label>
+          <label>Designation <input type="text" name="designation" maxlength="100" placeholder="e.g. Loader, Driver, Accountant"></label>
+          <label>Wage type <select name="wageType"><option value="daily">Per day</option><option value="monthly">Per month</option></select></label>
+          <label>Wage (₹) <input type="number" name="wage" min="0" step="1" inputmode="decimal"></label>
+          <label>Joined on <input type="date" name="joinedOn"></label>
+          <label>Notes <input type="text" name="notes" maxlength="300"></label>
+          <label class="worker-active"><input type="checkbox" name="active" checked> Still working here</label>
+        </div>
+        <div id="workerAlert" class="form-alert" hidden></div>
+        <div class="admin-card-actions">
+          <button type="submit" class="btn btn-accent" id="workerSaveBtn">Add Worker</button>
+          <button type="button" class="btn btn-outline" id="workerCancel" hidden>Cancel</button>
+        </div>
+      </form>
+
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Name</th><th>Department</th><th>Designation</th><th>Phone</th><th class="owner-only">Wage</th><th>Joined</th><th></th></tr></thead>
+          <tbody id="workersBody"><tr><td colspan="7" class="table-empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- Complaints (Grievance Officer) tab -->
     <section class="tab-panel" id="tab-grievances">
       <div class="panel-head">
@@ -729,6 +797,7 @@
 <script src="js/admin/demolition.js"></script>
 <script src="js/admin/callbacks.js"></script>
 <script src="js/admin/grievances.js"></script>
+<script src="js/admin/workers.js"></script>
 <script src="js/admin/customers.js"></script>
 <script src="js/admin/rates.js"></script>
 <script src="js/admin/reviews.js"></script>

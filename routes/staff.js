@@ -140,10 +140,10 @@ router.post('/pickups/:id/weigh', requireStaff, documents.acceptDocument, async 
   }
 });
 
-// { method: 'cash' | 'bank', amount, note }
+// { method: 'cash' | 'upi' | 'bank', amount, note, reference (UPI transaction ID) }
 router.post('/pickups/:id/paid', requireStaff, async (req, res) => {
   try {
-    const row = await dispatch.paid(req.staff.id, Number(req.params.id), req.body.method, req.body.amount, req.body.note);
+    const row = await dispatch.paid(req.staff.id, Number(req.params.id), req.body.method, req.body.amount, req.body.note, req.body.reference);
     if (!row) return res.status(409).json({ error: MOVED_ON });
     if (row.error) return res.status(400).json({ error: row.error });
     res.json({ ok: true, status: row.status });

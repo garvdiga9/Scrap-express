@@ -392,6 +392,12 @@ function payForm(pickup, post, later) {
   amount.addEventListener('input', () => {
     noteLabel.hidden = Math.abs((Number(amount.value) || 0) - pickup.amountDue) < 1;
   });
+  // UPI: the transaction ID (UTR) from the payment app, shown when UPI is chosen.
+  const utrLabel = el('label', null, 'UPI transaction ID (UTR) from the payment app');
+  utrLabel.hidden = true;
+  const utr = el('input');
+  Object.assign(utr, { type: 'text', maxLength: 30, autocomplete: 'off', placeholder: 'e.g. 432109876543' });
+  utrLabel.appendChild(utr);
   const pay = (method, label) => button(label, 'btn-accent btn-block', (b) => {
     const value = Number(amount.value);
     if (!(value >= 0) || amount.value === '') {
@@ -403,15 +409,24 @@ function payForm(pickup, post, later) {
       note.focus();
       return;
     }
+    const reference = utr.value.replace(/\s+/g, '');
+    if (method === 'upi' && !/^[A-Za-z0-9]{8,30}$/.test(reference)) {
+      utrLabel.hidden = false;
+      showAlert('Pay the customer by UPI, then enter the transaction ID (UTR) shown in the payment app.');
+      utr.focus();
+      return;
+    }
     const question = method === 'cash'
       ? `Confirm: ${rupees(value)} paid in cash, pickup finished?`
-      : `Confirm: the office will transfer ${rupees(value)} to the customer's bank, pickup finished?`;
+      : method === 'upi'
+        ? `Confirm: ${rupees(value)} paid by UPI (transaction ID ${reference}), pickup finished?`
+        : `Confirm: the office will transfer ${rupees(value)} to the customer's bank, pickup finished?`;
     if (confirm(question)) {
-      const body = { method, amount: value, note: note.value.trim() };
+      const body = { method, amount: value, note: note.value.trim(), ...(method === 'upi' ? { reference } : {}) };
       act(b, () => post('paid', body), later('paid', body, 'Payment', { status: 'completed', amountPaid: value, payment: method }));
     }
   });
-  form.append(amountLabel, noteLabel, pay('cash', 'Paid in Cash'), pay('bank', 'Bank Transfer (office pays)'));
+  form.append(amountLabel, noteLabel, utrLabel, pay('cash', 'Paid in Cash'), pay('upi', 'Paid by UPI'), pay('bank', 'Bank Transfer (office pays)'));
   return form;
 }
 

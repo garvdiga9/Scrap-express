@@ -15,7 +15,7 @@
       <% if (pickup.bankPending) { %>
         <tr class="receipt-pending"><th scope="row" colspan="3">To be paid by bank transfer</th><td><%= inr(pickup.amountPaid) %></td></tr>
       <% } else { %>
-        <tr class="receipt-paid"><th scope="row" colspan="3">Paid by <%= (pickup.payment || '').toLowerCase() %><%= pickup.bankReference ? ` (ref. ${pickup.bankReference})` : '' %></th><td><%= inr(pickup.amountPaid) %></td></tr>
+        <tr class="receipt-paid"><th scope="row" colspan="3">Paid by <%= pickup.payment === 'UPI' ? 'UPI' : (pickup.payment || '').toLowerCase() %><%= (pickup.bankReference || pickup.upiReference) ? ` (ref. ${pickup.bankReference || pickup.upiReference})` : '' %></th><td><%= inr(pickup.amountPaid) %></td></tr>
       <% } %>
     <% } %>
   </tfoot>

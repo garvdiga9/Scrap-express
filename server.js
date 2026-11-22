@@ -213,6 +213,7 @@ app.use('/api/testimonials', testimonialsRouter);
 app.use('/api/admin', require('./lib/activity').middleware);
 app.use('/api/admin', adminRouter);
 app.use('/api/admin', adminContentRouter); // photos, lots for sale, enquiries
+app.use('/api/admin', require('./routes/admin-workers')); // workers, attendance, pay
 app.use('/api/staff', require('./routes/staff'));
 app.use('/api/lots', express.urlencoded({ extended: false }), lotsRouter);
 app.use('/api/customer', customerRouter);

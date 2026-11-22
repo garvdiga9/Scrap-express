@@ -2188,3 +2188,28 @@ main[tabindex="-1"]:focus { outline: none; }
 .staff-checks label { display: grid; gap: 4px; font-weight: 600; font-size: 14px; }
 :root[data-theme="dark"] .not-accepted-list li { background: #2a1416; border-color: #5b2226; }
 :root[data-theme="dark"] .not-accepted-list li::before { color: #f87171; }
+
+/* ---------- Admin: workers, attendance, pay ---------- */
+.workers-filter { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+.attendance-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.attendance-head h3 { margin: 0; margin-right: auto; }
+.attendance-head label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.attendance-list { display: grid; gap: 14px; margin: 10px 0; }
+.attendance-group h4 { margin: 0 0 6px; font-size: 14px; color: var(--color-text-light); }
+.attendance-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; padding: 8px 0; border-bottom: 1px solid var(--color-border); }
+.attendance-who { font-size: 14.5px; }
+.attendance-marks { display: flex; gap: 6px; }
+.mark-btn { min-width: 44px; height: 38px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--color-border); background: var(--color-white); color: var(--color-text); font-weight: 700; cursor: pointer; }
+.mark-btn.on.mark-present { background: #16a34a; border-color: #16a34a; color: #fff; }
+.mark-btn.on.mark-half { background: #f59e0b; border-color: #f59e0b; color: #111; }
+.mark-btn.on.mark-absent { background: #dc2626; border-color: #dc2626; color: #fff; }
+.mark-btn.on.mark-leave { background: #2563eb; border-color: #2563eb; color: #fff; }
+.mark-btn.on.mark-off { background: #64748b; border-color: #64748b; color: #fff; }
+.payroll-summary { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 14px; }
+.payroll-chip { display: grid; padding: 10px 14px; border-radius: 12px; background: var(--color-subtle); border: 1px solid var(--color-border); font-size: 13px; color: var(--color-text-light); }
+.payroll-chip strong { font-size: 17px; color: var(--color-text); }
+.payroll-chip:last-child { background: var(--color-primary-light); border-color: var(--color-success-border); }
+.payroll-table td.payroll-amount { font-weight: 800; }
+.payroll-table td.payroll-unmarked { color: #b45309; font-weight: 700; }
+.row-muted td { opacity: 0.6; }
+.worker-active { display: flex; align-items: center; gap: 8px; }

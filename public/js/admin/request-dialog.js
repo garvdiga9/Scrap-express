@@ -156,7 +156,7 @@ function renderRequestSummary(r) {
   }
   if (r.weigh_latitude != null) addDetail('Uploaded from', 'See on the map', `https://www.google.com/maps?q=${r.weigh_latitude},${r.weigh_longitude}`);
   if (r.amount_paid != null) {
-    addDetail('Paid', `₹${Number(r.amount_paid).toLocaleString('en-IN')} by ${r.payment_method === 'cash' ? 'cash' : 'bank transfer'}${r.payment_note ? ` · reason: ${r.payment_note}` : ''}`);
+    addDetail('Paid', `₹${Number(r.amount_paid).toLocaleString('en-IN')} by ${{ cash: 'cash', upi: 'UPI', bank: 'bank transfer' }[r.payment_method] || r.payment_method}${r.payment_reference ? ` (UTR ${r.payment_reference})` : ''}${r.payment_note ? ` · reason: ${r.payment_note}` : ''}`);
   }
   if (r.weighed_items && r.quote_token) addDetail('Receipt', 'Open the printable receipt', `/quote/${r.quote_token}/receipt`);
   addDetail('Company', r.company_name);

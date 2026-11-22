@@ -237,24 +237,28 @@ window.SESchedule = (() => {
     form.noValidate = true;
     const due = r.amount_due == null ? null : Number(r.amount_due);
     const method = document.createElement('select');
-    method.append(new Option('Cash', 'cash'), new Option('Bank transfer', 'bank'));
+    method.append(new Option('Cash', 'cash'), new Option('UPI', 'upi'), new Option('Bank transfer', 'bank'));
     const amount = textInput(due ?? '', 12, '', 'number');
     amount.min = '0';
     const note = textInput('', 300, 'Only if the amount is different');
+    const utr = textInput('', 30, 'UPI transaction ID (UTR)');
+    const utrField = field('UPI transaction ID', utr);
+    utrField.hidden = true;
+    method.addEventListener('change', () => { utrField.hidden = method.value !== 'upi'; });
     const alertBox = alertLine();
     const save = document.createElement('button');
     save.type = 'submit';
     save.className = 'btn btn-accent btn-sm';
     save.textContent = 'Mark Paid and Finish';
-    form.append(field('Paid by', method), field('Amount paid (₹)', amount), field('Reason', note), alertBox, save);
+    form.append(field('Paid by', method), field('Amount paid (₹)', amount), utrField, field('Reason', note), alertBox, save);
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       alertBox.hidden = true;
-      const words = method.value === 'cash' ? 'paid in cash' : 'to be sent by bank transfer';
+      const words = { cash: 'paid in cash', upi: 'paid by UPI', bank: 'to be sent by bank transfer' }[method.value];
       if (!confirm(`₹${Number(amount.value || 0).toLocaleString('en-IN')} ${words}, and finish pickup #${r.id}?`)) return;
       save.disabled = true;
       try {
-        await send(`/api/admin/requests/${r.id}/office/paid`, { method: method.value, amount: amount.value, note: note.value });
+        await send(`/api/admin/requests/${r.id}/office/paid`, { method: method.value, amount: amount.value, note: note.value, reference: utr.value });
         await refresh();
       } catch (err) {
         showError(alertBox, err);

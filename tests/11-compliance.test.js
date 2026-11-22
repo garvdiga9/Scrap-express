@@ -130,3 +130,28 @@ test('customers can download their data', async () => {
   assert.equal(res.data.profile.name, 'Test Exporter');
   assert.ok(res.data.pickups.some((x) => x.company_name === 'Test Export Co'));
 });
+
+test('UPI payment at the site: transaction ID required, shown on the receipt', async () => {
+  const admin = await adminLogin();
+  assert.equal((await admin.post('/api/admin/staff', { name: 'Test Upi', username: 'testupi', password: 'test-pass-4' })).status, 201);
+  const staff = await staffLogin('testupi', 'test-pass-4');
+  const { rows: [s] } = await pool.query("SELECT id FROM staff_users WHERE username = 'testupi'");
+  const r = await makeRequest({ company: 'Test UPI Co' });
+  await pool.query(
+    `UPDATE pickup_requests SET status = 'weighed', quote_response = 'accepted', staff_id = $1, amount_due = 3000, weighed_kg = 100, weighed_at = NOW(),
+       weighed_items = $3 WHERE id = $2`,
+    [s.id, r.id, JSON.stringify([{
+      material: 'Iron', rate: 30, unit: 'per kg', qty: 100, amount: 3000,
+    }])]
+  );
+  const before = (await admin.get('/api/admin/cash')).data;
+  assert.equal((await staff.post(`/api/staff/pickups/${r.id}/paid`, { method: 'upi', amount: 3000 })).status, 400, 'transaction ID needed');
+  assert.equal((await staff.post(`/api/staff/pickups/${r.id}/paid`, { method: 'upi', amount: 3000, reference: '12' })).status, 400, 'a real transaction ID');
+  const paid = await staff.post(`/api/staff/pickups/${r.id}/paid`, { method: 'upi', amount: 3000, reference: '4321 0987 6543' });
+  assert.equal(paid.status, 200, paid.data.error);
+  const { rows: [p] } = await pool.query('SELECT payment_method, payment_reference FROM pickup_requests WHERE id = $1', [r.id]);
+  assert.deepEqual(p, { payment_method: 'upi', payment_reference: '432109876543' });
+  assert.ok((await client().page(`/quote/${r.token}/receipt`)).includes('Paid by UPI (ref. 432109876543)'));
+  const after = (await admin.get('/api/admin/cash')).data;
+  assert.equal(after.totals.upi_today - before.totals.upi_today, 3000);
+});

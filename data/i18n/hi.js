@@ -1808,6 +1808,20 @@ const HI = {
   'That handover code is wrong. Ask the customer to read it from their quote page.': 'यह हैंडओवर कोड ग़लत है। ग्राहक से कोटेशन पेज से पढ़कर बताने को कहें।',
   'Enter only the last 4 characters of the ID, never the full number.': 'ID के केवल आख़िरी 4 अक्षर डालें, पूरा नंबर कभी नहीं।',
   'Please choose which ID the seller showed.': 'कृपया चुनें कि विक्रेता ने कौन सी ID दिखाई।',
+
+  // ---------- UPI payments (Nov 2026) ----------
+  'You bring the scrap to our yard (your own vehicle, or Porter or any delivery app). The final amount is worked out from our weighbridge weight when it arrives. GST invoice and payment by cash, UPI or bank transfer, whichever you prefer.': 'आप स्क्रैप हमारे यार्ड तक लाते हैं (अपनी गाड़ी से, या Porter या किसी डिलीवरी ऐप से)। अंतिम रक़म पहुंचने पर हमारे धर्मकांटे के वज़न से तय होती है। GST बिल और नकद, UPI या बैंक ट्रांसफ़र से भुगतान, जो आप चाहें।',
+  'Final amount is worked out from the weighbridge weight at pickup. GST invoice and payment by cash or UPI at the site, or bank transfer, whichever you prefer.': 'अंतिम रक़म पिकअप पर धर्मकांटे के वज़न से तय होती है। GST बिल और साइट पर नकद या UPI से, या बैंक ट्रांसफ़र से भुगतान, जो आप चाहें।',
+  'We pay by cash or UPI at the site, or by bank transfer, whichever you choose. For UPI, the transaction ID is shown on your receipt. We never ask you to pay us to sell your scrap.': 'हम साइट पर नकद या UPI से, या बैंक ट्रांसफ़र से भुगतान करते हैं, जो आप चुनें। UPI के लिए ट्रांज़ैक्शन ID आपकी रसीद पर दिखती है। स्क्रैप बेचने के लिए हम आपसे कभी पैसे नहीं मांगते।',
+  'Paid by UPI': 'UPI से भुगतान हुआ',
+  'Paid by UPI (ref. {ref})': 'UPI से भुगतान (रेफ़. {ref})',
+  'UPI transaction ID (UTR) from the payment app': 'पेमेंट ऐप से UPI ट्रांज़ैक्शन ID (UTR)',
+  'e.g. 432109876543': 'जैसे 432109876543',
+  'Pay the customer by UPI, then enter the transaction ID (UTR) shown in the payment app.': 'ग्राहक को UPI से भुगतान करें, फिर पेमेंट ऐप में दिखी ट्रांज़ैक्शन ID (UTR) डालें।',
+  'Confirm: {a} paid by UPI (transaction ID {ref}), pickup finished?': 'पुष्टि करें: {a} UPI से दिए गए (ट्रांज़ैक्शन ID {ref}), पिकअप पूरा?',
+  'Please enter the UPI transaction ID (UTR) shown in the payment app.': 'कृपया पेमेंट ऐप में दिखी UPI ट्रांज़ैक्शन ID (UTR) डालें।',
+  'Please choose cash, UPI or bank transfer.': 'कृपया नकद, UPI या बैंक ट्रांसफ़र चुनें।',
+  'Pickup #{n} is complete and {a} was paid by UPI (transaction ID {ref}). Thank you! Please rate your pickup on your request page.': 'पिकअप #{n} पूरा हुआ और {a} का भुगतान UPI से हुआ (ट्रांज़ैक्शन ID {ref})। धन्यवाद! कृपया अपने रिक्वेस्ट पेज पर पिकअप को रेटिंग दें।',
 };
 
 module.exports = { HI };

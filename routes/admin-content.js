@@ -427,8 +427,8 @@ router.post('/requests/:id/office/step', officeStep((req, id) => dispatch.step(n
 // A drop-off can arrive without the customer saying they sent it.
 router.post('/requests/:id/office/step-yard', officeStep((req, id) => dispatch.reachedYard(id)));
 router.post('/requests/:id/office/no-scrap', officeStep((req, id) => dispatch.noScrap(null, id)));
-// { method: 'cash' | 'bank', amount, note }
-router.post('/requests/:id/office/paid', officeStep((req, id) => dispatch.paid(null, id, req.body.method, req.body.amount, req.body.note)));
+// { method: 'cash' | 'upi' | 'bank', amount, note, reference (UPI transaction ID) }
+router.post('/requests/:id/office/paid', officeStep((req, id) => dispatch.paid(null, id, req.body.method, req.body.amount, req.body.note, req.body.reference)));
 
 // The weights (quantities as JSON), with the weighing photo if the driver sent one.
 router.post('/requests/:id/office/weigh', (req, res, next) => (req.is('multipart/form-data') ? documents.acceptDocument(req, res, next) : next()), async (req, res) => {
