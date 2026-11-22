@@ -235,8 +235,9 @@ async function loadPayroll() {
     const people = p.people.filter((x) => deptShown(x.department));
     const summary = document.getElementById('payrollSummary');
     summary.replaceChildren(...[
-      ...p.departments.filter((d) => deptShown(d.name)).map((d) => [d.name, `${inrW(d.amount)} · ${d.workers} ${d.workers === 1 ? 'worker' : 'workers'}`]),
-      ['Total to pay', inrW(people.reduce((s, x) => s + x.amount, 0))],
+      ...p.departments.filter((d) => deptShown(d.name)).map((d) => [d.name, `${inrW(d.net)} · ${d.workers} ${d.workers === 1 ? 'worker' : 'workers'}`]),
+      ...(people.some((x) => x.advance || x.deduction) ? [['Advances and deductions taken off', inrW(people.reduce((s, x) => s + x.advance + x.deduction, 0))]] : []),
+      ['Total to pay', inrW(people.reduce((s, x) => s + x.net, 0))],
     ].map(([label, value]) => {
       const chip = document.createElement('div');
       chip.className = 'payroll-chip';
@@ -246,28 +247,125 @@ async function loadPayroll() {
       return chip;
     }));
     if (!people.length) {
-      body.innerHTML = '<tr><td colspan="10" class="table-empty">No workers for this month.</td></tr>';
+      body.innerHTML = '<tr><td colspan="13" class="table-empty">No workers for this month.</td></tr>';
       return;
     }
-    body.replaceChildren(...people.map((x) => {
+    body.replaceChildren(...people.flatMap((x) => {
       const tr = document.createElement('tr');
       const c = x.counts;
+      const adjText = [
+        x.advance ? `− ${inrW(x.advance)} advance` : '',
+        x.deduction ? `− ${inrW(x.deduction)} deduction` : '',
+        x.bonus ? `+ ${inrW(x.bonus)} bonus` : '',
+      ].filter(Boolean).join(', ') || '-';
       [
         `${x.name}${x.designation ? ` · ${x.designation}` : ''} (${x.department})`,
         `${inrW(x.wage)} ${x.wageType === 'monthly' ? '/ month' : '/ day'}`,
-        c.present, c.half, c.leave, c.off, c.absent, x.unmarked || '', x.paidDays, inrW(x.amount),
+        c.present, c.half, c.leave, c.off, c.absent, x.unmarked || '', x.paidDays, inrW(x.amount), adjText,
+        x.net < 0 ? `${inrW(x.net)} (to recover)` : inrW(x.net),
       ].forEach((text, i) => {
         const td = document.createElement('td');
         td.textContent = text;
         if (i === 7 && x.unmarked) td.className = 'payroll-unmarked';
-        if (i === 9) td.className = 'payroll-amount';
+        if (i === 11) td.className = `payroll-amount${x.net < 0 ? ' payroll-negative' : ''}`;
         tr.appendChild(td);
       });
-      return tr;
+      const actionTd = document.createElement('td');
+      const open = document.createElement('button');
+      open.type = 'button';
+      open.className = 'view-btn';
+      open.textContent = x.adjustments.length ? `Adjust (${x.adjustments.length})` : 'Adjust';
+      actionTd.appendChild(open);
+      tr.appendChild(actionTd);
+      const detail = adjustmentRow(x);
+      detail.hidden = !openAdjust.has(x.id);
+      open.addEventListener('click', () => {
+        detail.hidden = !detail.hidden;
+        if (detail.hidden) openAdjust.delete(x.id); else openAdjust.add(x.id);
+      });
+      return [tr, detail];
     }));
   } catch (err) {
-    body.innerHTML = `<tr><td colspan="10" class="table-empty">${err.message}</td></tr>`;
+    body.innerHTML = `<tr><td colspan="13" class="table-empty">${err.message}</td></tr>`;
   }
+}
+
+// Advances, deductions and bonuses for one worker this month.
+const openAdjust = new Set();
+const ADJ_LABELS = { advance: 'Advance (already given, taken off)', deduction: 'Deduction (taken off)', bonus: 'Bonus / extra (added)' };
+function adjustmentRow(x) {
+  const row = document.createElement('tr');
+  row.className = 'adjust-row';
+  const td = document.createElement('td');
+  td.colSpan = 13;
+  const list = document.createElement('ul');
+  list.className = 'adjust-list';
+  x.adjustments.forEach((a) => {
+    const li = document.createElement('li');
+    li.append(`${fmtDay(a.day)} · ${ADJ_LABELS[a.kind].split(' (')[0]} ${a.kind === 'bonus' ? '+' : '−'}${inrW(a.amount)}${a.note ? ` · ${a.note}` : ''}${a.addedBy ? ` · by ${a.addedBy}` : ''} `);
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'icon-btn';
+    del.title = 'Remove';
+    del.innerHTML = '<svg class="icon"><use href="#icon-trash"/></svg>';
+    del.addEventListener('click', async () => {
+      if (!confirm('Remove this entry?')) return;
+      try {
+        await getJson(`/api/admin/adjustments/${a.id}`, { method: 'DELETE' });
+        loadPayroll();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+    li.appendChild(del);
+    list.appendChild(li);
+  });
+  if (!x.adjustments.length) {
+    const li = document.createElement('li');
+    li.textContent = 'No advances, deductions or bonuses this month.';
+    list.appendChild(li);
+  }
+  const form = document.createElement('form');
+  form.className = 'adjust-form';
+  form.noValidate = true;
+  const kind = document.createElement('select');
+  Object.entries(ADJ_LABELS).forEach(([v, l]) => kind.append(new Option(l, v)));
+  const amount = Object.assign(document.createElement('input'), { type: 'number', min: '1', step: '1', placeholder: 'Amount (₹)' });
+  amount.setAttribute('aria-label', 'Amount in rupees');
+  const date = Object.assign(document.createElement('input'), { type: 'date' });
+  date.setAttribute('aria-label', 'Date');
+  const monthEnd = `${payrollMonth.value}-${String(new Date(Number(payrollMonth.value.slice(0, 4)), Number(payrollMonth.value.slice(5)), 0).getDate()).padStart(2, '0')}`;
+  date.min = `${payrollMonth.value}-01`;
+  date.max = monthEnd;
+  date.value = workerMeta.today.startsWith(payrollMonth.value) ? workerMeta.today : monthEnd;
+  const note = Object.assign(document.createElement('input'), { type: 'text', maxLength: 200, placeholder: 'Note (needed for a deduction)' });
+  note.setAttribute('aria-label', 'Note');
+  const save = Object.assign(document.createElement('button'), { type: 'submit', className: 'btn btn-accent btn-sm', textContent: 'Add' });
+  const msg = Object.assign(document.createElement('p'), { className: 'form-alert error', hidden: true });
+  form.append(kind, amount, date, note, save);
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    msg.hidden = true;
+    try {
+      await getJson(`/api/admin/workers/${x.id}/adjustments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: kind.value, amount: amount.value, date: date.value, note: note.value,
+        }),
+      });
+      openAdjust.add(x.id);
+      loadPayroll();
+    } catch (err) {
+      msg.textContent = err.message;
+      msg.hidden = false;
+    }
+  });
+  const title = document.createElement('strong');
+  title.textContent = `${x.name}: earned ${inrW(x.amount)} → net ${inrW(x.net)}`;
+  td.append(title, list, form, msg);
+  row.appendChild(td);
+  return row;
 }
 payrollMonth.addEventListener('change', loadPayroll);
 

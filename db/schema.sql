@@ -618,3 +618,18 @@ CREATE TABLE IF NOT EXISTS attendance (
   PRIMARY KEY (worker_id, day)
 );
 CREATE INDEX IF NOT EXISTS attendance_day_idx ON attendance (day);
+
+-- Pay adjustments for a worker: an advance already given (taken off the
+-- month's pay), a deduction (taken off), or a bonus / extra (added). The
+-- date decides which month's pay it belongs to.
+CREATE TABLE IF NOT EXISTS worker_adjustments (
+  id SERIAL PRIMARY KEY,
+  worker_id INTEGER NOT NULL REFERENCES workers(id) ON DELETE CASCADE,
+  day DATE NOT NULL,
+  kind VARCHAR(12) NOT NULL,
+  amount NUMERIC(10,2) NOT NULL,
+  note VARCHAR(200),
+  added_by VARCHAR(150),
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS worker_adjustments_idx ON worker_adjustments (worker_id, day);

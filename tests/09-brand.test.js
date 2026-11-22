@@ -51,7 +51,11 @@ test('pages, Hindi pages, app files and API messages all use the new details', a
   assert.ok(security, 'renamed files keep the security headers');
 });
 
-test('the real site is unchanged when nothing is set', async () => {
-  const html = await (await fetch(`${process.env.TEST_BASE_URL || 'http://localhost:3000'}/`)).text();
-  assert.match(html, /Scrap <strong>Express<\/strong>/);
+test('with nothing set, the site is ScrapDilli everywhere', async () => {
+  const base = process.env.TEST_BASE_URL || 'http://localhost:3000';
+  const html = await (await fetch(`${base}/`)).text();
+  assert.match(html, /Scrap<strong>Dilli<\/strong>/, 'logo');
+  assert.doesNotMatch(html, /Scrap Express/);
+  assert.match(await (await fetch(`${base}/admin.webmanifest`)).text(), /SD Admin/);
+  assert.match(html, /\+91 98188 26333/, 'phone unchanged');
 });

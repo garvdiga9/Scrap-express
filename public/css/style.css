@@ -2213,3 +2213,10 @@ main[tabindex="-1"]:focus { outline: none; }
 .payroll-table td.payroll-unmarked { color: #b45309; font-weight: 700; }
 .row-muted td { opacity: 0.6; }
 .worker-active { display: flex; align-items: center; gap: 8px; }
+.payroll-table td.payroll-negative { color: #b91c1c; }
+.adjust-row td { background: var(--color-subtle); }
+.adjust-list { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 4px; font-size: 14px; }
+.adjust-list li { display: flex; align-items: center; gap: 6px; }
+.adjust-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.adjust-form select, .adjust-form input { min-height: 38px; }
+.adjust-form input[type="text"] { flex: 1 1 220px; }

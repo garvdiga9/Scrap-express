@@ -79,3 +79,31 @@ test('workers, attendance and month-end pay; managers mark attendance but never 
   const cleared = await owner.put('/api/admin/attendance', { date: day, entries: [{ workerId: made.data.id, status: null }] });
   assert.equal(cleared.data.workers.find((w) => w.id === made.data.id).status, null);
 });
+
+test('advances, deductions and bonuses change the net pay', async () => {
+  const owner = await adminLogin();
+  const w = await owner.post('/api/admin/workers', {
+    name: 'Test Helper', department: 'Yard & sorting', designation: 'Sorter', wageType: 'daily', wage: 500,
+  });
+  assert.equal(w.status, 201);
+  const day = today();
+  const month = day.slice(0, 7);
+  await owner.put('/api/admin/attendance', { date: day, entries: [{ workerId: w.data.id, status: 'present' }] });
+  const add = (body) => owner.post(`/api/admin/workers/${w.data.id}/adjustments`, { date: day, ...body });
+  assert.equal((await add({ kind: 'loan', amount: 100 })).status, 400, 'known kinds only');
+  assert.equal((await add({ kind: 'advance', amount: -5 })).status, 400, 'positive amounts');
+  assert.equal((await add({ kind: 'deduction', amount: 50 })).status, 400, 'a deduction needs a reason');
+  assert.equal((await add({ kind: 'advance', amount: 200, note: 'Festival advance' })).status, 201);
+  assert.equal((await add({ kind: 'deduction', amount: 50, note: 'Broken scale glass' })).status, 201);
+  const bonus = await add({ kind: 'bonus', amount: 100, note: 'Sunday work' });
+  assert.equal(bonus.status, 201);
+
+  let me = (await owner.get(`/api/admin/payroll?month=${month}`)).data.people.find((p) => p.id === w.data.id);
+  assert.equal(me.amount, 500, 'earned from attendance');
+  assert.deepEqual([me.advance, me.deduction, me.bonus, me.net], [200, 50, 100, 350], 'net = 500 + 100 - 200 - 50');
+  assert.ok((await owner.get(`/api/admin/payroll.csv?month=${month}`)).text.includes('Festival advance'));
+
+  assert.equal((await owner.del(`/api/admin/adjustments/${bonus.data.id}`)).status, 200);
+  me = (await owner.get(`/api/admin/payroll?month=${month}`)).data.people.find((p) => p.id === w.data.id);
+  assert.equal(me.net, 250, 'removing the bonus');
+});

@@ -408,12 +408,12 @@
           <label>Month <input type="month" id="payrollMonth"></label>
           <a class="btn btn-outline btn-sm" id="payrollCsv" href="#" download>Download Spreadsheet</a>
         </div>
-        <p class="admin-card-hint"><strong>Daily wage:</strong> wage × (present + ½ × half days + paid leave). <strong>Monthly wage:</strong> wage ÷ days in the month × (present + ½ × half days + paid leave + week offs). Absent and unmarked days are not paid; mark unmarked days before paying.</p>
+        <p class="admin-card-hint"><strong>Daily wage:</strong> wage × (present + ½ × half days + paid leave). <strong>Monthly wage:</strong> wage ÷ days in the month × (present + ½ × half days + paid leave + week offs). Absent and unmarked days are not paid; mark unmarked days before paying. <strong>Net to pay</strong> = earned + bonus − advance − deductions.</p>
         <div id="payrollSummary" class="payroll-summary"></div>
         <div class="table-wrap">
           <table class="admin-table payroll-table">
-            <thead><tr><th>Worker</th><th>Wage</th><th>P</th><th>½</th><th>L</th><th>Off</th><th>A</th><th>Unmarked</th><th>Paid days</th><th>Amount</th></tr></thead>
-            <tbody id="payrollBody"><tr><td colspan="10" class="table-empty">Loading…</td></tr></tbody>
+            <thead><tr><th>Worker</th><th>Wage</th><th>P</th><th>½</th><th>L</th><th>Off</th><th>A</th><th>Unmarked</th><th>Paid days</th><th>Earned</th><th>Advance / deductions / bonus</th><th>Net to pay</th><th></th></tr></thead>
+            <tbody id="payrollBody"><tr><td colspan="13" class="table-empty">Loading…</td></tr></tbody>
           </table>
         </div>
       </section>

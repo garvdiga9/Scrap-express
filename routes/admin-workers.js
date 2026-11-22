@@ -34,6 +34,13 @@ router.get('/workers', guard(async (req, res) => {
 router.post('/workers', requireOwner, guard(async (req, res) => answer(res, await workers.save(null, req.body || {}), 201)));
 router.put('/workers/:id', requireOwner, guard(async (req, res) => answer(res, await workers.save(Number(req.params.id), req.body || {}))));
 
+// Advances, deductions and bonuses: { date, kind, amount, note }.
+router.post('/workers/:id/adjustments', requireOwner, guard(async (req, res) => {
+  const by = (req.session && req.session.adminName) || 'Admin';
+  answer(res, await workers.addAdjustment(Number(req.params.id), req.body || {}, by), 201);
+}));
+router.delete('/adjustments/:id', requireOwner, guard(async (req, res) => answer(res, await workers.removeAdjustment(Number(req.params.id)))));
+
 router.get('/attendance', guard(async (req, res) => answer(res, await workers.attendanceFor(String(req.query.date || workers.today())))));
 router.put('/attendance', guard(async (req, res) => {
   const by = (req.session && req.session.adminName) || 'Admin';

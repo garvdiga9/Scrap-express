@@ -24,7 +24,7 @@ test('every public page opens, in English and Hindi', async () => {
 
 test('Hindi pages have no English sentences left', async () => {
   // Brand, contact details, units and dates may stay in English.
-  const OK = /^(Scrap|Express|Scrap Express|scrapexpress@gmail\.com|WhatsApp|GSTIN|OpenStreetMap|&copy;|&times;|हिंदी|English|kg|\/kg|CPU|UPS|AC PCB|GST|you@company\.com|you@example\.com|98765 43210|\+91 98188 26333|07ABCDE1234F1Z5|Shri Ram Honda|Kirloskar|Sudhir|Mahindra)$/;
+  const OK = /^(Scrap|Express|Scrap Express|Dilli|ScrapDilli|scrapexpress@gmail\.com|WhatsApp|GSTIN|OpenStreetMap|&copy;|&times;|हिंदी|English|kg|\/kg|CPU|UPS|AC PCB|GST|you@company\.com|you@example\.com|98765 43210|\+91 98188 26333|07ABCDE1234F1Z5|Shri Ram Honda|Kirloskar|Sudhir|Mahindra)$/;
   const left = [];
   for (const p of ['/', '/about', '/rates', '/what-we-buy', '/book-pickup', '/demolition', '/areas', '/buy-from-us', '/rules', '/privacy', '/terms', '/legal', '/recycling-partners', '/grievance', '/grievance/status']) {
     let html = await (await fetch(`${BASE}${p}?lang=hi`)).text();
