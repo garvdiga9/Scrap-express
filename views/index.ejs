@@ -292,7 +292,8 @@
     ['What is the minimum quantity for a pickup?', `${minPickupKg} kg per pickup. You can add up several kinds of scrap to reach it. For smaller amounts, we may not be the right fit.`],
     ['Which areas do you cover?', `Delhi and anywhere within ${serviceKm} km of Delhi's boundary, including Gurugram, Manesar, Noida, Greater Noida, Faridabad, Ghaziabad, Sonipat, Bahadurgarh and Meerut.`],
     ['What are the scrap rates today?', 'Our Scrap Rates page shows indicative rates per kg, updated regularly. Your final rate depends on volume, grade and location, and we send it as a quote after seeing your details and photos.'],
-    ['How and when will I be paid?', 'By cash or bank transfer, whichever you prefer. The amount is worked out from the weighbridge weight at pickup, with a GST invoice.'],
+    ['How and when will I be paid?', 'By cash or UPI at the site, or by bank transfer, whichever you prefer. The amount is worked out from the weighbridge weight at pickup, with a GST invoice.'],
+    ['Where is your shop?', `Our shop is at ${shopAddress.full}. We have bought and sold scrap in Delhi since ${foundedYear}, and pick up from businesses anywhere within ${serviceKm} km.`],
     ['Do I need to create an account?', 'No. We send your quote on WhatsApp or email with a private link where you can accept it. An account is optional, and lets you track all your requests in one place.'],
     ['Do you also do demolition?', `Yes. We demolish commercial and institutional buildings such as schools, hospitals, factories, warehouses and malls within ${serviceKm} km of Delhi, after a site survey and a detailed quote.`],
   ]; %>
@@ -321,6 +322,7 @@
   '@context': 'https://schema.org',
   '@type': 'RecyclingCenter',
   name: 'Scrap Express',
+  alternateName: ['Scrap Dilli', 'ScrapDilli Delhi'],
   description: 'Bulk scrap buyers for businesses in Delhi NCR: pickup from factories, offices, hospitals, hotels and restaurants, weighbridge weight, GST invoice, and building demolition.',
   url: `${siteUrl}/`,
   logo: `${siteUrl}/icons/icon-512.png`,
@@ -341,6 +343,14 @@
   ],
   paymentAccepted: paymentModes.join(', '),
   knowsAbout: ['Scrap buying', 'Bulk scrap pickup', 'E-waste recycling', 'Industrial scrap', 'Building demolition'],
+}) %></script>
+<script type="application/ld+json"><%- jsonLd({
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Scrap Express',
+  alternateName: ['Scrap Dilli'],
+  url: `${siteUrl}/`,
+  inLanguage: ['en-IN', 'hi-IN'],
 }) %></script>
 <script type="application/ld+json"><%- jsonLd({
   '@context': 'https://schema.org',

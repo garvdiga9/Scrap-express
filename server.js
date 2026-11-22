@@ -305,8 +305,10 @@ app.locals.googleVerification = process.env.GOOGLE_SITE_VERIFICATION || '';
 app.locals.bingVerification = process.env.BING_SITE_VERIFICATION || '';
 // Words people type when they want to sell scrap. Search engines mostly read
 // the titles, descriptions and page text; these are a light extra hint.
-app.locals.siteKeywords = 'sell scrap Delhi, scrap buyer Delhi NCR, bulk scrap buyer, scrap dealer near me, kabadiwala, '
-  + 'scrap rates today Delhi, industrial scrap buyer, e-waste buyer Delhi, raddi, scrap pickup Gurugram Noida Faridabad';
+app.locals.siteKeywords = 'ScrapDilli, Scrap Dilli, sell scrap Delhi, sell scrap online, scrap buyer near me, scrap buyer Delhi NCR, bulk scrap buyer, '
+  + 'scrap dealer near me, kabadiwala, kabadi wala near me, kabadiwala Delhi, raddi wala, scrap rates today Delhi, iron scrap rate today, '
+  + 'copper scrap rate today, industrial scrap buyer, factory scrap buyer, office scrap disposal, e-waste buyer Delhi, old AC buyer, '
+  + 'battery scrap buyer, scrap pickup Rohini, scrap pickup Gurugram Noida Faridabad, कबाड़ी वाला, कबाड़ बेचें, स्क्रैप खरीदार दिल्ली';
 
 // Each page's title and description are what search results show.
 const PAGES = [

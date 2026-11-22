@@ -1822,6 +1822,11 @@ const HI = {
   'Please enter the UPI transaction ID (UTR) shown in the payment app.': 'कृपया पेमेंट ऐप में दिखी UPI ट्रांज़ैक्शन ID (UTR) डालें।',
   'Please choose cash, UPI or bank transfer.': 'कृपया नकद, UPI या बैंक ट्रांसफ़र चुनें।',
   'Pickup #{n} is complete and {a} was paid by UPI (transaction ID {ref}). Thank you! Please rate your pickup on your request page.': 'पिकअप #{n} पूरा हुआ और {a} का भुगतान UPI से हुआ (ट्रांज़ैक्शन ID {ref})। धन्यवाद! कृपया अपने रिक्वेस्ट पेज पर पिकअप को रेटिंग दें।',
+
+  // ---------- Home FAQ: UPI and shop location (Nov 2026) ----------
+  'By cash or UPI at the site, or by bank transfer, whichever you prefer. The amount is worked out from the weighbridge weight at pickup, with a GST invoice.': 'साइट पर नकद या UPI से, या बैंक ट्रांसफ़र से, जो आप चाहें। रक़म पिकअप पर धर्मकांटे के वज़न से तय होती है, GST बिल के साथ।',
+  'Where is your shop?': 'आपकी दुकान कहां है?',
+  'Our shop is at {address}. We have bought and sold scrap in Delhi since {n}, and pick up from businesses anywhere within {km} km.': 'हमारी दुकान {address} पर है। हम {n} से दिल्ली में स्क्रैप ख़रीद-बेच रहे हैं, और {km} किमी के अंदर कहीं भी व्यवसायों से पिकअप करते हैं।',
 };
 
 module.exports = { HI };
