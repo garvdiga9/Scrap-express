@@ -22,6 +22,8 @@ const documents = require('../lib/documents');
 const push = require('../lib/push');
 const grievances = require('../lib/grievances');
 const legal = require('../lib/legal');
+const approvals = require('../lib/approvals');
+const { approval } = approvals;
 
 router.use(requireAdmin);
 
@@ -48,9 +50,10 @@ const saveStaff = (getId) => async (req, res) => {
     res.status(500).json({ error: 'Could not save the staff member.' });
   }
 };
-// Staff logins are set by the owner; managers see the list (to assign pickups).
-router.post('/staff', requireOwner, saveStaff(() => null));
-router.put('/staff/:id', requireOwner, saveStaff((req) => Number(req.params.id)));
+// Staff logins: the owner's changes apply at once; a manager's wait for the
+// owner's approval (lib/approvals.js).
+router.post('/staff', approval('staff.add', saveStaff(() => null)));
+router.put('/staff/:id', approval('staff.change', saveStaff((req) => Number(req.params.id))));
 
 // ---- team: dashboard logins and the activity log (owner only) ----
 
@@ -354,7 +357,7 @@ router.get('/board/yard', async (req, res) => {
   }
 });
 
-router.put('/board/yard', async (req, res) => {
+router.put('/board/yard', approval('yard.change', async (req, res) => {
   try {
     const { yard, error } = await board.saveYard(req.body || {});
     if (error) return res.status(400).json({ error });
@@ -363,7 +366,7 @@ router.put('/board/yard', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Could not save the yard address.' });
   }
-});
+}));
 
 // ---- the office runs a pickup itself (outside truck) ----
 
@@ -601,7 +604,7 @@ router.get('/lots', async (req, res) => {
   }
 });
 
-router.post('/lots', async (req, res) => {
+router.post('/lots', approval('lot.add', async (req, res) => {
   const { lot, error } = lots.parseLot(req.body);
   if (error) return res.status(400).json({ error });
   try {
@@ -611,9 +614,9 @@ router.post('/lots', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Could not save the lot.' });
   }
-});
+}));
 
-router.put('/lots/:id', async (req, res) => {
+router.put('/lots/:id', approval('lot.change', async (req, res) => {
   const { lot, error } = lots.parseLot(req.body);
   if (error) return res.status(400).json({ error });
   try {
@@ -625,7 +628,7 @@ router.put('/lots/:id', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Could not save the lot.' });
   }
-});
+}));
 
 router.delete('/lots/:id', async (req, res) => {
   try {
@@ -746,5 +749,31 @@ router.delete('/legal/certificate', requireOwner, async (req, res) => {
     res.status(500).json({ error: 'Failed to remove the certificate' });
   }
 });
+
+
+// ---- managers' important changes waiting for the owner (lib/approvals.js) ----
+
+router.get('/approvals', async (req, res) => {
+  try {
+    const owner = roleOf(req) === 'owner';
+    res.json({ owner, items: await approvals.list({ adminId: req.session.adminId, owner }) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load approvals' });
+  }
+});
+
+const decideRoute = (approve) => async (req, res) => {
+  try {
+    const { error, value } = await approvals.decide(Number(req.params.id), approve, { id: req.session.adminId, name: req.session.adminName || 'Owner' }, req.body && req.body.note);
+    if (error) return res.status(409).json({ error });
+    res.json(value);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not save the decision.' });
+  }
+};
+router.post('/approvals/:id/approve', requireOwner, decideRoute(true));
+router.post('/approvals/:id/reject', requireOwner, decideRoute(false));
 
 module.exports = router;

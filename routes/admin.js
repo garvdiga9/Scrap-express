@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const pool = require('../db/pool');
 const { requireAdmin, roleOf } = require('../middleware/auth');
 const activity = require('../lib/activity');
+const { approval } = require('../lib/approvals');
 const {
   PICKUP_STATUSES, QUOTE_UNITS, BUSINESS_TYPES, AREAS, RATE_CATEGORIES, formatQuoteRate,
 } = require('../data/business');
@@ -83,7 +84,7 @@ router.get('/me', (req, res) => {
 
 // ---- notifications to the admin's phone ----
 
-mountPushRoutes(router, requireAdmin, () => ({ admin: true }));
+mountPushRoutes(router, requireAdmin, (req) => ({ admin: true, adminId: req.session.adminId || null }));
 
 router.post('/push/test', requireAdmin, async (req, res) => {
   try {
@@ -534,7 +535,7 @@ router.get('/rates', requireAdmin, async (req, res) => {
 
 const RATE_CATEGORY_KEYS = RATE_CATEGORIES.map((c) => c.key);
 
-router.post('/rates', requireAdmin, async (req, res) => {
+router.post('/rates', requireAdmin, approval('rate.add', async (req, res) => {
   const { name, unit, price, icon } = req.body;
   const category = req.body.category || 'other';
   if (!name || price == null || price === '' || Number.isNaN(Number(price)) || Number(price) < 0) {
@@ -556,9 +557,9 @@ router.post('/rates', requireAdmin, async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Failed to add category (name may already exist)' });
   }
-});
+}));
 
-router.put('/rates/:id', requireAdmin, async (req, res) => {
+router.put('/rates/:id', requireAdmin, approval('rate.change', async (req, res) => {
   const {
     name, unit, price, icon, category,
   } = req.body;
@@ -589,7 +590,7 @@ router.put('/rates/:id', requireAdmin, async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Failed to update category' });
   }
-});
+}));
 
 // "Rates checked today": prices unchanged, but the Rates page's
 // "Last updated" should show they're current.
@@ -623,7 +624,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
   res.json({ stats: await siteStats.getStats(), fields: siteStats.FIELDS });
 });
 
-router.put('/stats', requireAdmin, async (req, res) => {
+router.put('/stats', requireAdmin, approval('stats.change', async (req, res) => {
   try {
     const { stats, error } = await siteStats.saveStats(req.body || {});
     if (error) return res.status(400).json({ error });
@@ -633,7 +634,7 @@ router.put('/stats', requireAdmin, async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Could not save the numbers.' });
   }
-});
+}));
 
 // Lists the admin forms choose from (the same ones the public forms use).
 router.get('/options', requireAdmin, (req, res) => {

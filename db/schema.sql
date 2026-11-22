@@ -633,3 +633,27 @@ CREATE TABLE IF NOT EXISTS worker_adjustments (
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS worker_adjustments_idx ON worker_adjustments (worker_id, day);
+
+-- Which dashboard login an admin device belongs to, so alerts meant for the
+-- owner (manager activity, approvals) go only to the owner's devices.
+ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS admin_id INT REFERENCES admin_users(id) ON DELETE SET NULL;
+
+-- Important changes asked for by a manager (rates, staff logins, sale lots,
+-- home page numbers, yard address) wait here until the owner approves them
+-- (lib/approvals.js). The request is stored and run as is on approval.
+CREATE TABLE IF NOT EXISTS pending_changes (
+  id SERIAL PRIMARY KEY,
+  kind VARCHAR(40) NOT NULL,
+  params JSONB NOT NULL DEFAULT '{}',
+  body JSONB NOT NULL DEFAULT '{}',
+  summary VARCHAR(300) NOT NULL,
+  details JSONB NOT NULL DEFAULT '[]',
+  requested_by_id INT REFERENCES admin_users(id) ON DELETE SET NULL,
+  requested_by_name VARCHAR(150),
+  status VARCHAR(12) NOT NULL DEFAULT 'pending',
+  decided_by_name VARCHAR(150),
+  decided_at TIMESTAMP,
+  decision_note VARCHAR(300),
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS pending_changes_status_idx ON pending_changes (status, created_at);

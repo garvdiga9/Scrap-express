@@ -78,6 +78,7 @@
     <button class="tab-btn" data-tab="demolition">Demolition <span class="tab-long">Requests</span> <span class="tab-count" id="demolitionCount" hidden></span></button>
     <button class="tab-btn" data-tab="callbacks">Call Backs <span class="tab-count" id="callbackCount" hidden></span></button>
     <button class="tab-btn" data-tab="grievances">Complaints <span class="tab-count" id="grievanceCount" hidden></span></button>
+    <button class="tab-btn" data-tab="approvals">Approvals <span class="tab-count" id="approvalCount" hidden></span></button>
     <button class="tab-btn" data-tab="board">Pickups <span class="tab-count" id="unassignedCount" hidden></span></button>
     <button class="tab-btn" data-tab="staff">Staff</button>
     <button class="tab-btn" data-tab="workers">Workers</button>
@@ -356,7 +357,7 @@
         <a href="/staff.html" target="_blank" rel="noopener" class="btn btn-outline">Open Staff app</a>
       </div>
       <p class="admin-card-hint">Each staff member signs in to the Staff app with the username and password you set here. They open <strong id="staffAppAddress"></strong> on their phone, sign in, and tap "Install Staff App". They only see pickups: no rates, customers or quotes. When a customer chooses a pickup slot, every staff member is alerted and the first one free takes it.</p>
-      <form class="admin-card staff-form owner-only" id="staffForm" method="post" novalidate>
+      <form class="admin-card staff-form" id="staffForm" method="post" novalidate>
         <h3 id="staffFormTitle">Add a staff member</h3>
         <input type="hidden" id="staffEditId">
         <div class="lot-form-grid">
@@ -447,6 +448,15 @@
       </div>
     </section>
 
+    <!-- Approvals: managers' important changes wait for the owner -->
+    <section class="tab-panel" id="tab-approvals">
+      <div class="panel-head">
+        <h2>Approvals</h2>
+      </div>
+      <p class="admin-card-hint">When a manager changes scrap rates, staff logins, lots for sale, the home page numbers or the yard address, nothing goes live until the owner approves it here. The owner gets an alert for every request and for everything else a manager does.</p>
+      <div id="approvalList" class="grievance-list"><p class="table-empty">Loading…</p></div>
+    </section>
+
     <!-- Complaints (Grievance Officer) tab -->
     <section class="tab-panel" id="tab-grievances">
       <div class="panel-head">
@@ -460,7 +470,7 @@
       <div class="panel-head">
         <h2>Team</h2>
       </div>
-      <p class="admin-card-hint">Give each manager their own login instead of sharing yours, so the activity log below shows who did what. Managers can do the daily work: requests, quotes, slots, assigning staff, money, rates, reviews. Only you can delete things, add or change logins (team and staff), and read this log. Your own login is the one set on the server and isn't listed for editing.</p>
+      <p class="admin-card-hint">Give each manager their own login instead of sharing yours, so the activity log below shows who did what. Managers can do the daily work: requests, quotes, slots, assigning staff, money, reviews. Their changes to scrap rates, staff logins, lots for sale, home page numbers and the yard address wait for your approval (Approvals tab), and you get an alert for everything a manager does. Only you can delete things, add or change team logins, and read this log. Your own login is the one set on the server and isn't listed for editing.</p>
       <form class="admin-card staff-form" id="teamForm" method="post" novalidate>
         <h3 id="teamFormTitle">Add a manager</h3>
         <input type="hidden" id="teamEditId">
@@ -797,6 +807,7 @@
 <script src="js/admin/demolition.js"></script>
 <script src="js/admin/callbacks.js"></script>
 <script src="js/admin/grievances.js"></script>
+<script src="js/admin/approvals.js"></script>
 <script src="js/admin/workers.js"></script>
 <script src="js/admin/customers.js"></script>
 <script src="js/admin/rates.js"></script>

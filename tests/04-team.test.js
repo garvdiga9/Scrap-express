@@ -32,7 +32,10 @@ test('owner manages managers; managers do daily work but cannot delete or manage
   assert.equal(me.name, 'Test Manager');
   for (const url of ['/api/admin/team', '/api/admin/activity']) assert.equal((await mgr.get(url)).status, 403, url);
   assert.equal((await mgr.del('/api/admin/leads/999999')).status, 403);
-  assert.equal((await mgr.post('/api/admin/staff', { name: 'S', username: 'testsss', password: 'pppppppp' })).status, 403);
+  // A manager's new staff login waits for the owner (tests/13-approvals.test.js).
+  assert.equal((await mgr.post('/api/admin/staff', { name: 'S', username: 'testsss', password: 'pppppppp' })).status, 202);
+  assert.equal((await pool.query("SELECT 1 FROM staff_users WHERE username = 'testsss'")).rowCount, 0, 'not created before approval');
+  await pool.query("DELETE FROM pending_changes WHERE requested_by_name = 'Test Manager'");
   assert.equal((await mgr.get('/api/admin/staff')).status, 200);
   assert.equal((await mgr.get('/api/admin/requests')).status, 200);
   assert.equal((await mgr.get('/api/admin/todo')).status, 200);
