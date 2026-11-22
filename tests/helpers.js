@@ -111,6 +111,7 @@ async function cleanUp() {
   await pool.query("DELETE FROM staff_cash WHERE staff_id IN (SELECT id FROM staff_users WHERE username LIKE 'test%')");
   await pool.query("DELETE FROM staff_users WHERE username LIKE 'test%'");
   await pool.query("DELETE FROM admin_users WHERE username LIKE 'test%' AND role = 'manager'");
+  await pool.query("DELETE FROM grievances WHERE name LIKE 'Test %'");
   await pool.query("DELETE FROM customers WHERE firebase_uid LIKE 'test-%'");
   await pool.query("DELETE FROM admin_activity WHERE admin_name LIKE 'Test %'");
 }

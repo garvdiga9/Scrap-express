@@ -289,9 +289,32 @@ function weighForm(pickup) {
   photo.accept = 'image/*';
   photo.setAttribute('capture', 'environment'); // opens the camera on a phone
   photoLabel.appendChild(photo);
+  // Seller verification: the customer's handover code (from their quote page),
+  // and without a GSTIN, the ID they show: its type and last 4 characters only.
+  const extra = {};
+  const checks = el('div', 'staff-checks');
+  if (pickup.needsHandoverCode) {
+    const label = el('label', null, "Customer's handover code (ask them to read it from their quote page)");
+    extra.handoverCode = el('input');
+    Object.assign(extra.handoverCode, { type: 'text', inputMode: 'numeric', maxLength: 4, autocomplete: 'off', placeholder: '4 digits' });
+    label.appendChild(extra.handoverCode);
+    checks.appendChild(label);
+  }
+  if (!pickup.hasGstin) {
+    const idLabel = el('label', null, pickup.sellerId ? `Seller ID recorded: ${pickup.sellerId}. Change it only if wrong.` : 'No GSTIN: which ID did the seller show?');
+    extra.sellerIdType = el('select');
+    extra.sellerIdType.append(new Option('Choose ID', ''));
+    ['Aadhaar', 'PAN', 'Driving licence', 'Voter ID', 'Passport'].forEach((t) => extra.sellerIdType.append(new Option(t, t)));
+    idLabel.appendChild(extra.sellerIdType);
+    const lastLabel = el('label', null, 'Last 4 characters of the ID only (never the full number)');
+    extra.sellerIdLast4 = el('input');
+    Object.assign(extra.sellerIdLast4, { type: 'text', maxLength: 4, autocomplete: 'off', placeholder: 'e.g. 4821' });
+    lastLabel.appendChild(extra.sellerIdLast4);
+    checks.append(idLabel, lastLabel);
+  }
   const save = el('button', 'btn btn-accent btn-block', pickup.status === 'weighed' ? 'Change Weight & Photo' : 'Save Weight & Photo');
   save.type = 'submit';
-  form.append(photoLabel, save);
+  form.append(photoLabel, checks, save);
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const quantities = lines.map((line, i) => (line.unit === 'lump sum' ? null : inputs[i].value));
@@ -319,6 +342,12 @@ function weighForm(pickup) {
         body.append('longitude', place.longitude);
         Object.assign(parts, place);
       }
+      Object.entries(extra).forEach(([key, input]) => {
+        if (input.value.trim()) {
+          body.append(key, input.value.trim());
+          parts[key] = input.value.trim();
+        }
+      });
       parts.file = await shrinkPhoto(photo.files[0]);
       body.append('file', parts.file, 'weighing.jpg');
       const res = await fetch(`/api/staff/pickups/${pickup.id}/weigh`, { method: 'POST', body });

@@ -1,7 +1,17 @@
-<%# Required on request forms. Opens in a new tab so the form isn't lost. %>
+<%# Required on request forms: the terms (click-wrap, saved with the time and
+    version) and the seller's declaration. Marketing messages are a separate
+    choice and never ticked for you. Links open in a new tab so the form isn't lost. %>
 <div class="form-group rules-check">
   <label class="rules-check-label">
-    <input type="checkbox" name="acceptTerms" data-rules-check>
-    <span>I confirm these details (and any photos) are true, and I accept the <a href="/rules" target="_blank" rel="noopener">Pickup &amp; Demolition Rules</a>.</span>
+    <input type="checkbox" name="acceptTerms" data-rules-check data-rules-message="Please tick this box to accept the terms before sending.">
+    <span>I confirm these details (and any photos) are true, and I agree to the <a href="/terms" target="_blank" rel="noopener">Terms of Use</a> and <a href="/rules" target="_blank" rel="noopener">Pickup Rules</a>.</span>
+  </label>
+  <label class="rules-check-label">
+    <input type="checkbox" name="declareOwnership" data-rules-check data-rules-message="Please tick this box to confirm you may sell this scrap.">
+    <span>I am 18 or older, and I own this scrap or am authorised by my business to sell it. It is not stolen, and has none of the <a href="/terms#not-accepted" target="_blank" rel="noopener">items we don't accept</a>.</span>
+  </label>
+  <label class="rules-check-label rules-check-optional">
+    <input type="checkbox" name="marketingOptIn" value="yes">
+    <span>Optional: send me rate updates and offers on SMS or WhatsApp. I can stop them any time.</span>
   </label>
 </div>

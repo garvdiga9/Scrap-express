@@ -7,6 +7,7 @@
     <div class="rate-media rate-media-icon" style="background:<%= rate.colors.bg %>;color:<%= rate.colors.fg %>" aria-hidden="true"><svg class="icon"><use href="#<%= rate.iconId %>"/></svg></div>
   <% } %>
   <h3><% if (rate.url) { %><a href="<%= rate.url %>" class="rate-link"><%= rate.name %></a><% } else { %><%= rate.name %><% } %></h3>
+  <% const viaRecycler = recyclerTypeFor(rate.name); if (viaRecycler && locals.legal && legal.recyclers.some((r) => r.type === viaRecycler)) { %><a class="rate-recycler" href="/recycling-partners">Handled via registered recycler</a><% } %>
   <div class="rate-price">₹<span class="price-val"><%= rate.priceText %></span> <span>/ <%= rate.unit %></span></div>
   <% if (locals.showTrend) { %>
     <div class="rate-trend trend-<%= rate.trend.direction %>">

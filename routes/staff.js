@@ -128,6 +128,7 @@ router.post('/pickups/:id/weigh', requireStaff, documents.acceptDocument, async 
   try {
     const row = await dispatch.weigh(req.staff.id, Number(req.params.id), quantities, req.document, {
       takenAt: req.body.takenAt, latitude: req.body.latitude, longitude: req.body.longitude,
+      handoverCode: req.body.handoverCode, sellerIdType: req.body.sellerIdType, sellerIdLast4: req.body.sellerIdLast4,
     });
     if (!row) return fail(409, MOVED_ON);
     if (row.error) return fail(400, row.error);

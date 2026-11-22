@@ -4,11 +4,11 @@ const assert = require('node:assert/strict');
 const {
   BASE, client, pool, cleanUp,
 } = require('./helpers');
-const { MIN_PICKUP_KG, PICKUP_FREQUENCIES } = require('../data/business');
+const { MIN_PICKUP_KG, PICKUP_FREQUENCIES, RULES_VERSION } = require('../data/business');
 
 after(async () => { await cleanUp(); await pool.end(); });
 
-const PAGES = ['/', '/about', '/rates', '/what-we-buy', '/book-pickup', '/demolition', '/areas', '/buy-from-us', '/rules', '/privacy', '/delete-account', '/login'];
+const PAGES = ['/', '/about', '/rates', '/what-we-buy', '/book-pickup', '/demolition', '/areas', '/buy-from-us', '/rules', '/privacy', '/delete-account', '/login', '/terms', '/legal', '/recycling-partners', '/grievance', '/grievance/status'];
 
 test('every public page opens, in English and Hindi', async () => {
   for (const p of PAGES) {
@@ -26,7 +26,7 @@ test('Hindi pages have no English sentences left', async () => {
   // Brand, contact details, units and dates may stay in English.
   const OK = /^(Scrap|Express|Scrap Express|scrapexpress@gmail\.com|WhatsApp|GSTIN|OpenStreetMap|&copy;|&times;|हिंदी|English|kg|\/kg|CPU|UPS|AC PCB|GST|you@company\.com|you@example\.com|98765 43210|\+91 98188 26333|07ABCDE1234F1Z5|Shri Ram Honda|Kirloskar|Sudhir|Mahindra)$/;
   const left = [];
-  for (const p of ['/', '/about', '/rates', '/what-we-buy', '/book-pickup', '/demolition', '/areas', '/buy-from-us', '/rules', '/privacy']) {
+  for (const p of ['/', '/about', '/rates', '/what-we-buy', '/book-pickup', '/demolition', '/areas', '/buy-from-us', '/rules', '/privacy', '/terms', '/legal', '/recycling-partners', '/grievance', '/grievance/status']) {
     let html = await (await fetch(`${BASE}${p}?lang=hi`)).text();
     html = html.replace(/<(script|style|textarea)\b[\s\S]*?<\/\1>/gi, '');
     for (const m of html.matchAll(/>([^<>]+)</g)) {
@@ -68,12 +68,15 @@ test(`booking: minimum ${MIN_PICKUP_KG} kg, real phone numbers, known places`, a
 
   const full = {
     ...step1, leadToken: lead.data.leadToken, name: 'Test Person', businessType: 'Warehouse', pickupFrequency: PICKUP_FREQUENCIES[0],
-    building: 'Plot 1', street: 'Okhla Phase 2', pincode: '110020', city: 'South Delhi', state: 'Delhi', area: 'Okhla Industrial Area', acceptTerms: 'on',
+    building: 'Plot 1', street: 'Okhla Phase 2', pincode: '110020', city: 'South Delhi', state: 'Delhi', area: 'Okhla Industrial Area', acceptTerms: 'on', declareOwnership: 'on',
   };
   assert.equal((await anon.post('/api/pickup', { ...full, acceptTerms: '' })).status, 400, 'rules must be accepted');
+  assert.equal((await anon.post('/api/pickup', { ...full, declareOwnership: '' })).status, 400, 'seller must declare ownership and 18+');
   assert.equal((await anon.post('/api/pickup', { ...full, scrapLocation: 'On the moon' })).status, 400);
   const pickup = await anon.post('/api/pickup', { ...full, scrapLocation: 'Upper floor, stairs only', needsDismantling: 'yes' });
   assert.equal(pickup.status, 201, pickup.data.error);
+  const { rows: [decl] } = await pool.query('SELECT ownership_declared_at IS NOT NULL AS declared, marketing_opt_in, terms_version FROM pickup_requests WHERE id = $1', [pickup.data.id]);
+  assert.deepEqual(decl, { declared: true, marketing_opt_in: false, terms_version: RULES_VERSION }, 'declaration saved, marketing never assumed');
   const { rows: [p] } = await pool.query('SELECT delivery_mode, office_handled, scrap_location, needs_dismantling FROM pickup_requests WHERE id = $1', [pickup.data.id]);
   assert.deepEqual(p, {
     delivery_mode: 'pickup', office_handled: false, scrap_location: 'Upper floor, stairs only', needs_dismantling: true,

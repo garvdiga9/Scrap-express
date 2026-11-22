@@ -60,6 +60,7 @@ app.use(securityHeaders({ production: isProduction }));
 // The business name and contacts (lib/brand.js): when they're set on the
 // server, they replace the current ones in every reply and app file.
 const brand = require('./lib/brand');
+const legal = require('./lib/legal');
 if (brand.changed) {
   app.use((req, res, next) => {
     const send = res.send.bind(res);
@@ -152,6 +153,7 @@ app.get('/sitemap.xml', async (req, res) => {
   const entries = PAGES.map(({ path: pagePath, priority }) => ({
     path: pagePath, priority, changefreq: pagePath === '/rates' ? 'daily' : 'weekly',
   }));
+  entries.push({ path: '/grievance', priority: '0.3', changefreq: 'monthly' });
   try {
     const [areaList, rateList] = await Promise.all([areas.listAreas(), rates.listRates()]);
     areaList.forEach((area) => entries.push({ path: `/areas/${area.slug}`, priority: '0.7', changefreq: 'monthly' }));
@@ -243,6 +245,8 @@ app.use(async (req, res, next) => {
   // For the "daily rates" sign-up box in the footer (cached, see lib/settings).
   res.locals.whatsappChannelUrl = await updates.getSettings()
     .then((s) => s.whatsappChannelUrl).catch(() => '');
+  // Legal details the owner has filled in (cached). Unfilled ones aren't shown.
+  res.locals.legal = await legal.get();
   const id = req.session && req.session.customerId;
   if (!id) return next();
   try {
@@ -260,6 +264,10 @@ app.use(async (req, res, next) => {
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.locals.areas = AREAS;
+// Banned items and recycler-only materials (data/compliance.js).
+const compliance = require('./data/compliance');
+app.locals.notAccepted = compliance.NOT_ACCEPTED;
+app.locals.recyclerTypeFor = compliance.recyclerTypeFor;
 app.locals.otherArea = OTHER_AREA;
 app.locals.serviceKm = SERVICE_KM;
 app.locals.businessTypes = BUSINESS_TYPES;
@@ -352,6 +360,21 @@ const PAGES = [
     description: 'How Scrap Express collects, uses and protects information from customers of our website and app.',
   },
   {
+    path: '/terms', view: 'terms', page: 'terms', priority: '0.3',
+    title: 'Terms of Use and Pickup Terms - Scrap Express',
+    description: 'Terms for selling scrap to Scrap Express: who can sell, items we do not accept, rates and quotes, weighing, payment, cancelling, liability and Delhi jurisdiction.',
+  },
+  {
+    path: '/legal', view: 'legal', page: 'legal', priority: '0.2',
+    title: 'Legal Information - Scrap Express',
+    description: 'Scrap Express business details, registrations, weighing scale certificate and policies.',
+  },
+  {
+    path: '/recycling-partners', view: 'recycling-partners', page: 'recycling-partners', priority: '0.2',
+    title: 'Recycling Partners - Scrap Express',
+    description: 'The registered recyclers Scrap Express hands e-waste, batteries and plastic waste to, with their registration numbers.',
+  },
+  {
     path: '/delete-account', view: 'delete-account', page: 'delete-account', priority: '0.2',
     title: 'Delete Your Account - Scrap Express',
     description: 'How to delete your Scrap Express account and what happens to your data.',
@@ -376,6 +399,9 @@ const PAGE_DATA = {
     return { rates: rateList, ratesUpdated };
   },
 };
+
+// Complaints to the Grievance Officer, and the scale's stamping certificate.
+app.use(require('./routes/grievance'));
 
 PAGES.forEach(({ path: routePath, view, page, title, description }) => {
   app.get(routePath, async (req, res, next) => {

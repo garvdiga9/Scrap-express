@@ -84,6 +84,15 @@
     </div>
   </section>
 
+  <section class="section section-alt" id="not-accepted">
+    <div class="container legal-page">
+      <h2>What we don't accept</h2>
+      <p>For safety and the law, we never buy these, whoever offers them:</p>
+      <%- include('partials/not-accepted') %>
+      <p><span>E-waste and batteries are handled as the e-waste and battery waste rules require.</span><% if (locals.legal && legal.recyclers.length) { %> <a href="/recycling-partners">See our Recycling Partners</a>.<% } %> <a href="/terms#not-accepted">Read the full Terms of Use</a>.</p>
+    </div>
+  </section>
+
 <%- include('partials/cta') %>
 
 </main>

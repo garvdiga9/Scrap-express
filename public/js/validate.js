@@ -60,11 +60,11 @@ window.SEValidate = (() => {
     return false;
   }
 
-  // The rules tick-box on request forms.
+  // The required tick-boxes on request forms (terms, seller's declaration).
   function rulesAccepted(form) {
-    const box = form.querySelector('[data-rules-check]');
-    if (box.checked) return true;
-    setError(box, 'Please tick this box to accept the rules before sending.');
+    const box = [...form.querySelectorAll('[data-rules-check]')].find((b) => !b.checked);
+    if (!box) return true;
+    setError(box, box.dataset.rulesMessage || 'Please tick this box before sending.');
     box.scrollIntoView({ behavior: 'smooth', block: 'center' });
     box.focus({ preventScroll: true });
     return false;

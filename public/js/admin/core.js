@@ -36,7 +36,7 @@ function enterDashboard(who) {
   document.body.dataset.role = role;
   dashboard.hidden = false;
   welcomeUser.textContent = `Signed in as ${who.name || who.username}${role === 'manager' ? ' (manager)' : ''}`;
-  Promise.all([loadRequests(), loadDemolitionRequests(), loadCallbacks()]).then(openFromLink);
+  Promise.all([loadRequests(), loadDemolitionRequests(), loadCallbacks(), loadGrievances(true)]).then(openFromLink);
   loadLeads();
   loadCustomers();
   loadRates();
@@ -58,6 +58,10 @@ function showTab(name) {
 
 // Notifications link to /admin.html#pickup-12, #demolition-4 or #callback-7: open that one.
 function openFromLink() {
+  if (window.location.hash === '#tab-grievances') {
+    showTab('grievances');
+    return;
+  }
   // Enquiries about lots for sale (Buy From Us tab, public/js/admin-content.js).
   if (/^#lots-\d+$/.test(window.location.hash)) {
     showTab('lots');

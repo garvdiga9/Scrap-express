@@ -114,7 +114,7 @@ const QUOTE_UNITS = ['per kg', 'per tonne', 'per piece', 'lump sum'];
 
 // Change this whenever views/rules.ejs changes in substance, so each request
 // records which version its customer accepted.
-const RULES_VERSION = '2026-11-14';
+const RULES_VERSION = '2026-11-22';
 const READY_DATE_MAX_DAYS = 30;
 
 // 'YYYY-MM-DD' in India, and the dates a customer can say their scrap is ready.

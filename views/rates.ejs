@@ -23,6 +23,12 @@
             Rates are being updated. Please call us for today's prices.
           <% } %>
         </p>
+        <ul class="rate-terms">
+          <% if (locals.ratesUpdated) { %><li>Effective from <time datetime="<%= ratesUpdated.toISOString() %>"><%= formatIndiaTime(ratesUpdated) %></time> until we next update them.</li><% } %>
+          <li>Minimum quantity: <%= minPickupKg %> kg per pickup.</li>
+          <li>Rates are per kg unless another unit is shown.</li>
+          <li>No hidden fees: any charge or deduction is written in your quote before you accept it.</li>
+        </ul>
 
         <%# Search and tabs work with JavaScript; without it, every rate is listed. %>
         <div class="rate-filter" id="rateFilter" hidden>

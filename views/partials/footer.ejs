@@ -40,8 +40,13 @@
     <div class="container footer-bottom-inner">
       <p>&copy; <span id="year"></span> Scrap Express. All rights reserved.</p>
       <div class="footer-legal">
-        <a href="/rules" class="admin-link">Pickup Rules</a>
+        <a href="/terms" class="admin-link">Terms of Use</a>
         <a href="/privacy" class="admin-link">Privacy Policy</a>
+        <a href="/rules" class="admin-link">Pickup Rules</a>
+        <a href="/rates" class="admin-link">Rate Card</a>
+        <a href="/grievance" class="admin-link">Grievance Officer</a>
+        <a href="/legal" class="admin-link">Legal Info</a>
+        <% if (locals.legal && legal.recyclers.length) { %><a href="/recycling-partners" class="admin-link">Recycling Partners</a><% } %>
         <a href="/delete-account" class="admin-link">Delete Account</a>
       </div>
     </div>

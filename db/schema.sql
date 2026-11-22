@@ -550,3 +550,43 @@ ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS quote_reminded BOOLEAN NOT 
 -- App alerts for customers who use their private quote link (no login).
 ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS quote_token VARCHAR(48);
 CREATE INDEX IF NOT EXISTS idx_push_subscriptions_token ON push_subscriptions(quote_token);
+
+-- Legal compliance (Nov 2026).
+-- Booking declarations: the seller owns the scrap (or may sell it) and is 18+,
+-- and a separate, never pre-ticked choice to get marketing messages.
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS ownership_declared_at TIMESTAMP;
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS marketing_opt_in BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE demolition_requests ADD COLUMN IF NOT EXISTS ownership_declared_at TIMESTAMP;
+ALTER TABLE demolition_requests ADD COLUMN IF NOT EXISTS marketing_opt_in BOOLEAN NOT NULL DEFAULT FALSE;
+-- Seller verification: GSTIN (already stored) or, without one, the ID type
+-- and its last 4 digits only. A full Aadhaar or other ID is never stored.
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS seller_id_type VARCHAR(30);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS seller_id_last4 VARCHAR(4);
+-- Handover code: shown only to the customer; the crew asks for it at the
+-- site, so a fake "agent" can't collect. NULL = not checked.
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS handover_code VARCHAR(4);
+ALTER TABLE pickup_requests ADD COLUMN IF NOT EXISTS handover_checked BOOLEAN;
+
+-- Complaints to the Grievance Officer: acknowledged at once, to be resolved
+-- within 7 days (the admin to-do list flags overdue ones).
+CREATE TABLE IF NOT EXISTS grievances (
+  id SERIAL PRIMARY KEY,
+  ticket VARCHAR(20) UNIQUE NOT NULL,
+  name VARCHAR(150) NOT NULL,
+  phone VARCHAR(20) NOT NULL,
+  email VARCHAR(200),
+  request_ref VARCHAR(50),
+  category VARCHAR(40) NOT NULL,
+  message TEXT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'open',
+  response TEXT,
+  customer_id INTEGER REFERENCES customers(id) ON DELETE SET NULL,
+  acknowledged_at TIMESTAMP,
+  resolved_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS grievances_status_idx ON grievances (status, created_at);
+ALTER TABLE pickup_requests ALTER COLUMN handover_code SET DEFAULT lpad(floor(random() * 10000)::int::text, 4, '0');
+UPDATE pickup_requests SET handover_code = lpad(floor(random() * 10000)::int::text, 4, '0')
+WHERE handover_code IS NULL AND status IN ('pending', 'quoted', 'accepted', 'ready', 'slots_sent', 'scheduled', 'on_way', 'arrived');

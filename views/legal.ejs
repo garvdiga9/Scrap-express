@@ -1,0 +1,53 @@
+<%- include('partials/head') %>
+<%- include('partials/sprite') %>
+<%- include('partials/header') %>
+
+<% const L = locals.legal || {}; const fmtDate = (d) => new Date(`${d}T00:00:00+05:30`).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' }); %>
+<main id="top" tabindex="-1">
+
+  <section class="section page-top">
+    <div class="container legal-page">
+      <span class="eyebrow">Legal</span>
+      <h1>Legal Information</h1>
+
+      <h2>The business</h2>
+      <dl class="legal-facts">
+        <dt>Trade name</dt><dd>Scrap Express</dd>
+        <% if (L.entityName) { %><dt>Legal name</dt><dd><%= L.entityName %></dd><% } %>
+        <% if (L.gstin) { %><dt>GSTIN</dt><dd><%= L.gstin %></dd><% } %>
+        <% if (L.udyam) { %><dt>Udyam registration</dt><dd><%= L.udyam %></dd><% } %>
+        <% if (L.dpiit) { %><dt>DPIIT recognition</dt><dd><%= L.dpiit %></dd><% } %>
+        <dt>In business since</dt><dd><%= foundedYear %></dd>
+        <dt>Address</dt><dd><%= shopAddress.full %>, India</dd>
+        <dt>Phone / WhatsApp</dt><dd><a href="tel:+919818826333">+91 98188 26333</a></dd>
+        <dt>Email</dt><dd><a href="mailto:scrapexpress@gmail.com">scrapexpress@gmail.com</a></dd>
+      </dl>
+
+      <h2 id="scale">Weighing scale</h2>
+      <% if (L.certificate) { %>
+        <p>Our scale is verified and stamped under the Legal Metrology Act, 2009.</p>
+        <dl class="legal-facts">
+          <% if (L.certificate.number) { %><dt>Certificate number</dt><dd><%= L.certificate.number %></dd><% } %>
+          <% if (L.certificate.validTill) { %><dt>Valid until</dt><dd><%= fmtDate(L.certificate.validTill) %></dd><% } %>
+        </dl>
+        <p><a class="btn btn-outline" href="/legal/stamping-certificate" target="_blank" rel="noopener">View the stamping certificate</a></p>
+      <% } else { %>
+        <p>We weigh on a weighbridge or a scale stamped under the Legal Metrology Act, 2009, and photograph the reading at your site. Ask us to see the stamping certificate.</p>
+      <% } %>
+
+      <h2>Policies</h2>
+      <ul>
+        <li><a href="/terms">Terms of Use and Pickup Terms</a></li>
+        <li><a href="/rules">Pickup Rules</a></li>
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/rates">Rate Card</a></li>
+        <li><a href="/grievance">Grievance Officer and complaints</a></li>
+        <% if ((L.recyclers || []).length) { %><li><a href="/recycling-partners">Recycling Partners</a></li><% } %>
+        <li><a href="/delete-account">Delete your account</a></li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<%- include('partials/footer') %>

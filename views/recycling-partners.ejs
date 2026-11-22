@@ -1,0 +1,35 @@
+<%- include('partials/head') %>
+<%- include('partials/sprite') %>
+<%- include('partials/header') %>
+
+<% const recyclers = (locals.legal && legal.recyclers) || []; const fmtDate = (d) => new Date(`${d}T00:00:00+05:30`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }); %>
+<main id="top" tabindex="-1">
+
+  <section class="section page-top">
+    <div class="container legal-page">
+      <span class="eyebrow">Responsible recycling</span>
+      <h1>Recycling Partners</h1>
+      <p>E-waste, batteries and plastic waste must go to recyclers registered with the Central or State Pollution Control Board. These are the registered recyclers we hand them to.</p>
+
+      <% if (recyclers.length) { %>
+        <div class="table-scroll">
+          <table class="legal-table">
+            <thead><tr><th>Recycler</th><th>Handles</th><th>Registration number</th><th>Valid until</th></tr></thead>
+            <tbody>
+              <% recyclers.forEach((r) => { %>
+                <tr><td><%= r.name %></td><td><%= r.type %></td><td><%= r.regNo %></td><td><%= r.validTill ? fmtDate(r.validTill) : '-' %></td></tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <p class="legal-empty">No recycling partners are listed yet. Ask us which recycler your material will go to.</p>
+      <% } %>
+
+      <p>See also our <a href="/terms">Terms of Use</a>.</p>
+    </div>
+  </section>
+
+</main>
+
+<%- include('partials/footer') %>

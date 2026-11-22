@@ -2,7 +2,7 @@ const router = require('express').Router();
 const spam = require('../lib/spam');
 const pool = require('../db/pool');
 const {
-  PHONE_ERROR, EMAIL_ERROR, cleanPhone, cleanEmail,
+  PHONE_ERROR, EMAIL_ERROR, OWNERSHIP_ERROR, cleanPhone, cleanEmail, ticked,
 } = require('../lib/validation');
 const { RULES_VERSION, parseArea } = require('../data/business');
 const { parseSite, outsideServiceArea } = require('../lib/location');
@@ -22,6 +22,7 @@ router.post('/', spam.limit('demolition', { max: 10 }), media.acceptMedia, spam.
   if (!req.body.acceptTerms) {
     return res.status(400).json({ error: 'Please accept the Rules. If you don\'t see the tick-box, refresh this page.' });
   }
+  if (!ticked(req.body.declareOwnership)) return res.status(400).json({ error: OWNERSHIP_ERROR });
   const site = parseSite(req.body);
   if (site.error) return res.status(400).json({ error: site.error });
   const { area, error: areaError } = parseArea(req.body.area, req.body.otherArea);
@@ -43,12 +44,12 @@ router.post('/', spam.limit('demolition', { max: 10 }), media.acceptMedia, spam.
     const { rows } = await pool.query(
       `INSERT INTO demolition_requests
         (name, phone, email, building_type, location, approx_area, notes, customer_id,
-         pincode, latitude, longitude, terms_accepted_at, terms_version, area)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW(),$12,$13)
+         pincode, latitude, longitude, terms_accepted_at, terms_version, area, ownership_declared_at, marketing_opt_in)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW(),$12,$13,NOW(),$14)
        RETURNING id`,
       [
         name, phone, email, buildingType, site.address, approxArea || null, notes || null, customerId,
-        site.pincode, site.latitude, site.longitude, RULES_VERSION, area,
+        site.pincode, site.latitude, site.longitude, RULES_VERSION, area, ticked(req.body.marketingOptIn),
       ]
     );
     await media.saveForRequest(req, 'demolition', rows[0].id)

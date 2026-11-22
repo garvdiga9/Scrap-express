@@ -6,7 +6,7 @@ const {
 } = require('../data/business');
 const { parseSite, outsideServiceArea } = require('../lib/location');
 const {
-  GSTIN_RE, GSTIN_ERROR, PHONE_ERROR, EMAIL_ERROR, cleanPhone, cleanEmail,
+  GSTIN_RE, GSTIN_ERROR, PHONE_ERROR, EMAIL_ERROR, OWNERSHIP_ERROR, cleanPhone, cleanEmail, ticked,
 } = require('../lib/validation');
 const customers = require('../lib/customers');
 const spam = require('../lib/spam');
@@ -162,6 +162,7 @@ router.post('/', spam.limit('pickup', { max: 10 }), media.acceptMedia, spam.hone
   if (!req.body.acceptTerms) {
     return res.status(400).json({ error: 'Please accept the Pickup Rules. If you don\'t see the tick-box, refresh this page.' });
   }
+  if (!ticked(req.body.declareOwnership)) return res.status(400).json({ error: OWNERSHIP_ERROR });
   const site = parseSite(req.body);
   if (site.error) return res.status(400).json({ error: site.error });
   const { area, error: areaError } = parseArea(req.body.area, req.body.otherArea);
@@ -201,8 +202,8 @@ router.post('/', spam.limit('pickup', { max: 10 }), media.acceptMedia, spam.hone
         (company_name, business_type, pickup_frequency, gstin, customer_id,
          name, phone, email, address, area, pincode, scrap_type, approx_quantity, item_quantities, notes,
          latitude, longitude, terms_accepted_at, terms_version,
-         delivery_mode, scrap_location, needs_dismantling, office_handled)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),$18,$19,$20,$21,$22)
+         delivery_mode, scrap_location, needs_dismantling, office_handled, ownership_declared_at, marketing_opt_in)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),$18,$19,$20,$21,$22,NOW(),$23)
        RETURNING id`,
       [
         companyName, businessType || null, pickupFrequency || null, gstin, customerId,
@@ -210,7 +211,7 @@ router.post('/', spam.limit('pickup', { max: 10 }), media.acceptMedia, spam.hone
         scrapType, quantity, itemQuantities && JSON.stringify(itemQuantities), notes || null,
         site.latitude, site.longitude, RULES_VERSION,
         // A self drop-off is run by the office: staff never see it.
-        deliveryMode, scrapLocation, needsDismantling, deliveryMode === 'self',
+        deliveryMode, scrapLocation, needsDismantling, deliveryMode === 'self', ticked(req.body.marketingOptIn),
       ]
     );
     const requestId = rows[0].id;

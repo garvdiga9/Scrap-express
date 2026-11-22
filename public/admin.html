@@ -77,6 +77,7 @@
     <button class="tab-btn active" data-tab="requests">Pickup <span class="tab-long">Requests</span> <span class="tab-count" id="pickupCount" hidden></span></button>
     <button class="tab-btn" data-tab="demolition">Demolition <span class="tab-long">Requests</span> <span class="tab-count" id="demolitionCount" hidden></span></button>
     <button class="tab-btn" data-tab="callbacks">Call Backs <span class="tab-count" id="callbackCount" hidden></span></button>
+    <button class="tab-btn" data-tab="grievances">Complaints <span class="tab-count" id="grievanceCount" hidden></span></button>
     <button class="tab-btn" data-tab="board">Pickups <span class="tab-count" id="unassignedCount" hidden></span></button>
     <button class="tab-btn" data-tab="staff">Staff</button>
     <button class="tab-btn" data-tab="money">Money <span class="tab-count" id="bankToPayCount" hidden></span></button>
@@ -378,6 +379,15 @@
     </section>
 
     <!-- Team tab (owner only): dashboard logins for managers, and the activity log -->
+    <!-- Complaints (Grievance Officer) tab -->
+    <section class="tab-panel" id="tab-grievances">
+      <div class="panel-head">
+        <h2>Complaints</h2>
+      </div>
+      <p class="admin-card-hint">Complaints sent from the Grievance Officer page. Each one was acknowledged automatically with a ticket number. Reply and mark it resolved within 7 days: the customer sees your reply on the complaint status page.</p>
+      <div id="grievanceList" class="grievance-list"><p class="table-empty">Loading complaints…</p></div>
+    </section>
+
     <section class="tab-panel" id="tab-team">
       <div class="panel-head">
         <h2>Team</h2>
@@ -414,6 +424,48 @@
         </div>
         <p class="admin-card-hint">"With photos" also includes every uploaded photo, video and paper, so it is much bigger and takes longer.</p>
       </section>
+
+      <form class="admin-card legal-card" id="legalForm" novalidate>
+        <h3>Legal details</h3>
+        <p class="admin-card-hint">Shown on the Legal Info, Terms, Grievance and Recycling Partners pages. Only what you fill in is shown; nothing is made up. Use your real registered details.</p>
+        <p class="legal-missing" id="legalMissing" hidden></p>
+        <div class="lot-form-grid">
+          <label>Legal entity name <input type="text" name="entityName" maxlength="150" placeholder="e.g. ABC Traders (Proprietor: …)"></label>
+          <label>GSTIN <input type="text" name="gstin" maxlength="15" autocapitalize="characters" placeholder="07ABCDE1234F1Z5"></label>
+          <label>Udyam registration <input type="text" name="udyam" maxlength="30" autocapitalize="characters" placeholder="UDYAM-DL-01-0000000"></label>
+          <label>DPIIT recognition no. (if any) <input type="text" name="dpiit" maxlength="30" autocapitalize="characters"></label>
+          <label>Bank transfers paid within (working days) <input type="number" name="bankDays" min="1" max="30" step="1" placeholder="e.g. 2"></label>
+        </div>
+        <h4>Grievance Officer</h4>
+        <div class="lot-form-grid">
+          <label>Name <input type="text" name="officerName" maxlength="100"></label>
+          <label>Designation <input type="text" name="officerDesignation" maxlength="100" placeholder="e.g. Partner"></label>
+          <label>Email <input type="email" name="officerEmail" maxlength="200"></label>
+          <label>Phone <input type="tel" name="officerPhone" maxlength="20"></label>
+        </div>
+        <h4>Registered recyclers</h4>
+        <p class="admin-card-hint">Recyclers registered with the CPCB / DPCC that you hand e-waste, batteries or plastic to. E-waste and battery rates show "Handled via registered recycler" only when one of that type is listed.</p>
+        <div id="recyclerRows" class="recycler-rows"></div>
+        <button type="button" class="add-line-btn" id="addRecycler">+ Add a recycler</button>
+        <div id="legalAlert" class="form-alert" hidden></div>
+        <div class="admin-card-actions"><button type="submit" class="btn btn-accent">Save Legal Details</button></div>
+      </form>
+
+      <form class="admin-card legal-card" id="certificateForm" novalidate>
+        <h3>Scale stamping certificate</h3>
+        <p class="admin-card-hint">The Legal Metrology stamping certificate of your weighing scale (PDF or photo). Shown on the Legal Info page and linked from the Terms.</p>
+        <p id="certificateCurrent"></p>
+        <div class="lot-form-grid">
+          <label>Certificate number <input type="text" name="number" maxlength="60"></label>
+          <label>Valid until <input type="date" name="validTill"></label>
+          <label>File <input type="file" name="file" accept="application/pdf,image/*"></label>
+        </div>
+        <div id="certificateAlert" class="form-alert" hidden></div>
+        <div class="admin-card-actions">
+          <button type="submit" class="btn btn-accent">Upload Certificate</button>
+          <button type="button" class="btn btn-outline" id="certificateRemove" hidden>Remove</button>
+        </div>
+      </form>
 
       <div class="panel-head activity-head">
         <h3 class="admin-subhead">Activity log</h3>
@@ -676,6 +728,7 @@
 <script src="js/admin/request-dialog.js"></script>
 <script src="js/admin/demolition.js"></script>
 <script src="js/admin/callbacks.js"></script>
+<script src="js/admin/grievances.js"></script>
 <script src="js/admin/customers.js"></script>
 <script src="js/admin/rates.js"></script>
 <script src="js/admin/reviews.js"></script>
@@ -694,6 +747,7 @@
 <script src="js/admin/board.js"></script>
 <script src="js/admin/ratings.js"></script>
 <script src="js/admin/team.js"></script>
+<script src="js/admin/legal.js"></script>
 <script src="js/admin/todo.js"></script>
 </body>
 </html>

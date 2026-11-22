@@ -117,6 +117,14 @@
         <% } else if (r.status === 'arrived') { %><%= pk.staffName || 'Our team' %> has arrived at your site.
         <% } else { %>Your scrap has been weighed. Payment is next.<% } %>
       </p>
+      <% if (pk.handoverCode && ['scheduled', 'on_way', 'arrived'].includes(r.status)) { %>
+        <div class="handover-box">
+          <p class="handover-agent"><svg class="icon" aria-hidden="true"><use href="#icon-shield"/></svg> <strong><%= pk.staffName %></strong> <span class="verified-badge">Verified Scrap Express staff</span></p>
+          <p class="handover-label">Your handover code</p>
+          <p class="handover-code"><%= pk.handoverCode %></p>
+          <p class="handover-note">Give this code only to <%= pk.staffName %>, at your site, before loading. Never share it on the phone. If someone else comes to collect, don't hand over the scrap and call us.</p>
+        </div>
+      <% } %>
       <% } %>
       <% if (r.status === 'scheduled') { %>
         <% const others = (pk.slots || []).filter((s) => s.id !== pk.chosen.id && s.date >= new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })); %>

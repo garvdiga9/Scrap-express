@@ -1,0 +1,49 @@
+<%- include('partials/head') %>
+<%- include('partials/sprite') %>
+<%- include('partials/header') %>
+
+<% const fmt = (d) => new Date(d).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }); const f = locals.form || {}; %>
+<main id="top" tabindex="-1">
+
+  <section class="section page-top">
+    <div class="container legal-page">
+      <span class="eyebrow">Complaints</span>
+      <h1>Complaint Status</h1>
+
+      <% if (locals.result) { %>
+        <div class="grievance-result">
+          <p class="grievance-ticket"><%= result.ticket %></p>
+          <dl class="legal-facts">
+            <dt>About</dt><dd><%= result.category %></dd>
+            <dt>Status</dt><dd><span class="grievance-status status-<%= result.status %>"><%= result.statusLabel %></span></dd>
+            <dt>Received</dt><dd><%= fmt(result.createdAt) %></dd>
+            <% if (result.resolvedAt) { %><dt>Resolved</dt><dd><%= fmt(result.resolvedAt) %></dd><% } else { %><dt>Due by</dt><dd><%= fmt(result.dueBy) %></dd><% } %>
+          </dl>
+          <% if (result.response) { %>
+            <h2>Our reply</h2>
+            <p class="grievance-reply"><%= result.response %></p>
+          <% } %>
+        </div>
+      <% } %>
+
+      <% if (locals.error) { %><div class="form-alert error" role="alert"><%= error %></div><% } %>
+      <form class="grievance-form book-form" method="post" action="/grievance/status">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="sTicket">Ticket number</label>
+            <input type="text" id="sTicket" name="ticket" required maxlength="20" placeholder="GRV-00001" autocapitalize="characters" value="<%= f.ticket || '' %>">
+          </div>
+          <div class="form-group">
+            <label for="sPhone">Phone number you gave</label>
+            <input type="tel" id="sPhone" name="phone" required maxlength="20" autocomplete="tel" placeholder="98765 43210" value="<%= f.phone || '' %>">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-accent">Check Status</button>
+      </form>
+      <p>Need to send a new complaint? <a href="/grievance#complaint-form">Go to the complaint form</a>.</p>
+    </div>
+  </section>
+
+</main>
+
+<%- include('partials/footer') %>

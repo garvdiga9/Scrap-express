@@ -163,6 +163,41 @@ router.post('/delete', requireCustomer, async (req, res) => {
   }
 });
 
+// GET /api/customer/export — a copy of everything we hold about this
+// customer (DPDP Act: right to access), as a JSON file download.
+router.get('/export', requireCustomer, async (req, res) => {
+  try {
+    const id = req.session.customerId;
+    const q = (sql) => pool.query(sql, [id]).then((r) => r.rows);
+    const [[profile], pickups, demolitions, schedules, callbacks, complaints] = await Promise.all([
+      q(`SELECT email, name, phone, verified_phone, company_name, business_type, gstin, address, area, pincode, created_at, last_login_at
+         FROM customers WHERE id = $1`),
+      q(`SELECT id, created_at, company_name, business_type, name, phone, email, gstin, address, area, pincode, latitude, longitude,
+              scrap_type, approx_quantity, item_quantities, notes, pickup_frequency, delivery_mode, scrap_location, status,
+              quote_items, quote_note, quoted_at, quote_response, terms_accepted_at, terms_version, ownership_declared_at, marketing_opt_in,
+              weighed_kg, weighed_items, amount_due, amount_paid, payment_method, paid_at, seller_id_type, seller_id_last4,
+              rating, rating_comment, rating_public, rated_at
+         FROM pickup_requests WHERE customer_id = $1 ORDER BY created_at`),
+      q(`SELECT id, created_at, name, phone, email, building_type, location, approx_area, notes, status, terms_accepted_at, terms_version,
+              ownership_declared_at, marketing_opt_in FROM demolition_requests WHERE customer_id = $1 ORDER BY created_at`),
+      q('SELECT * FROM pickup_schedules WHERE customer_id = $1 ORDER BY id'),
+      q('SELECT created_at, name, phone, query, status FROM callback_requests WHERE customer_id = $1 ORDER BY created_at'),
+      q('SELECT ticket, created_at, category, message, status, response, resolved_at FROM grievances WHERE customer_id = $1 ORDER BY created_at'),
+    ]);
+    const data = {
+      exportedAt: new Date().toISOString(),
+      note: 'Your data held by Scrap Express. Photos and documents can be downloaded from My Account.',
+      profile, pickups, demolitions, schedules, callbacks, complaints,
+    };
+    res.set('Cache-Control', 'private, no-store');
+    res.attachment('scrap-express-my-data.json');
+    res.type('application/json').send(JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not prepare your data. Please try again.' });
+  }
+});
+
 // POST /api/customer/requests/:id/quote — accept or decline a quote.
 router.post('/requests/:id/quote', requireCustomer, async (req, res) => {
   const response = { accept: 'accepted', decline: 'declined' }[req.body.response];

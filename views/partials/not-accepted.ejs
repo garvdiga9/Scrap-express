@@ -1,0 +1,6 @@
+<%# Items we never buy (data/compliance.js). %>
+<ul class="not-accepted-list">
+  <% notAccepted.forEach(({ item, detail }) => { %>
+    <li><strong><%= item %></strong><span><%= detail %></span></li>
+  <% }) %>
+</ul>

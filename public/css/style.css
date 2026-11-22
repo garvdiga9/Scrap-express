@@ -2134,3 +2134,57 @@ main[tabindex="-1"]:focus { outline: none; }
 .about-why-grid { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
 .about-why-grid .why-card h3 { font-size: 16px; }
 .about-contact-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 16px; margin-top: 28px; font-weight: 600; }
+
+/* ---------- Legal compliance pages and features ---------- */
+.form-group.rules-check { display: grid; gap: 12px; }
+.form-group .rules-check-optional { font-weight: 400; color: var(--color-text-light); }
+.legal-facts { display: grid; grid-template-columns: minmax(150px, max-content) 1fr; gap: 8px 20px; margin: 0 0 1.2em; font-size: 15.5px; }
+.legal-facts dt { font-weight: 700; color: var(--color-text); }
+.legal-facts dd { margin: 0; color: var(--color-text); overflow-wrap: anywhere; }
+@media (max-width: 520px) { .legal-facts { grid-template-columns: 1fr; gap: 2px; } .legal-facts dd { margin-bottom: 10px; } }
+.table-scroll { overflow-x: auto; margin: 0 0 1.2em; }
+.legal-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.legal-table th, .legal-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--color-border); }
+.legal-table th { background: var(--color-subtle); font-weight: 700; }
+.legal-empty { padding: 16px; border-radius: 12px; background: var(--color-subtle); border: 1px dashed var(--color-border); }
+.legal-page .not-accepted-list { list-style: none; padding: 0; display: grid; gap: 10px; }
+.not-accepted-list li { display: grid; gap: 2px; padding: 12px 14px 12px 44px; border-radius: 12px; background: #fef2f2; border: 1px solid #fecaca; position: relative; }
+.not-accepted-list li::before { content: "✕"; position: absolute; left: 16px; top: 12px; color: #b91c1c; font-weight: 800; }
+.not-accepted-list li span { color: var(--color-text-light); font-size: 14.5px; }
+.rate-terms { list-style: none; padding: 0; margin: 4px 0 18px; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--color-text-light); }
+.rate-terms li::before { content: "• "; color: var(--color-primary); font-weight: 800; }
+.rate-recycler { display: inline-block; margin: 2px 0 4px; padding: 2px 8px; border-radius: 999px; background: var(--color-primary-light); color: var(--color-primary-dark); font-size: 12px; font-weight: 700; text-decoration: none; }
+.handover-box { margin: 14px 0 6px; padding: 16px; border-radius: 14px; background: var(--color-success-bg); border: 1px solid var(--color-success-border); text-align: center; }
+.handover-agent { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin: 0 0 8px; }
+.handover-agent .icon { color: var(--color-primary); }
+.verified-badge { padding: 2px 9px; border-radius: 999px; background: var(--color-primary); color: #fff; font-size: 12px; font-weight: 700; }
+.handover-label { margin: 0; font-size: 13px; color: var(--color-text-light); }
+.handover-code { margin: 2px 0 8px; font-size: 34px; font-weight: 800; letter-spacing: 0.3em; color: var(--color-text); font-variant-numeric: tabular-nums; }
+.handover-note { margin: 0; font-size: 13.5px; color: var(--color-text-light); }
+.grievance-done, .grievance-result { margin: 18px 0 8px; padding: 20px; border-radius: 16px; background: var(--color-success-bg); border: 1px solid var(--color-success-border); }
+.grievance-done h2 { margin-top: 0; }
+.grievance-ticket { font-size: 28px; font-weight: 800; letter-spacing: 0.04em; margin: 4px 0 10px; color: var(--color-text); }
+.grievance-status { padding: 2px 10px; border-radius: 999px; font-weight: 700; font-size: 13px; background: var(--color-warm-bg); }
+.grievance-status.status-resolved, .grievance-status.status-closed { background: var(--color-primary-light); color: var(--color-primary-dark); }
+.grievance-reply { white-space: pre-wrap; }
+.grievance-form { margin: 8px 0 20px; }
+.grievance-form .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 16px; }
+/* Admin: complaints and legal details */
+.grievance-list { display: grid; gap: 14px; }
+.grievance-card.grievance-overdue { border-color: #fca5a5; box-shadow: inset 4px 0 0 #dc2626; }
+.grievance-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; }
+.grievance-head span { color: var(--color-text-light); font-size: 13px; }
+.grievance-who { margin: 6px 0; font-size: 14px; color: var(--color-text-light); }
+.grievance-message { white-space: pre-wrap; margin: 8px 0 12px; }
+.grievance-reply-form { display: grid; gap: 8px; }
+.grievance-reply-form .status-select { max-width: 220px; }
+.grievance-reply-form .btn { justify-self: start; }
+.legal-card h4 { margin: 18px 0 8px; }
+.legal-missing { color: var(--color-accent-strong); font-weight: 600; }
+.recycler-rows { display: grid; gap: 8px; margin-bottom: 8px; }
+.recycler-row { display: grid; grid-template-columns: 2fr 1fr 1.4fr 1fr auto; gap: 8px; align-items: center; }
+@media (max-width: 760px) { .recycler-row { grid-template-columns: 1fr 1fr; } }
+.staff-checks { display: grid; gap: 10px; margin: 10px 0; }
+.staff-checks label { display: grid; gap: 4px; font-weight: 600; font-size: 14px; }
+:root[data-theme="dark"] .not-accepted-list li { background: #2a1416; border-color: #5b2226; }
+:root[data-theme="dark"] .not-accepted-list li::before { color: #f87171; }

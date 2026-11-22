@@ -20,6 +20,8 @@ const ratings = require('../lib/ratings');
 const { cleanPhone } = require('../lib/validation');
 const documents = require('../lib/documents');
 const push = require('../lib/push');
+const grievances = require('../lib/grievances');
+const legal = require('../lib/legal');
 
 router.use(requireAdmin);
 
@@ -671,6 +673,77 @@ router.delete('/lot-enquiries/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete' });
+  }
+});
+
+
+// ---- complaints to the Grievance Officer (lib/grievances.js) ----
+
+router.get('/grievances', async (req, res) => {
+  try {
+    res.json(await grievances.list());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load complaints' });
+  }
+});
+
+router.patch('/grievances/:id', async (req, res) => {
+  try {
+    const { error, value } = await grievances.update(Number(req.params.id), req.body || {});
+    if (error) return res.status(error === 'Not found' ? 404 : 400).json({ error });
+    res.json(value);
+    live.publish('grievances');
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update the complaint' });
+  }
+});
+
+// ---- legal details (owner only, lib/legal.js) ----
+
+router.get('/legal', requireOwner, async (req, res) => {
+  try {
+    const value = await legal.get();
+    res.json({ ...value, recyclerTypes: legal.RECYCLER_TYPES, missing: legal.missing(value) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load legal details' });
+  }
+});
+
+router.put('/legal', requireOwner, async (req, res) => {
+  try {
+    const { error, value } = await legal.save(req.body || {});
+    if (error) return res.status(400).json({ error });
+    res.json({ ...value, recyclerTypes: legal.RECYCLER_TYPES, missing: legal.missing(value) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save legal details' });
+  }
+});
+
+router.post('/legal/certificate', requireOwner, documents.acceptDocument, async (req, res) => {
+  try {
+    const old = await legal.setCertificate(req.document, { number: req.body.number, validTill: req.body.validTill });
+    if (old) await legal.deleteFile(old.fileName);
+    const value = await legal.get();
+    res.status(201).json({ ...value, recyclerTypes: legal.RECYCLER_TYPES, missing: legal.missing(value) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save the certificate' });
+  }
+});
+
+router.delete('/legal/certificate', requireOwner, async (req, res) => {
+  try {
+    const old = await legal.removeCertificate();
+    if (old) await legal.deleteFile(old.fileName);
+    const value = await legal.get();
+    res.json({ ...value, recyclerTypes: legal.RECYCLER_TYPES, missing: legal.missing(value) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to remove the certificate' });
   }
 });
 

@@ -1,0 +1,87 @@
+<%- include('partials/head') %>
+<%- include('partials/sprite') %>
+<%- include('partials/header') %>
+
+<% const L = locals.legal || {}; const o = L.officer || {}; const f = locals.form || {}; %>
+<main id="top" tabindex="-1">
+
+  <section class="section page-top">
+    <div class="container legal-page">
+      <span class="eyebrow">Complaints</span>
+      <h1>Grievance Officer</h1>
+      <p>If you are unhappy with a pickup, a payment, our staff or how we handle your data, tell us here. Every complaint gets a ticket number straight away.</p>
+
+      <% if (locals.done) { %>
+        <div class="grievance-done" role="status">
+          <h2>Complaint received</h2>
+          <p>Your ticket number is</p>
+          <p class="grievance-ticket"><%= done.ticket %></p>
+          <p>Please note it down. We aim to resolve your complaint within <%= resolveDays %> days. You can check its status any time with this ticket number and your phone number.</p>
+          <p><a class="btn btn-accent" href="/grievance/status">Check complaint status</a></p>
+        </div>
+      <% } %>
+
+      <h2>Who handles complaints</h2>
+      <dl class="legal-facts">
+        <% if (o.name) { %>
+          <dt>Grievance Officer</dt><dd><%= o.name %><% if (o.designation) { %>, <%= o.designation %><% } %></dd>
+        <% } %>
+        <dt>Email</dt><dd><% const mail = o.email || 'scrapexpress@gmail.com'; %><a href="mailto:<%= mail %>"><%= mail %></a></dd>
+        <dt>Phone</dt><dd><% if (o.phone) { %><a href="tel:+91<%= o.phone.replace(/^0/, '') %>"><%= o.phone %></a><% } else { %><a href="tel:+919818826333">+91 98188 26333</a><% } %></dd>
+        <dt>Address</dt><dd><%= shopAddress.full %>, India</dd>
+      </dl>
+
+      <h2>What happens next</h2>
+      <ol>
+        <li><strong>Acknowledged at once:</strong> <span>You get a ticket number on this page straight away.</span><% if (locals.mailEnabled) { %> <span>If you give your email, we email it to you too.</span><% } %> <span>Every complaint is acknowledged within <%= ackHours %> hours at the latest.</span></li>
+        <li><strong>Looked into:</strong> we check the pickup record, weighing photo and payment, and may call you.</li>
+        <li><strong>Resolved within <%= resolveDays %> days:</strong> you see our reply and the outcome on the status page.</li>
+        <li><strong>Not satisfied?</strong> For data complaints you may approach the Data Protection Board of India. For other disputes, see section 13 of our <a href="/terms">Terms of Use</a>.</li>
+      </ol>
+
+      <h2 id="complaint-form">Send a complaint</h2>
+      <% if (locals.error) { %><div class="form-alert error" role="alert"><%= error %></div><% } %>
+      <form class="grievance-form book-form" method="post" action="/grievance#complaint-form">
+        <div class="callback-website" aria-hidden="true"><label for="gWebsite">Website</label><input type="text" id="gWebsite" name="website" tabindex="-1" autocomplete="off"></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="gName">Your name *</label>
+            <input type="text" id="gName" name="name" required maxlength="150" autocomplete="name" value="<%= f.name || '' %>">
+          </div>
+          <div class="form-group">
+            <label for="gPhone">Phone number *</label>
+            <input type="tel" id="gPhone" name="phone" required maxlength="20" autocomplete="tel" placeholder="98765 43210" value="<%= f.phone || '' %>">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="gEmail">Email (optional)</label>
+            <input type="email" id="gEmail" name="email" maxlength="200" autocomplete="email" placeholder="you@company.com" value="<%= f.email || '' %>">
+          </div>
+          <div class="form-group">
+            <label for="gRef">Pickup number (optional)</label>
+            <input type="text" id="gRef" name="requestRef" maxlength="50" placeholder="e.g. Bulk Pickup #12" value="<%= f.requestRef || '' %>">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="gCategory">What is it about? *</label>
+          <select id="gCategory" name="category" required>
+            <option value="">Choose one</option>
+            <% categories.forEach((c) => { %><option value="<%= c %>"<%= f.category === c ? ' selected' : '' %>><%= c %></option><% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="gMessage">Your complaint *</label>
+          <textarea id="gMessage" name="message" rows="5" required maxlength="<%= maxMessage %>" placeholder="What happened, and when?"><%= f.message || '' %></textarea>
+        </div>
+        <button type="submit" class="btn btn-accent btn-lg">Send Complaint</button>
+        <p class="form-step-note">We use these details only to handle your complaint. See our <a href="/privacy">Privacy Policy</a>.</p>
+      </form>
+
+      <p>Already sent a complaint? <a href="/grievance/status">Check its status</a>.</p>
+    </div>
+  </section>
+
+</main>
+
+<%- include('partials/footer') %>
