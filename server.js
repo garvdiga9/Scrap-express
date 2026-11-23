@@ -46,6 +46,8 @@ const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 
 app.set('trust proxy', 1);
+// Visitor addresses without a port, whichever host is in front (lib/client-ip.js).
+app.use(require('./lib/client-ip').clientIp);
 // Health check (before the custom-domain forwarding, so Render can always
 // reach it), error counting and alerts (lib/health.js).
 const health = require('./lib/health');

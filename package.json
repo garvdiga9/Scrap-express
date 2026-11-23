@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "node server.js",
+    "start:prod": "node db/migrate.js && node db/seed.js && node server.js",
     "dev": "node server.js",
     "migrate": "node db/migrate.js",
     "seed": "node db/seed.js",
