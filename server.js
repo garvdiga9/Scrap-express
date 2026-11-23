@@ -85,7 +85,12 @@ if (brand.changed) {
 }
 // Browsers send what the security policy blocked here (logged).
 app.post('/api/csp-report', express.json({ type: ['application/csp-report', 'application/json', 'application/reports+json'], limit: '20kb' }), cspReport);
-app.use(express.json());
+app.use(express.json({ limit: '200kb' }));
+
+// Flood protection: a generous cap per connection on everything (a normal
+// visit is a few dozen requests a minute). Forms and logins have their own,
+// stricter limits (lib/spam.js, lib/login-limit.js).
+app.use(require('./lib/spam').limit('all', { max: 1200, windowMs: 60 * 1000, message: 'Too many requests from your connection. Please wait a minute and try again.' }));
 
 // One line per API call, so a request that stalls or gets dropped shows up in
 // the server log (locally and in Render's Logs tab).
@@ -616,7 +621,7 @@ app.use((req, res) => {
 // Anything that went wrong and wasn't handled: a friendly page, logged and counted.
 app.use(health.errorHandler(NOTICE));
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Scrap Express server running at http://localhost:${PORT}`);
   push.init().catch(() => {}); // prepare notification keys early; logged inside if it fails
   updates.startSchedule(); // daily rates to subscribers
@@ -625,4 +630,23 @@ app.listen(PORT, () => {
   require('./lib/activity').start(); // clears activity log entries older than a year
   require('./lib/reminders').start(); // morning to-do alerts, and nudges for customers
   quotes.addMissingTokens().catch((err) => console.error('adding quote links failed:', err.message));
+});
+
+// ---- staying up ----
+
+// A promise that failed with nobody handling it: log it and keep serving.
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled promise rejection (site keeps running):', reason && reason.stack ? reason.stack : reason);
+});
+// A real programming error leaves the process in an unknown state: log it and
+// exit, and Render starts a fresh copy within seconds.
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception, restarting:', err && err.stack ? err.stack : err);
+  setTimeout(() => process.exit(1), 500).unref();
+});
+// Deploys and restarts: finish the requests in progress, then stop.
+process.on('SIGTERM', () => {
+  console.log('Shutting down: finishing requests in progress');
+  server.close(() => pool.end().finally(() => process.exit(0)));
+  setTimeout(() => process.exit(0), 10000).unref();
 });
